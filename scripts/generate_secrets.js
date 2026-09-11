@@ -8,10 +8,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const SECRETS_TO_ENCODE = {
-  SUPABASE_URL: 'https://tlyvlfhjkbaejsftmrvs.supabase.co',
-  SUPABASE_KEY: 'sb_publishable_zQi_aEStL8rzASwGExU84g_xfrY49yt',
-  VAULT_SALT: 'LLP_SAFE_VAULT_SALT_2026',
-  HARDWARE_SEED: 'LLP_TITAN_2026',
+  SUPABASE_URL: process.env.SUPABASE_URL || 'https://tlyvlfhjkbaejsftmrvs.supabase.co',
+  SUPABASE_KEY: process.env.SUPABASE_KEY || 'sb_publishable_zQi_aEStL8rzASwGExU84g_xfrY49yt',
+  VAULT_SALT: process.env.VAULT_SALT || 'LLP_SAFE_VAULT_SALT_2026',
+  HARDWARE_SEED: process.env.HARDWARE_SEED || 'LLP_TITAN_2026',
+  GITHUB_TOKEN: process.env.GITHUB_UPDATER_TOKEN || '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',
 };
 
 function generateDynamicSecrets() {
@@ -53,6 +54,7 @@ module.exports = {
   get SUPABASE_KEY() { return getSecret('SUPABASE_KEY'); },
   get VAULT_SALT() { return getSecret('VAULT_SALT'); },
   get HARDWARE_SEED() { return getSecret('HARDWARE_SEED'); },
+  get GITHUB_TOKEN() { return getSecret('GITHUB_TOKEN'); },
 };
 `;
 

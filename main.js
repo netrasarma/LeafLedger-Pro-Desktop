@@ -651,10 +651,28 @@ function isNewerVersion(current, remote) {
 }
 
 function downloadFile(url, destPath, onProgress, onComplete, onError) {
-  const proto = url.startsWith('https') ? https : http;
+  const token = secrets.GITHUB_TOKEN;
 
   function requestUrl(targetUrl) {
-    const req = proto.get(targetUrl, { headers: { 'User-Agent': 'Leaf-Ledger-Pro-Desktop' } }, (res) => {
+    let parsed;
+    try {
+      parsed = new URL(targetUrl);
+    } catch (e) {
+      return onError(new Error(`Invalid URL: ${targetUrl}`));
+    }
+
+    const proto = parsed.protocol === 'https:' ? https : http;
+    const isGitHubApi = parsed.hostname === 'api.github.com';
+
+    const headers = {
+      'User-Agent': 'Leaf-Ledger-Pro-Desktop',
+    };
+    if (isGitHubApi) {
+      headers['Accept'] = 'application/octet-stream';
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const req = proto.get(targetUrl, { headers }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return requestUrl(res.headers.location);
       }
@@ -749,13 +767,19 @@ function startUpdateDownload(remoteVersion, downloadUrl) {
 }
 
 function checkForUpdates(isManual = false) {
+  const token = secrets.GITHUB_TOKEN;
+  const headers = {
+    'User-Agent': 'Leaf-Ledger-Pro-Desktop',
+    'Accept': 'application/vnd.github.v3+json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const options = {
     hostname: 'api.github.com',
     path: '/repos/netrasarma/LeafLedger-Pro-Desktop/releases/latest',
-    headers: {
-      'User-Agent': 'Leaf-Ledger-Pro-Desktop',
-      'Accept': 'application/vnd.github.v3+json',
-    },
+    headers,
   };
 
   https.get(options, (res) => {
@@ -771,7 +795,8 @@ function checkForUpdates(isManual = false) {
 
           if (isNewerVersion(currentVersion, remoteVersion)) {
             const exeAsset = (release.assets || []).find(a => a.name.endsWith('.exe')) || release.assets?.[0];
-            const downloadUrl = exeAsset ? exeAsset.browser_download_url : release.html_url;
+            // Prefer API endpoint for authenticated binary asset streaming in private repos
+            const downloadUrl = (exeAsset && exeAsset.url) ? exeAsset.url : (exeAsset ? exeAsset.browser_download_url : release.html_url);
 
             dialog.showMessageBox(mainWindow, {
               type: 'info',

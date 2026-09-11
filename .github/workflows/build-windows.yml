@@ -44,6 +44,8 @@ jobs:
       # ── 5. Generate Dynamic Cyclic XOR Secrets ────────────────────────────
       - name: Generate Dynamic XOR Secrets
         run: node scripts/generate_secrets.js
+        env:
+          GITHUB_UPDATER_TOKEN: ${{ secrets.GITHUB_UPDATER_TOKEN || secrets.GITHUB_TOKEN }}
         shell: pwsh
 
       # ── 6. Generate Two-Tier X.509 Code Signing Certificates ───────────────

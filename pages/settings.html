@@ -1,0 +1,801 @@
+<section id="view-settings" class="view-page active">
+  
+  <!-- Page Header -->
+  <div class="page-header" style="margin-bottom: 20px;">
+    <div class="page-title-group">
+      <h1>⚙️ Settings configuration</h1>
+    </div>
+  </div>
+
+  <!-- Settings Split Layout: Left Sidebar + Right Content Area -->
+  <div class="settings-split-container">
+    
+    <!-- Left Category Sidebar (240px wide) -->
+    <aside class="settings-sidebar">
+      <div class="settings-sidebar-label">CATEGORIES</div>
+      <nav class="settings-tab-list">
+        <button class="settings-tab-btn active" data-tab="agent" onclick="settingsModule.switchTab('agent')">
+          <span>🏢 Business Profile</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="appearance" onclick="settingsModule.switchTab('appearance')">
+          <span>🎨 Appearance & Theme</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="session" onclick="settingsModule.switchTab('session')">
+          <span>📅 Session Manager</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="security" onclick="settingsModule.switchTab('security')">
+          <span>🔒 Security</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="activation" onclick="settingsModule.switchTab('activation')">
+          <span>✨ Activation</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="users" onclick="settingsModule.switchTab('users')">
+          <span>👥 Staff Access</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="update" onclick="settingsModule.switchTab('update')">
+          <span>🔄 OTA Updates</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="mobile" onclick="settingsModule.switchTab('mobile')">
+          <span>📱 Mobile App</span>
+        </button>
+        <button class="settings-tab-btn" data-tab="about" onclick="settingsModule.switchTab('about')">
+          <span>ℹ️ About Us</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Right Scrollable Content Area -->
+    <main class="settings-content-area">
+      
+      <!-- ====================================================================
+           TAB 1: BUSINESS PROFILE
+           ==================================================================== -->
+      <div id="setTab-agent" class="settings-tab-panel active">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <h3 class="settings-card-title">BUSINESS PROFILE</h3>
+            <p class="settings-card-subtitle">These details appear on your generated PDF statements.</p>
+          </div>
+          <div class="settings-card-divider"></div>
+
+          <div class="form-group">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">💼 BUSINESS NAME</label>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Enter your legal business or agency name</div>
+            <input type="text" id="setAgentName" class="form-input" style="max-width: 480px; height: 42px;">
+          </div>
+
+          <div class="form-group" style="margin-top: 14px;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">📞 CONTACT NUMBER</label>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Used for official identification</div>
+            <input type="tel" id="setAgentPhone" class="form-input mono" placeholder="10-digit contact number" maxlength="10" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)" style="max-width: 480px; height: 42px;">
+          </div>
+
+          <div class="form-group" style="margin-top: 14px;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">📍 PHYSICAL ADDRESS</label>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Your primary office or garden location</div>
+            <input type="text" id="setAgentAddress" class="form-input" style="max-width: 480px; height: 42px;">
+          </div>
+
+          <div class="form-group" style="margin-top: 14px;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">✍️ AUTHORITY NAME</label>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Name printed below the signature on documents (e.g. Manager / Proprietor)</div>
+            <input type="text" id="setAuthorityName" class="form-input" style="max-width: 480px; height: 42px;" placeholder="e.g. Rajesh Kumar, Garden Manager">
+          </div>
+
+          <!-- Signature Upload Section -->
+          <div style="margin-top: 20px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; max-width: 480px;">
+            <div style="font-size: 11px; font-weight: 700; color: var(--accent-emerald); letter-spacing: 0.5px; margin-bottom: 4px;">🖊️ AUTHORITY SIGNATURE</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 14px;">Upload a scanned signature image (PNG/JPG, transparent background preferred). Appears on printed statements and receipts.</div>
+
+            <!-- Signature Preview Box -->
+            <div id="setSignaturePreviewBox" style="background: #ffffff; border: 2px dashed var(--border-subtle); border-radius: 10px; height: 100px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; overflow: hidden; cursor: pointer;" onclick="document.getElementById('setSignatureFileInput').click()">
+              <img id="setSignaturePreviewImg" src="" alt="" style="max-height: 90px; max-width: 100%; object-fit: contain; display: none;">
+              <div id="setSignaturePlaceholder" style="text-align: center; color: #aaa;">
+                <div style="font-size: 28px; margin-bottom: 4px;">✍️</div>
+                <div style="font-size: 11px; font-weight: 600;">Click to upload signature</div>
+              </div>
+            </div>
+
+            <!-- Hidden file input -->
+            <input type="file" id="setSignatureFileInput" accept="image/png,image/jpeg,image/jpg" style="display: none;" onchange="settingsModule.onSignatureFileSelected(event)">
+
+            <div style="display: flex; gap: 10px;">
+              <button type="button" class="btn btn-secondary btn-sm" style="flex: 1; font-weight: 700;" onclick="document.getElementById('setSignatureFileInput').click()">
+                📁 Upload Image
+              </button>
+              <button type="button" class="btn btn-danger btn-sm" id="setSignatureClearBtn" style="font-weight: 700; display: none;" onclick="settingsModule.clearSignature()">
+                🗑️ Remove
+              </button>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" style="margin-top: 24px; padding: 10px 24px; font-weight: 700;" onclick="settingsModule.saveAgentProfile()">
+            💾 Save Business Information
+          </button>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB: APPEARANCE & THEME
+           ==================================================================== -->
+      <div id="setTab-appearance" class="settings-tab-panel">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <h3 class="settings-card-title">APPLICATION THEME</h3>
+            <p class="settings-card-subtitle">Select your preferred color theme. Switch between dark and light modes anytime.</p>
+          </div>
+          <div class="settings-card-divider"></div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <!-- Dark Option -->
+            <div id="themeCardDark" onclick="app.setTheme('dark')" style="cursor: pointer; border: 2px solid var(--accent-emerald); border-radius: 14px; padding: 20px; background: #1a1f2e; color: #f0f4f8; transition: all 0.2s; box-shadow: var(--shadow-sm);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                  <span>🌙</span> Executive Dark
+                </div>
+                <span id="themeBadgeDark" class="badge" style="background: rgba(76, 175, 125, 0.2); color: #4caf7d; font-size: 10px; font-weight: 700; border: 1px solid #4caf7d; padding: 2px 8px; border-radius: 999px;">ACTIVE</span>
+              </div>
+              <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin-bottom: 16px;">
+                Obsidian slate dark theme with emerald accents. Ideal for low-light office work, reducing eye strain during high-volume ledger data entry.
+              </p>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="display: inline-block; width: 26px; height: 26px; border-radius: 6px; background: #1a1f2e; border: 1px solid #363d52;" title="Backdrop: #1a1f2e"></span>
+                <span style="display: inline-block; width: 26px; height: 26px; border-radius: 6px; background: #242938; border: 1px solid #363d52;" title="Card: #242938"></span>
+                <span style="display: inline-block; width: 26px; height: 26px; border-radius: 6px; background: #4caf7d;" title="Accent: #4caf7d"></span>
+                <span style="display: inline-block; width: 26px; height: 26px; border-radius: 6px; background: #f0f4f8;" title="Text: #f0f4f8"></span>
+              </div>
+            </div>
+
+            <!-- Light Option -->
+            <div id="themeCardLight" onclick="app.setTheme('light')" style="cursor: pointer; border: 2px solid var(--border-subtle); border-radius: 14px; padding: 20px; background: #f8fafc; color: #0f172a; transition: all 0.2s; box-shadow: var(--shadow-sm);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div style="font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                  <span>☀️</span> Clean Light
+                </div>
+                <span id="themeBadgeLight" class="badge" style="display: none; background: rgba(22, 163, 74, 0.15); color: #16a34a; font-size: 10px; font-weight: 700; border: 1px solid #16a34a; padding: 2px 8px; border-radius: 999px;">ACTIVE</span>
+              </div>
+              <p style="font-size: 12px; color: #475569; line-height: 1.5; margin-bottom: 16px;">
+                Crisp daylight theme with emerald accents. High contrast and clean readability, matching printed receipts and daylight desk work.
+              </p>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="display: inline-block; width: 26px; height: 26px; border-radius: 6px; background: #f1f5f9; border: 1px solid #cbd5e1;" title="Backdrop: #f1f5f9"></span>
+                <span style="display: inline-block; width: 26px; height: 26px; border-radius: 6px; background: #ffffff; border: 1px solid #cbd5e1;" title="Card: #ffffff"></span>
+                <span style="display: inline-block; width: 26px; height: 26px; border-radius: 6px; background: #16a34a;" title="Accent: #16a34a"></span>
+                <span style="display: inline-block; width: 26px; height: 26px; border-radius: 6px; background: #0f172a;" title="Text: #0f172a"></span>
+              </div>
+            </div>
+          </div>
+
+          <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 18px; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 18px;">💡</span>
+            <span>You can also quickly toggle between Dark and Light mode from anywhere in the app using the <b>Sun/Moon icon</b> in the top-right title bar.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB 2: SESSION MANAGER
+           ==================================================================== -->
+      <div id="setTab-session" class="settings-tab-panel">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <h3 class="settings-card-title">WORKING PLUCKING SEASON</h3>
+            <p class="settings-card-subtitle">View and audit data by harvest year. Operational seasons are managed centrally.</p>
+          </div>
+          <div class="settings-card-divider"></div>
+
+          <!-- Active Session Banner -->
+          <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-input); border: 1px solid var(--accent-green); border-radius: 10px; padding: 14px 20px; margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--accent-green); letter-spacing: 0.5px;">● ACTIVE WORKING SEASON</span>
+              <span id="setActiveSessionDisplay" style="font-size: 18px; font-weight: 800; color: var(--text-primary);">2026</span>
+            </div>
+            <span style="font-size: 11px; color: var(--text-muted); background: var(--bg-card); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border-subtle);">Central System Period</span>
+          </div>
+
+          <!-- Switch Session Control -->
+          <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 22px; max-width: 500px;">
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">SWITCH WORKING SEASON</div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <select id="setSwitchSessionSelect" class="form-select" style="height: 42px; flex: 1;"></select>
+              <button class="btn btn-primary" style="height: 42px; padding: 0 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;" onclick="settingsModule.switchSession()">
+                <span>🔄</span>
+                <span>Switch Season</span>
+              </button>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
+              💡 <b>Audit Note:</b> Switching seasons allows viewing historical leaf collections and payments for that year without modifying current operations.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB 3: SECURITY
+           ==================================================================== -->
+      <div id="setTab-security" class="settings-tab-panel">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <h3 class="settings-card-title">APP SECURITY</h3>
+            <p class="settings-card-subtitle">Update the 6-Digit MPIN for your Leaf Ledger Pro master account.</p>
+          </div>
+          <div class="settings-card-divider"></div>
+
+          <div class="form-group" style="max-width: 360px;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">NEW 6-DIGIT MPIN</label>
+            <input type="password" id="setNewMpin" class="form-input mono" maxlength="6" placeholder="Enter new 6-digit MPIN" style="height: 44px; margin-bottom: 14px;">
+          </div>
+
+          <div class="form-group" style="max-width: 360px;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">CONFIRM 6-DIGIT MPIN</label>
+            <input type="password" id="setConfMpin" class="form-input mono" maxlength="6" placeholder="Confirm 6-digit MPIN" style="height: 44px; margin-bottom: 20px;">
+          </div>
+
+          <button class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;" onclick="settingsModule.updateMpin()">
+            💾 Update MPIN
+          </button>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB 4: ACTIVATION & SOFTWARE LICENSE
+           ==================================================================== -->
+      <div id="setTab-activation" class="settings-tab-panel">
+        <div class="settings-card">
+          <div class="settings-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h3 class="settings-card-title">SOFTWARE LICENSE</h3>
+              <p class="settings-card-subtitle">Manage your Leaf Ledger Pro premium activation and subscription validity.</p>
+            </div>
+            <div id="setLicenseStatusBadge" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
+              <!-- Dynamic Status Badge -->
+            </div>
+          </div>
+          <div class="settings-card-divider"></div>
+
+          <!-- Hero Expiry Date Showcase Card -->
+          <div id="setLicenseHeroCard" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.03) 100%); border: 1.5px solid var(--accent-green); border-radius: 14px; padding: 22px 24px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div style="width: 52px; height: 52px; border-radius: 12px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; font-size: 26px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                🛡️
+              </div>
+              <div>
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px;">
+                  LICENSE EXPIRY DATE
+                </div>
+                <div id="setLicenseExpiryDisplay" style="font-size: 22px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.3px;">
+                  Loading...
+                </div>
+                <div id="setLicenseExpirySub" style="font-size: 12px; font-weight: 600; color: var(--accent-green); margin-top: 3px; display: flex; align-items: center; gap: 6px;">
+                  <!-- E.g., 235 days remaining -->
+                </div>
+              </div>
+            </div>
+
+            <div style="text-align: right;">
+              <span id="setLicensePlanTag" style="display: inline-block; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--text-primary);">
+                Enterprise Pro
+              </span>
+            </div>
+          </div>
+
+          <!-- License Specs Grid (2x2) -->
+          <div class="license-specs-grid">
+            <!-- Active License Key -->
+            <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.5px;">🔑 ACTIVE LICENSE KEY</span>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 10.5px; height: 22px;" onclick="settingsModule.copyLicenseKey()">📋 Copy</button>
+              </div>
+              <div id="setActiveKeyDisplay" class="mono" style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); letter-spacing: 1px;">
+                -------------------
+              </div>
+            </div>
+
+            <!-- Expiry & Validity Details -->
+            <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.5px; margin-bottom: 6px;">📅 VALIDITY STATUS</div>
+              <div id="setValidityStatusDisplay" style="font-size: 13.5px; font-weight: 700; color: var(--accent-green);">
+                Active &amp; Verified
+              </div>
+            </div>
+
+            <!-- Registered Agency / Client -->
+            <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 16px;">
+              <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.5px; margin-bottom: 6px;">🏢 LICENSED TO</div>
+              <div id="setLicenseOwnerDisplay" style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">
+                --
+              </div>
+            </div>
+
+            <!-- Hardware Machine Lock -->
+            <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.5px;">💻 HARDWARE ID</span>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 8px; font-size: 10.5px; height: 22px;" onclick="settingsModule.copyMachineId()">📋 Copy</button>
+              </div>
+              <div id="setMachineIdDisplay" class="mono" style="font-size: 11.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                --
+              </div>
+            </div>
+          </div>
+
+          <!-- Toggle Button for Key Input -->
+          <div style="margin-bottom: 18px;">
+            <button type="button" id="toggleKeyEntryBtn" class="btn btn-secondary btn-sm" style="font-weight: 700; height: 32px; padding: 0 14px;" onclick="settingsModule.toggleKeyEntry()">
+              🔄 Change / Renew License Key
+            </button>
+          </div>
+
+          <!-- Product Key Entry Section -->
+          <div id="setActEntrySection" style="display: none; background: var(--bg-input); border: 1px dashed var(--border-subtle); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">ENTER ACTIVATION KEY</label>
+            <div style="display: flex; gap: 12px; max-width: 520px;">
+              <input type="text" id="setLicenseKeyInput" class="form-input mono" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19" style="height: 38px; letter-spacing: 2px; text-transform: uppercase;">
+              <button class="btn btn-primary" style="height: 38px; padding: 0 18px; font-weight: 700; font-size: 12.5px; white-space: nowrap;" onclick="settingsModule.activateKey()">
+                🚀 Activate Now
+              </button>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+              Enter your 16-character alphanumeric key to renew or transfer your desktop agency license.
+            </div>
+          </div>
+
+          <!-- Official Support & Desk Help -->
+          <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 18px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 20px;">📞</span>
+              <div>
+                <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">OFFICIAL DESK SUPPORT &amp; LICENSE RENEWALS</div>
+                <div style="font-size: 14px; font-weight: 800; color: var(--accent-green);">+91 8638149032</div>
+              </div>
+            </div>
+            <div style="font-size: 11.5px; color: var(--text-muted);">
+              Assam &bull; Available Mon&ndash;Sat 09:00&ndash;19:00
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB 5: STAFF ACCESS
+           ==================================================================== -->
+      <!-- ====================================================================
+           TAB 5: STAFF ACCESS & PERMISSIONS
+           ==================================================================== -->
+      <div id="setTab-users" class="settings-tab-panel">
+        <div class="settings-card">
+          <div class="settings-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h3 class="settings-card-title">STAFF & FIELD ACCESS CONTROL</h3>
+              <p class="settings-card-subtitle">Provision, configure permissions, and manage login access for your collection operators and field fleet.</p>
+            </div>
+            <!-- Quick Summary Badges -->
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;" id="staffStatsBadges">
+              <span style="font-size: 11px; font-weight: 700; background: var(--bg-input); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 4px 10px; border-radius: 6px;" id="statStaffTotal">
+                Total: 0
+              </span>
+              <span style="font-size: 11px; font-weight: 700; background: rgba(76, 175, 125, 0.12); border: 1px solid rgba(76, 175, 125, 0.3); color: var(--accent-green); padding: 4px 10px; border-radius: 6px;" id="statStaffActive">
+                Active: 0
+              </span>
+              <span style="font-size: 11px; font-weight: 700; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--accent-red); padding: 4px 10px; border-radius: 6px;" id="statStaffRevoked">
+                Revoked: 0
+              </span>
+            </div>
+          </div>
+          <div class="settings-card-divider"></div>
+
+          <!-- Add New Staff Form Box -->
+          <div style="font-size: 11px; font-weight: 800; color: var(--accent-green); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">
+            ➕ PROVISION NEW FIELD COLLECTOR
+          </div>
+          <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+            <div class="staff-form-grid">
+              <div class="form-group">
+                <label class="form-label" style="font-size: 11px; font-weight: 700;">Full Name <span class="req">*</span></label>
+                <input type="text" id="setStaffName" class="form-input" placeholder="e.g. Ajay Sharma">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size: 11px; font-weight: 700;">Staff Mobile Number <span class="req">*</span></label>
+                <input type="tel" id="setStaffMobile" class="form-input mono" placeholder="10-digit mobile number" maxlength="10" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size: 11px; font-weight: 700;">6-Digit MPIN <span class="req">*</span></label>
+                <input type="password" id="setStaffMpin" class="form-input mono" placeholder="6-digit login MPIN" maxlength="6" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)">
+              </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; height: 40px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;" onclick="settingsModule.addStaffMember()">
+              <span>🚀</span>
+              <span>Authorize & Provision Field Collector</span>
+            </button>
+          </div>
+
+          <!-- Existing Staff Fleet Section -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+              👥 FIELD COLLECTORS & PERMISSIONS
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <input type="text" id="setStaffSearchInput" class="form-input" placeholder="🔍 Search by name or phone..." style="height: 32px; width: 220px; font-size: 11.5px;" oninput="settingsModule.filterStaffTable()">
+              <select id="setStaffFilterStatus" class="form-select" style="height: 32px; font-size: 11.5px; width: 130px;" onchange="settingsModule.filterStaffTable()">
+                <option value="all">All Status</option>
+                <option value="active">Active Only</option>
+                <option value="revoked">Revoked Only</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 32%;">STAFF COLLECTOR & LOGIN</th>
+                  <th style="width: 25%;">COLLECTION PERMISSION</th>
+                  <th style="width: 18%;">LOGIN STATUS</th>
+                  <th style="width: 25%; text-align: right;">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="setStaffTableBody">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB 6: OTA UPDATES
+           ==================================================================== -->
+      <div id="setTab-update" class="settings-tab-panel">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <h3 class="settings-card-title">SOFTWARE INFORMATION</h3>
+            <p class="settings-card-subtitle">You are running Leaf Ledger Pro v2.8.7</p>
+          </div>
+          <div class="settings-card-divider"></div>
+
+          <div style="display: flex; align-items: center; gap: 10px; background: var(--bg-input); border: 1px solid var(--accent-green); border-radius: 10px; padding: 12px 18px; margin-bottom: 20px;">
+            <span style="font-size: 11px; font-weight: 700; color: var(--accent-green);">● CLOUD CONNECTED</span>
+          </div>
+
+          <button class="btn btn-primary" style="padding: 12px 28px; font-weight: 700; font-size: 14px;" onclick="settingsModule.checkForUpdates()">
+            🔍 Check for Updates Now
+          </button>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB 7: MOBILE APP
+           ==================================================================== -->
+      <div id="setTab-mobile" class="settings-tab-panel">
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <h3 class="settings-card-title">LEAF LEDGER PRO MOBILE</h3>
+            <p class="settings-card-subtitle">Provision your field team with the unified mobile application for weighing, collections, and estate operations.</p>
+          </div>
+          <div class="settings-card-divider"></div>
+
+          <div style="max-width: 460px; margin: 0 auto;">
+            <!-- Unified Mobile App Card -->
+            <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 26px 24px; text-align: center; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 6px;">
+                <span style="font-size: 24px;">📱</span>
+                <span style="font-size: 13px; font-weight: 800; color: var(--accent-green); letter-spacing: 0.5px;">ALL-IN-ONE MOBILE SUITE</span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 16px;">
+                Field leaf collection, digital weighing, grower passbooks, and agent management combined into one app.
+              </p>
+
+              <div style="background: #ffffff; padding: 14px; border-radius: 12px; display: inline-block; margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://drive.google.com/uc?export=download%26id=1VXKZ0t7IMsevOAA1uBytAJqmuAKTO62E" style="width: 160px; height: 160px; display: block;" alt="Leaf Ledger Pro Mobile QR">
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn btn-primary" style="width: 100%; height: 42px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;" onclick="settingsModule.downloadApk('mobile')">
+                  <span>📥</span>
+                  <span>Download Mobile APK</span>
+                </button>
+                <div style="font-size: 11px; color: var(--text-muted);">
+                  Compatible with Android 8.0+ &bull; Weighing scale bluetooth ready
+                </div>
+              </div>
+            </div>
+
+            <!-- Helpful Integration Notice -->
+            <div style="margin-top: 18px; padding: 12px 16px; background: rgba(76, 175, 125, 0.08); border: 1px solid rgba(76, 175, 125, 0.25); border-radius: 10px; display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 18px;">ℹ️</span>
+              <span style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.5;">
+                <b>Merged Mobile Ecosystem:</b> Field collector functionality is now integrated directly inside the main Leaf Ledger Pro mobile application.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           TAB 8: ABOUT US
+           ==================================================================== -->
+      <div id="setTab-about" class="settings-tab-panel">
+        
+        <!-- Hero Identity Banner Card -->
+        <div class="settings-card" style="margin-bottom: 24px;">
+          <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+            <img src="assets/logo_new.png" style="width: 70px; height: 70px; object-fit: contain;" alt="Leaf Ledger Pro" onerror="this.src='assets/logo new.png'">
+            <div style="flex: 1; min-width: 260px;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                <span style="font-size: 10px; font-weight: 800; background: var(--accent-emerald); color: #fff; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.6px;">ENTERPRISE EDITION</span>
+                <span style="font-size: 10px; font-weight: 700; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 2px 8px; border-radius: 4px;">COMMERCIAL RELEASE</span>
+                <span style="font-size: 10px; font-weight: 700; background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 8px; border-radius: 4px;">ASSAM HERITAGE 🇮🇳</span>
+              </div>
+              <h2 style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px; letter-spacing: -0.4px;">
+                Leaf Ledger Pro
+              </h2>
+              <p style="font-size: 13.5px; color: var(--text-secondary); margin: 0; line-height: 1.5;">
+                The authoritative commercial operating system for tea planters, bought-leaf agents, and modern collection centers.
+              </p>
+            </div>
+          </div>
+
+          <div class="settings-card-divider" style="margin: 18px 0 16px;"></div>
+
+          <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.8; margin: 0;">
+            <b>Leaf Ledger Pro</b> is a dedicated agri-business software enterprise established in Assam, India—the heartland of world tea production. Our organization is committed to transforming how tea leaves are collected, accounted for, and settled across the tea value chain. We bridge traditional tea estate practices with modern commercial automation, empowering bought-leaf agents, estate managers, and smallholder growers with total transparency, zero calculation disputes, and reliable financial management.
+          </p>
+        </div>
+
+        <!-- Company Profile & Vision (2 Columns) -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-left: 4px solid var(--accent-emerald); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 22px;">🏛️</span>
+              <span style="font-size: 14px; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.6px;">Company Mission</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.7;">
+              To empower every tea collection center and smallholder planter across India with transparent, dispute-free commercial accounting. We aim to protect grower livelihoods while equipping agents and tea factories with organized, audit-ready operational tools.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-left: 4px solid #38bdf8; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 22px;">🌱</span>
+              <span style="font-size: 14px; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.6px;">Our Industry Commitment</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.7;">
+              Built specifically for the realities of tea country. We ensure software simplicity, rapid weighing scale throughput, multi-season debt continuity, and dedicated local customer assistance so businesses thrive year after year.
+            </p>
+          </div>
+        </div>
+
+        <!-- Section Header: Operational Working Workflow -->
+        <div style="margin: 0 0 14px 4px;">
+          <h3 style="font-size: 14px; font-weight: 800; color: var(--accent-emerald); text-transform: uppercase; letter-spacing: 0.8px; margin: 0 0 4px;">
+            🔄 HOW LEAF LEDGER PRO WORKS
+          </h3>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 0;">The complete commercial operational lifecycle from garden collection to factory payout</p>
+        </div>
+
+        <!-- 4-Stage Operational Workflow Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(76, 175, 125, 0.12); border: 1px solid rgba(76, 175, 125, 0.25); display: flex; align-items: center; justify-content: center; padding: 6px;">
+                <img src="assets/sidebar/collections.png" style="width: 100%; height: 100%; object-fit: contain;" alt="Intake">
+              </div>
+              <div>
+                <span style="font-size: 10px; font-weight: 800; color: var(--accent-emerald); letter-spacing: 0.5px;">STAGE 01</span>
+                <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">Green Leaf Intake</div>
+              </div>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
+              Growers deliver freshly plucked tea leaf bags to the collection shed. The operator enters gross weight; bag tare and moisture deductions are computed instantly, and a printed slip or WhatsApp receipt is issued immediately.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.25); display: flex; align-items: center; justify-content: center; padding: 6px;">
+                <img src="assets/sidebar/advances.png" style="width: 100%; height: 100%; object-fit: contain;" alt="Advances">
+              </div>
+              <div>
+                <span style="font-size: 10px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px;">STAGE 02</span>
+                <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">Planter Advances</div>
+              </div>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
+              Cash advances, fertilizer distributions, manure loans, and emergency borrowings given to growers are recorded in real-time. Running balances update automatically, preventing unrecorded or disputed loans.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.25); display: flex; align-items: center; justify-content: center; padding: 6px;">
+                <img src="assets/sidebar/factory.png" style="width: 100%; height: 100%; object-fit: contain;" alt="Factory">
+              </div>
+              <div>
+                <span style="font-size: 10px; font-weight: 800; color: #f59e0b; letter-spacing: 0.5px;">STAGE 03</span>
+                <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">Factory Dispatch</div>
+              </div>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
+              Daily collected leaf is aggregated into transport trucks and dispatched to bought-leaf tea factories with official challans. Factory weighbridge weights are cross-verified against garden intake to audit transit loss.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.25); display: flex; align-items: center; justify-content: center; padding: 6px;">
+                <img src="assets/sidebar/monthly.png" style="width: 100%; height: 100%; object-fit: contain;" alt="Settlement">
+              </div>
+              <div>
+                <span style="font-size: 10px; font-weight: 800; color: #c084fc; letter-spacing: 0.5px;">STAGE 04</span>
+                <div style="font-size: 14px; font-weight: 800; color: var(--text-primary);">Monthly Settlement</div>
+              </div>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.6;">
+              At the close of each plucking month, the system calculates gross earnings based on applicable leaf rates, deducts amortized advances, and generates clear planter passbooks for seamless bank payments.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Section Header: Licensing & Regulatory Terms -->
+        <div style="margin: 0 0 14px 4px;">
+          <h3 style="font-size: 14px; font-weight: 800; color: var(--accent-emerald); text-transform: uppercase; letter-spacing: 0.8px; margin: 0 0 4px;">
+            📜 COMMERCIAL LICENSING & REGULATORY DETAILS
+          </h3>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Legal terms, user rights, data sovereignty, and industry compliance</p>
+        </div>
+
+        <!-- Licensing Cards Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 20px;">🔑</span>
+              <span style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Commercial License Model</span>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              Licensed under an authorized Enterprise Commercial End-User Agreement. Each installation is authenticated via a verified commercial activation key tied to your registered business profile.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 20px;">🛡️</span>
+              <span style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">100% Client Data Sovereignty</span>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              Your business data belongs exclusively to you. All grower records, weighment numbers, cash advances, and factory billing files remain completely private, confidential, and isolated to your enterprise.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 20px;">📋</span>
+              <span style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Tea Board Compliance Norms</span>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              Calculations and billing structures conform to Indian Tea Board bought-leaf procurement recommendations, including accurate tare handling, moisture reduction reporting, and transparent passbook disclosures.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 20px;">⚖️</span>
+              <span style="font-size: 13.5px; font-weight: 800; color: var(--text-primary);">Intellectual Property & Rights</span>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-muted); margin: 0; line-height: 1.6;">
+              <b>Leaf Ledger Pro</b> and its associated algorithms, designs, and interfaces are proprietary commercial intellectual property. Unauthorized reproduction, modification, or reverse engineering is strictly prohibited.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Founder, Support & Contact Banner -->
+        <div class="settings-card" style="border: 1px solid rgba(76, 175, 125, 0.3); background: linear-gradient(135deg, var(--bg-card) 0%, rgba(76, 175, 125, 0.05) 100%); display: flex; flex-direction: column; gap: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <span style="font-size: 11px; font-weight: 800; color: var(--accent-emerald); text-transform: uppercase; letter-spacing: 0.6px;">OFFICIAL ENTERPRISE SUPPORT DESK</span>
+                <span style="font-size: 10px; font-weight: 700; background: rgba(76, 175, 125, 0.15); color: var(--accent-emerald); padding: 1px 6px; border-radius: 4px;">COMMERCIAL HOTLINE</span>
+              </div>
+              <div style="font-size: 18px; font-weight: 800; color: var(--text-primary);">Customer Success & Operations Desk</div>
+              <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                Direct assistance for licensed tea bought-leaf agents, estate managers, weighment staff, and accountants.
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <a href="tel:+918638149032" class="btn btn-secondary" style="height: 40px; padding: 0 16px; font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; border-radius: 8px;">
+                <span>📞</span>
+                <span>+91 8638149032</span>
+              </a>
+              <button class="btn btn-secondary" style="height: 40px; padding: 0 16px; font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; border-radius: 8px;" onclick="navigator.clipboard.writeText('+918638149032'); app.showToast('Support hotline copied to clipboard!', 'success');">
+                <span>📋</span>
+                <span>Copy Hotline</span>
+              </button>
+              <button class="btn btn-primary" style="height: 40px; padding: 0 18px; font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; background: #25d366; border-color: #25d366; color: #fff; border-radius: 8px;" onclick="app.openExternalLink('https://wa.me/918638149032?text=Hello%20Leaf%20Ledger%20Pro%20Support')">
+                <span>💬</span>
+                <span>Chat on WhatsApp</span>
+              </button>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid var(--border-subtle); padding-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+              <b>Leaf Ledger Pro Commercial Enterprise</b> &bull; Developed with pride for the Tea Plantation Industry of Assam & North-East India 🇮🇳.<br>
+              Founder: <b>Netra Prasad Sarma</b> &bull; Official Email: <a href="mailto:support@leafledgerpro.com" style="color: var(--accent-emerald); text-decoration: none;">support@leafledgerpro.com</a>
+            </div>
+            <div style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); text-align: right;">
+              &copy; 2026 Leaf Ledger Pro. All rights reserved.<br>
+              <span style="font-size: 10.5px; color: var(--text-muted);">Confidential & Commercial Proprietary Platform</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+</section>
+
+<!-- Modal: Edit Staff Member & Permissions -->
+<div id="modalEditStaff" class="modal-overlay">
+  <div class="modal-box" style="width: 520px; max-width: 95vw;">
+    <div class="modal-header">
+      <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+        <span>✏️</span>
+        <span>Edit Staff Member & Permissions</span>
+      </h3>
+      <button class="modal-close-btn" onclick="app.closeModal('modalEditStaff')">✕</button>
+    </div>
+    <div class="modal-body" style="padding: 20px 24px;">
+      <form id="editStaffForm" onsubmit="return false;">
+        <input type="hidden" id="editStaffId">
+        
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label class="form-label" style="font-size: 11px; font-weight: 700;">Full Name <span class="req">*</span></label>
+          <input type="text" id="editStaffName" class="form-input" placeholder="e.g. Ajay Sharma" required>
+        </div>
+
+        <div class="license-specs-grid" style="margin-bottom: 16px;">
+          <div class="form-group">
+            <label class="form-label" style="font-size: 11px; font-weight: 700;">Mobile Number (10 digits) <span class="req">*</span></label>
+            <input type="tel" id="editStaffMobile" class="form-input mono" placeholder="10-digit mobile" maxlength="10" required oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-size: 11px; font-weight: 700;">Reset 6-Digit MPIN</label>
+            <input type="password" id="editStaffMpin" class="form-input mono" placeholder="Leave blank to keep" maxlength="6" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)">
+          </div>
+        </div>
+
+        <!-- Specific Permissions Box -->
+        <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;">
+          <div style="font-size: 11px; font-weight: 800; color: var(--accent-green); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
+            🛡️ COLLECTOR APP PERMISSIONS
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12.5px; color: var(--text-primary);">
+              <input type="checkbox" id="editStaffActive" style="accent-color: var(--accent-emerald); width: 16px; height: 16px;">
+              <span><b>Allow Mobile App Login</b> <span style="font-size: 11px; color: var(--text-muted);">(Active Account)</span></span>
+            </label>
+
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12.5px; color: var(--text-primary);">
+              <input type="checkbox" id="editStaffAllowCollector" style="accent-color: var(--accent-emerald); width: 16px; height: 16px;">
+              <span><b>Collection Permission</b> <span style="font-size: 11px; color: var(--text-muted);">(Green Leaf Intake & Weighment access)</span></span>
+            </label>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 10px;">
+      <button class="btn btn-secondary" onclick="app.closeModal('modalEditStaff')">Cancel</button>
+      <button class="btn btn-primary" onclick="settingsModule.saveStaffEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+

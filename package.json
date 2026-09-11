@@ -1,0 +1,26 @@
+{
+  "name": "leaf-ledger-pro-desktop",
+  "version": "2.0.7",
+  "description": "Leaf Ledger Pro - Executive Enterprise Desktop Suite",
+  "main": "main.js",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "generate:secrets": "node scripts/generate_secrets.js",
+    "generate:cert": "python3 scripts/generate_cert.py",
+    "build:secure": "node scripts/build_protected.js win",
+    "package:win": "electron-builder --win --x64",
+    "package:mac": "electron-builder --mac",
+    "package:linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1"
+  },
+  "devDependencies": {
+    "@electron/fuses": "^2.1.3",
+    "electron": "^35.0.0",
+    "electron-builder": "^25.1.8",
+    "javascript-obfuscator": "^5.7.0"
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+release/
+*.sqlite*
+*.log
+.DS_Store
+*.pfx
+*.cer
+*.enc
+.build_protected_staging/
+
+

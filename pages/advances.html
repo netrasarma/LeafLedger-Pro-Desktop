@@ -1,0 +1,171 @@
+<section id="view-advances" class="view-page active" style="padding: 24px 32px;">
+  
+  <!-- Header Row -->
+  <header style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0;">Advance Management</h1>
+      <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Manage and track garden owner advance disbursements</div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <!-- ＋ New Entry Primary Action Button -->
+      <button type="button" id="advNewEntryBtn" class="btn btn-primary btn-sm" style="height: 34px; border-radius: 8px; font-weight: 700; font-size: 12.5px; padding: 0 14px; display: flex; align-items: center; gap: 6px;" onclick="advancesModule.openNewEntryModal()">
+        <span>＋</span>
+        <span>New Entry</span>
+      </button>
+
+      <!-- Search Box -->
+      <div style="display: flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; height: 34px; padding: 0 10px; width: 220px;">
+        <span style="font-size: 13px; color: var(--text-muted); margin-right: 8px;">🔍</span>
+        <input type="text" id="advancesSearchInput" style="background: transparent; border: none; color: var(--text-primary); font-size: 12.5px; outline: none; width: 100%;" placeholder="Search Owner..." oninput="advancesModule.filterMasterList()">
+      </div>
+    </div>
+  </header>
+
+  <!-- Statistics Row: Total Advance, Pending, Cleared -->
+  <div class="advances-kpi-grid">
+    
+    <div class="stat-card" style="background: var(--bg-card); border-radius: 16px; padding: 18px 22px; border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 16px;">
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(76, 175, 80, 0.15); display: flex; align-items: center; justify-content: center; font-size: 20px;">💸</div>
+      <div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Total Advance</div>
+        <div id="advStatTotal" style="font-size: 22px; font-weight: 800; color: #4caf50;">Rs. 0</div>
+      </div>
+    </div>
+
+    <div class="stat-card" style="background: var(--bg-card); border-radius: 16px; padding: 18px 22px; border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 16px;">
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); display: flex; align-items: center; justify-content: center; font-size: 20px;">⏳</div>
+      <div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Pending</div>
+        <div id="advStatPending" style="font-size: 22px; font-weight: 800; color: #ff9800;">Rs. 0</div>
+      </div>
+    </div>
+
+    <div class="stat-card" style="background: var(--bg-card); border-radius: 16px; padding: 18px 22px; border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 16px;">
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0, 150, 136, 0.15); display: flex; align-items: center; justify-content: center; font-size: 20px;">✅</div>
+      <div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Cleared</div>
+        <div id="advStatCleared" style="font-size: 22px; font-weight: 800; color: #009688;">Rs. 0</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Full-Width Ledger Section -->
+  <div style="background: var(--bg-card); border-radius: 16px; padding: 22px 24px; border: 1px solid var(--border-subtle); min-height: 460px;">
+
+    <!-- Master View: Garden Owners Ledger -->
+    <div id="advMasterView">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <h2 style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 0;">Garden Owners Ledger</h2>
+        </div>
+
+        <!-- Filter Segmented Tabs -->
+        <div style="display: flex; align-items: center; background: var(--bg-input); border-radius: 8px; padding: 3px; gap: 4px;">
+          <button type="button" class="btn btn-sm adv-filter-tab active" data-filter="All" onclick="advancesModule.setFilter('All', this)">All</button>
+          <button type="button" class="btn btn-sm adv-filter-tab" data-filter="Pending" onclick="advancesModule.setFilter('Pending', this)">Pending</button>
+          <button type="button" class="btn btn-sm adv-filter-tab" data-filter="Cleared" onclick="advancesModule.setFilter('Cleared', this)">Cleared</button>
+        </div>
+      </div>
+
+      <div style="height: 1px; background: var(--border-subtle); margin-bottom: 14px;"></div>
+
+      <div id="advMasterScrollList" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 500px;">
+        <div style="text-align: center; color: var(--text-muted); padding: 50px 0;">
+          ⏳ Analyzing Ledgers...
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail View: Specific Owner Ledger History -->
+    <div id="advDetailView" style="display: none;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="advancesModule.showMasterView()">← Back</button>
+          <h2 id="advDetailOwnerTitle" style="font-size: 17px; font-weight: 800; color: var(--accent-emerald); margin: 0;">Ledger: Grower</h2>
+        </div>
+        <div id="advDetailOutstandingBadge" style="font-size: 14px; font-weight: 800; color: #ff9800;">
+          Outstanding: Rs. 0.00
+        </div>
+      </div>
+
+      <div style="height: 1px; background: var(--border-subtle); margin-bottom: 12px;"></div>
+
+      <!-- Table of transactions -->
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount (Rs)</th>
+            <th>Mode / Notes</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="advDetailTableBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Modal: Record New Advance -->
+  <div id="modalAdvanceEntry" class="modal-overlay">
+    <div class="modal-box" style="width: 460px;">
+      <div class="modal-header">
+        <h3 id="advModalTitle" class="modal-title">Record New Advance</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('modalAdvanceEntry')">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 16px;">
+
+        <!-- Garden Owner -->
+        <div class="form-group">
+          <label class="form-label">Garden Owner</label>
+          <select id="advOwnerSelect" class="form-select">
+            <option value="">-- Select Garden Owner --</option>
+          </select>
+        </div>
+
+        <!-- Amount -->
+        <div class="form-group">
+          <label class="form-label">Amount</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <span style="position: absolute; left: 12px; font-size: 16px; font-weight: 800; color: var(--text-muted);">₹</span>
+            <input type="number" step="1" id="advAmountInput" class="form-input mono" placeholder="Enter Amount" style="padding-left: 32px; font-size: 18px; font-weight: 700;" required>
+          </div>
+        </div>
+
+        <!-- Date -->
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" id="advDateInput" class="form-input mono">
+        </div>
+
+        <!-- Payment Mode -->
+        <div class="form-group">
+          <label class="form-label">Payment Mode</label>
+          <select id="advModeSelect" class="form-select">
+            <option value="Cash">Cash</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="UPI">UPI</option>
+            <option value="Cheque">Cheque</option>
+          </select>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <input type="text" id="advNotesInput" class="form-input" placeholder="Add optional note...">
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modalAdvanceEntry')">Cancel</button>
+        <button type="button" id="advSaveBtn" class="btn btn-primary" style="min-width: 160px; justify-content: center;" onclick="advancesModule.saveAdvance()">
+          💰 &nbsp;Record Advance
+        </button>
+      </div>
+    </div>
+  </div>
+
+</section>

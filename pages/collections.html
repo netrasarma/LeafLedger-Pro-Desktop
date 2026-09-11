@@ -1,0 +1,320 @@
+<section id="view-collections" class="view-page active" style="padding: 24px 32px;">
+  
+  <!-- Header Row -->
+  <header style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0;">Daily Leaf Collection</h1>
+      <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Record, inspect, and reconcile daily garden collections</div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <!-- ＋ New Entry Primary Action Button -->
+      <button type="button" class="btn btn-primary btn-sm" style="height: 34px; border-radius: 8px; font-weight: 700; font-size: 12.5px; padding: 0 14px; display: flex; align-items: center; gap: 6px;" onclick="collectionsModule.openNewEntryModal()">
+        <span>＋</span>
+        <span>New Entry</span>
+      </button>
+
+      <!-- Monthly Rate Manager Button -->
+      <button type="button" class="btn btn-secondary btn-sm" style="background: var(--bg-card); color: var(--text-primary); border-color: var(--border-medium); font-weight: 700; height: 34px; border-radius: 8px; font-size: 12.5px; padding: 0 12px;" onclick="app.navTo('rates')">
+        ₹ Rates
+      </button>
+
+      <!-- Date Stepper Box -->
+      <div style="display: flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; height: 34px; padding: 0 4px;">
+        <button type="button" class="btn btn-secondary btn-sm" style="border: none; background: transparent; padding: 2px 8px; font-size: 12px;" onclick="collectionsModule.prevDay()">◀</button>
+        <input type="date" id="collDateInput" style="background: transparent; border: none; color: var(--accent-emerald); font-weight: 700; font-size: 12.5px; font-family: var(--font-mono); outline: none; padding: 0 4px;" onchange="collectionsModule.loadDayList()">
+        <button type="button" class="btn btn-secondary btn-sm" style="border: none; background: transparent; padding: 2px 8px; font-size: 12px;" onclick="collectionsModule.nextDay()">▶</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Statistics 4-Card Row -->
+  <div class="collections-kpi-grid">
+    
+    <div class="stat-card" style="background: var(--bg-card); border-radius: 16px; padding: 18px 20px; border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 16px;">
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(111, 207, 151, 0.15); display: flex; align-items: center; justify-content: center; font-size: 20px;">⚖️</div>
+      <div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Gross Weight</div>
+        <div id="collStatGross" style="font-size: 22px; font-weight: 800; color: var(--accent-emerald-light);">0.00 kg</div>
+      </div>
+    </div>
+
+    <div class="stat-card" style="background: var(--bg-card); border-radius: 16px; padding: 18px 20px; border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 16px;">
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(76, 175, 80, 0.15); display: flex; align-items: center; justify-content: center; font-size: 20px;">🍃</div>
+      <div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Net Weight</div>
+        <div id="collStatNet" style="font-size: 22px; font-weight: 800; color: #4caf50;">0.00 kg</div>
+      </div>
+    </div>
+
+    <div class="stat-card" style="background: var(--bg-card); border-radius: 16px; padding: 18px 20px; border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 16px;">
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); display: flex; align-items: center; justify-content: center; font-size: 20px;">💰</div>
+      <div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Total Payout</div>
+        <div id="collStatPayout" style="font-size: 22px; font-weight: 800; color: #ff9800;">Rs. 0</div>
+      </div>
+    </div>
+
+    <div class="stat-card" style="background: var(--bg-card); border-radius: 16px; padding: 18px 20px; border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 16px;">
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0, 150, 136, 0.15); display: flex; align-items: center; justify-content: center; font-size: 20px;">🏭</div>
+      <div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Factory Weight</div>
+        <div id="collStatFactory" style="font-size: 22px; font-weight: 800; color: #009688;">0.00 kg</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Full-Width Collections Section -->
+  <div style="background: var(--bg-card); border-radius: 16px; padding: 22px 24px; border: 1px solid var(--border-subtle); display: flex; flex-direction: column; min-height: 520px;">
+    
+    <!-- Table Toolbar -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <h2 style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 0;">Today's Collections</h2>
+        <span id="collCountBadge" style="background: var(--bg-input); border: 1px solid var(--border-subtle); font-size: 11px; font-weight: 700; color: var(--accent-emerald-light); padding: 3px 10px; border-radius: 999px;">0 entries</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <!-- Search Owner -->
+        <div style="position: relative; display: flex; align-items: center;">
+          <span style="position: absolute; left: 10px; font-size: 12px; color: var(--text-muted);">🔍</span>
+          <input type="text" id="collSearchInput" class="form-input" placeholder="Search owner..." style="padding-left: 28px; width: 190px; height: 36px; font-size: 12px; border-radius: 8px;" oninput="collectionsModule.applyFilter()">
+        </div>
+
+        <!-- Collector Filter -->
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Collector:</span>
+          <select id="collCollectorFilter" class="form-select" style="width: 150px; height: 36px; padding: 4px 10px; font-size: 12px; border-radius: 8px;" onchange="collectionsModule.applyFilter()">
+            <option value="ALL">All Collectors</option>
+          </select>
+        </div>
+
+        <!-- Full View Button -->
+        <button type="button" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 700; height: 36px; border-radius: 8px; padding: 0 12px;" onclick="collectionsModule.openFullScreenView()">
+          ⛶ Full Log
+        </button>
+
+        <!-- Add Entry Button -->
+        <button type="button" class="btn btn-primary btn-sm" style="font-size: 12px; font-weight: 700; height: 36px; border-radius: 8px; padding: 0 14px;" onclick="collectionsModule.openNewEntryModal()">
+          ＋ Add Entry
+        </button>
+      </div>
+    </div>
+
+    <!-- Full Width Table Container -->
+    <div style="flex: 1; overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: 12px;">
+      <table class="data-table" style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr>
+            <th style="width: 85px;">Time</th>
+            <th>Garden Owner</th>
+            <th style="text-align: right;">Gross (kg)</th>
+            <th style="text-align: right;">Ded %</th>
+            <th style="text-align: right;">Net (kg)</th>
+            <th style="text-align: right;">Rate (₹)</th>
+            <th style="text-align: right;">Total Amount</th>
+            <th>Collector</th>
+            <th style="text-align: center; width: 140px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="collTableBody">
+          <tr>
+            <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 50px 0;">
+              No collections recorded for this date.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Modal 1: Add/Edit Collection Entry -->
+  <div id="modalCollectionEntry" class="modal-overlay">
+    <div class="modal-box" style="width: 540px; max-width: 95vw;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="collModalTitle">Add Collection Entry</h3>
+        <button type="button" class="modal-close-btn" onclick="collectionsModule.closeEntryModal()">✕</button>
+      </div>
+      
+      <div class="modal-body" style="padding: 20px 24px;">
+        <form id="collEntryForm" onsubmit="event.preventDefault(); collectionsModule.saveEntry(); return false;" style="display: flex; flex-direction: column; gap: 14px;">
+          
+          <!-- Date & Garden Owner 2-Col Split -->
+          <div style="display: grid; grid-template-columns: 155px minmax(0, 1fr); gap: 12px;">
+            <div class="form-group" style="min-width: 0;">
+              <label class="form-label">Date <span class="req">*</span></label>
+              <input type="date" id="collModalDateInput" class="form-input" style="height: 38px; font-weight: 700; font-family: var(--font-mono); font-size: 13px;">
+            </div>
+
+            <div class="form-group" style="min-width: 0;">
+              <label class="form-label">Garden Owner <span class="req">*</span></label>
+              <select id="collOwnerSelect" class="form-select" style="height: 38px;" onchange="collectionsModule.onOwnerChange()">
+                <option value="">-- Select Garden Owner --</option>
+              </select>
+              <div id="collOwnerInfoLabel" style="font-size: 11px; color: var(--accent-emerald); margin-top: 4px; min-height: 16px;"></div>
+            </div>
+          </div>
+
+          <!-- Gross Weight -->
+          <div class="form-group">
+            <label class="form-label">Gross Weight (kg) <span class="req">*</span></label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <span style="position: absolute; left: 12px; font-size: 15px; color: var(--accent-emerald-light);">⚖️</span>
+              <input type="number" step="0.01" id="collGrossInput" class="form-input mono" placeholder="0.00" style="padding-left: 38px; font-size: 16px;" oninput="collectionsModule.updateCalc()">
+            </div>
+          </div>
+
+          <!-- 2-Col Split: Bag Deduc % and Rate per kg -->
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px;">
+            <div class="form-group" style="min-width: 0;">
+              <label class="form-label">Bag Deduc (%)</label>
+              <div style="position: relative; display: flex; align-items: center;">
+                <span style="position: absolute; left: 10px; font-size: 14px; color: var(--accent-amber);">👜</span>
+                <input type="number" step="0.1" id="collDeducInput" class="form-input mono" value="0" style="padding-left: 32px;" oninput="collectionsModule.updateCalc()">
+              </div>
+              <div id="collCalcNetLabel" style="font-size: 12px; font-weight: 700; color: #ef4444; margin-top: 4px;">Net: 0 kg</div>
+            </div>
+
+            <div class="form-group" style="min-width: 0;">
+              <label class="form-label">Rate per kg (₹)</label>
+              <div style="position: relative; display: flex; align-items: center;">
+                <span style="position: absolute; left: 10px; font-size: 14px; color: var(--accent-amber);">💰</span>
+                <input type="number" step="0.01" id="collRateInput" class="form-input mono" placeholder="0.00" style="padding-left: 32px;" oninput="collectionsModule.updateCalc()">
+              </div>
+              <div id="collCalcAmountLabel" style="font-size: 12px; font-weight: 700; color: #16a34a; margin-top: 4px;">Total: Rs. 0</div>
+            </div>
+          </div>
+
+          <!-- Summary Badge -->
+          <div style="background: var(--bg-input); border-radius: 10px; padding: 10px 14px; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-size: 12px; color: var(--text-secondary);">Calculated Result:</div>
+            <div id="collModalSummaryBadge" style="font-size: 15px; font-weight: 800; color: var(--accent-emerald-light); font-family: var(--font-mono);">0 kg • ₹0</div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group">
+            <label class="form-label">Notes (Optional)</label>
+            <input type="text" id="collNotesInput" class="form-input" placeholder="e.g. Morning plucking, 2 bags...">
+          </div>
+
+          <!-- Collected By -->
+          <div class="form-group">
+            <label class="form-label">Collected By</label>
+            <select id="collStaffSelect" class="form-select">
+              <option value="Agent-Computer">Agent-Computer</option>
+            </select>
+          </div>
+
+          <!-- Owner Recent History -->
+          <div id="collOwnerHistoryContainer" style="margin-top: 6px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">Recent History for Selected Owner</div>
+            <div id="collOwnerHistoryBody" style="font-size: 11px; color: var(--text-muted); max-height: 100px; overflow-y: auto;">
+              Select an owner to view recent collections.
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="modal-footer" style="display: flex; align-items: center; justify-content: space-between;">
+        <button type="button" class="btn btn-secondary" onclick="collectionsModule.closeEntryModal()">Cancel</button>
+        
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-secondary" style="font-size: 12px;" onclick="collectionsModule.clearForm()">Clear</button>
+          <button type="button" id="collSaveBtn" class="btn btn-primary" style="height: 42px; border-radius: 10px; font-weight: 700; padding: 0 20px;" onclick="collectionsModule.saveEntry()">
+            💾 Save Entry
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Daily Full Screen Log -->
+  <div id="modalFullScreenLog" class="modal-overlay">
+    <div class="modal-box" style="width: 900px; max-width: 95vw;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="fullLogModalTitle">Daily Collections Log</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('modalFullScreenLog')">✕</button>
+      </div>
+      <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
+        <table class="data-table" id="fullLogTable">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Owner Name</th>
+              <th>Gross (kg)</th>
+              <th>Ded %</th>
+              <th>Net (kg)</th>
+              <th>Rate (₹)</th>
+              <th>Amount (₹)</th>
+              <th>Collector</th>
+              <th>Receipt</th>
+            </tr>
+          </thead>
+          <tbody id="fullLogTableBody"></tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modalFullScreenLog')">Close</button>
+      </div>
+    </div>
+  </div>
+  <!-- Modal: Print Preview -->
+  <div id="modalPrintPreview" class="modal-overlay">
+    <div class="modal-box" style="width: 820px; max-width: 96vw; max-height: 92vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <h3 class="modal-title">🖨️ Print Preview</h3>
+          <!-- Paper Format Selector -->
+          <div style="display: flex; align-items: center; background: var(--bg-input); border-radius: 8px; padding: 3px; gap: 3px;" id="printFormatTabs">
+            <button type="button" class="btn btn-sm print-fmt-btn active" data-fmt="thermal58"
+              onclick="collectionsModule.setPrintFormat('thermal58', this)"
+              style="font-size: 11px; font-weight: 700; border-radius: 6px;">
+              🧾 58mm
+            </button>
+            <button type="button" class="btn btn-sm print-fmt-btn" data-fmt="thermal80"
+              onclick="collectionsModule.setPrintFormat('thermal80', this)"
+              style="font-size: 11px; font-weight: 700; border-radius: 6px;">
+              🧾 80mm
+            </button>
+            <button type="button" class="btn btn-sm print-fmt-btn" data-fmt="a5"
+              onclick="collectionsModule.setPrintFormat('a5', this)"
+              style="font-size: 11px; font-weight: 700; border-radius: 6px;">
+              📄 A5
+            </button>
+            <button type="button" class="btn btn-sm print-fmt-btn" data-fmt="a4"
+              onclick="collectionsModule.setPrintFormat('a4', this)"
+              style="font-size: 11px; font-weight: 700; border-radius: 6px;">
+              📋 A4
+            </button>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="app.closeModal('modalPrintPreview')">✕</button>
+      </div>
+
+      <!-- Preview Pane -->
+      <div style="flex: 1; overflow: auto; background: #cbd5e1; padding: 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 0;">
+        <iframe id="printPreviewFrame"
+          style="border: none; box-shadow: 0 8px 32px rgba(0,0,0,0.3); background: #fff; border-radius: 4px; transition: all 0.3s ease;"
+          sandbox="allow-same-origin">
+        </iframe>
+      </div>
+
+      <div class="modal-footer" style="flex-shrink: 0; justify-content: space-between;">
+        <div style="font-size: 11px; color: var(--text-muted);" id="printFormatHint">
+          58mm Thermal — optimised for POS receipt printers
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-secondary" onclick="app.closeModal('modalPrintPreview')">Cancel</button>
+          <button type="button" id="printPreviewConfirmBtn" class="btn btn-primary" style="min-width: 130px; justify-content: center; font-size: 14px; font-weight: 700;" onclick="collectionsModule.confirmPrint()">
+            🖨️ &nbsp;Print Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>
+

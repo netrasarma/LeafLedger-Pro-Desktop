@@ -1,0 +1,120 @@
+<section id="view-reports" class="view-page active" style="padding: 24px 32px;">
+  
+  <!-- Header -->
+  <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h1 style="font-size: 26px; font-weight: 800; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 10px;">
+        <span>📈</span> Executive Analytics & Intelligence
+      </h1>
+      <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-secondary);">
+        Commercial performance, green leaf transit audits, spread economics, and grower intelligence
+      </p>
+    </div>
+
+    <!-- Actions: Refresh, Export PDF, Export CSV -->
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button type="button" class="btn btn-primary btn-sm" style="height: 38px; font-weight: 700; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px;" onclick="reportsModule.generateReport()">
+        🔄 Refresh
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm" style="height: 38px; font-weight: 700; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px;" onclick="reportsModule.exportCSV()">
+        📥 Export CSV
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm" style="height: 38px; font-weight: 700; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px;" onclick="reportsModule.exportPDF()">
+        📄 Print / PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- Tab Selector Bar -->
+  <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px;">
+    <button type="button" id="repTabPulse" class="btn btn-primary btn-sm" style="font-weight: 700; height: 38px; border-radius: 9px; padding: 0 16px;" onclick="reportsModule.switchTab('pulse')">
+      📊 Business Pulse & Spread
+    </button>
+    <button type="button" id="repTabRecon" class="btn btn-secondary btn-sm" style="font-weight: 700; height: 38px; border-radius: 9px; padding: 0 16px;" onclick="reportsModule.switchTab('comparison')">
+      ⚖️ Transit Shortage Audit
+    </button>
+    <button type="button" id="repTabFinance" class="btn btn-secondary btn-sm" style="font-weight: 700; height: 38px; border-radius: 9px; padding: 0 16px;" onclick="reportsModule.switchTab('finance')">
+      💰 P&L Statement
+    </button>
+    <button type="button" id="repTabGrower" class="btn btn-secondary btn-sm" style="font-weight: 700; height: 38px; border-radius: 9px; padding: 0 16px;" onclick="reportsModule.switchTab('grower')">
+      👥 Grower Intelligence & Risk
+    </button>
+    <button type="button" id="repTabFactory" class="btn btn-secondary btn-sm" style="font-weight: 700; height: 38px; border-radius: 9px; padding: 0 16px;" onclick="reportsModule.switchTab('factory')">
+      🏭 Factory Scorecard
+    </button>
+    <button type="button" id="repTabExpenses" class="btn btn-secondary btn-sm" style="font-weight: 700; height: 38px; border-radius: 9px; padding: 0 16px;" onclick="reportsModule.switchTab('expenses')">
+      🧾 Operational Expenses
+    </button>
+  </div>
+
+  <!-- Filter & Period Bar -->
+  <div style="background: var(--bg-card); border-radius: 12px; padding: 12px 18px; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
+    
+    <!-- Quick Period Presets + Selectors -->
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      
+      <!-- Preset pills -->
+      <div style="display: flex; align-items: center; background: var(--bg-input); padding: 3px; border-radius: 8px; border: 1px solid var(--border-subtle); gap: 4px;">
+        <button type="button" id="repQuickCurrentMonth" class="btn btn-secondary btn-sm" style="height: 28px; padding: 0 10px; font-size: 11px; font-weight: 700; border-radius: 6px;" onclick="reportsModule.setPeriodPreset('current')">
+          This Month
+        </button>
+        <button type="button" id="repQuickLastMonth" class="btn btn-secondary btn-sm" style="height: 28px; padding: 0 10px; font-size: 11px; font-weight: 700; border-radius: 6px;" onclick="reportsModule.setPeriodPreset('last')">
+          Last Month
+        </button>
+        <button type="button" id="repQuickFullSeason" class="btn btn-secondary btn-sm" style="height: 28px; padding: 0 10px; font-size: 11px; font-weight: 700; border-radius: 6px;" onclick="reportsModule.setPeriodPreset('season')">
+          Full Season (YTD)
+        </button>
+      </div>
+
+      <!-- Month/Year Container -->
+      <div id="repMonthContainer" style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Period:</span>
+        <select id="repMonthSelect" class="form-select" style="width: 130px; height: 34px; font-size: 12px;" onchange="reportsModule.onFilterChange()">
+          <option value="ALL">All Months</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <input type="number" id="repYearInput" class="form-input mono year-input" style="width: 90px; min-width: 86px; height: 34px; font-size: 13px; text-align: center;" value="2026" onchange="reportsModule.onFilterChange()">
+      </div>
+
+      <!-- Owner Filter (Shown for grower analysis) -->
+      <div id="repOwnerContainer" style="display: none; align-items: center; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Grower:</span>
+        <select id="repOwnerSelect" class="form-select" style="width: 180px; height: 34px; font-size: 12px;" onchange="reportsModule.onFilterChange()">
+          <option value="ALL">All Growers</option>
+        </select>
+      </div>
+
+      <!-- Factory Filter (Shown for comparison/factory scorecard) -->
+      <div id="repFactoryContainer" style="display: none; align-items: center; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Factory:</span>
+        <select id="repFactorySelect" class="form-select" style="width: 180px; height: 34px; font-size: 12px;" onchange="reportsModule.onFilterChange()">
+          <option value="ALL">All Factories</option>
+        </select>
+      </div>
+
+    </div>
+
+    <!-- Period Status Text -->
+    <div id="repPeriodStatusText" style="font-size: 12px; font-weight: 600; color: var(--accent-emerald);"></div>
+
+  </div>
+
+  <!-- Report Content Workspace -->
+  <div id="repContentArea" style="min-height: 480px;">
+    <div style="text-align: center; color: var(--text-muted); padding: 50px 0;">
+      Loading analytics...
+    </div>
+  </div>
+
+</section>

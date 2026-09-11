@@ -1,0 +1,31 @@
+<section id="view-activation" class="auth-viewport">
+  <div class="auth-card">
+    
+    <!-- Header -->
+    <div style="font-size: 52px; line-height: 1; margin-bottom: 12px;">🔑</div>
+    <h2 class="auth-title">Product Activation</h2>
+    <p class="auth-subtitle">Support: +91 8638149032</p>
+
+    <!-- Error/Notice Display -->
+    <div id="activationErrorMsg" class="auth-error-badge" style="display: none;"></div>
+
+    <form id="activationForm" onsubmit="return false;">
+      <div class="auth-input-box" style="height: 60px;">
+        <input type="text" id="activationKeyInput" class="auth-input-field mono" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19" autofocus style="text-align: center; font-size: 19px; letter-spacing: 2px; font-weight: 700; text-transform: uppercase;">
+      </div>
+
+      <p style="font-size: 11px; color: #666; margin: 8px 0 16px;">
+        Enter your 16-character license key issued for your Tea Agency hardware.
+      </p>
+
+      <button type="submit" id="activationSubmitBtn" class="auth-primary-btn" onclick="activationModule.submitActivation()">
+        <span>ACTIVATE ONLINE</span>
+      </button>
+
+      <button type="button" class="auth-secondary-btn" onclick="app.navTo('login')">
+        Back to Login
+      </button>
+    </form>
+
+  </div>
+</section>

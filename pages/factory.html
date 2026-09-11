@@ -1,0 +1,445 @@
+<section id="view-factory" class="view-page active" style="padding: 24px 32px;">
+  
+  <!-- Header Row with Tabs and Manage Factories Button -->
+  <header style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 14px;">
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <h1 style="font-size: 26px; font-weight: 800; color: var(--text-primary); margin: 0;">Factory Records</h1>
+
+      <!-- Tabs Container -->
+      <div style="display: flex; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 4px; gap: 4px;">
+        <button type="button" id="factTabBtnDaily" class="btn btn-sm" style="background: var(--accent-dark); color: #ffffff; font-weight: 700; border-radius: 8px;" onclick="factoryModule.switchTab('daily')">
+          Daily Weight
+        </button>
+        <button type="button" id="factTabBtnPayments" class="btn btn-sm" style="background: transparent; color: var(--text-secondary); font-weight: 700; border-radius: 8px;" onclick="factoryModule.switchTab('payments')">
+          Monthly Payments
+        </button>
+        <button type="button" id="factTabBtnBulk" class="btn btn-sm" style="background: transparent; color: var(--text-secondary); font-weight: 700; border-radius: 8px;" onclick="factoryModule.switchTab('bulk')">
+          Bulk Rate Entry
+        </button>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <!-- ＋ New Entry Primary Action Button (Daily tab only) -->
+      <button type="button" id="factNewEntryBtn" class="btn btn-primary btn-sm" style="height: 34px; border-radius: 8px; font-weight: 700; font-size: 12.5px; padding: 0 14px; display: flex; align-items: center; gap: 6px;" onclick="factoryModule.openNewEntryModal()">
+        <span>＋</span>
+        <span>New Entry</span>
+      </button>
+
+      <!-- Manage Factories Button -->
+      <button type="button" class="btn btn-secondary btn-sm" style="height: 34px; border-radius: 8px; font-weight: 700; font-size: 12.5px; padding: 0 12px; color: var(--accent-emerald-light);" onclick="factoryModule.openManageModal()">
+        ⚙️ Manage Factories
+      </button>
+    </div>
+  </header>
+
+  <!-- TAB 1: DAILY WEIGHT & RECONCILIATION -->
+  <div id="factTabDaily" style="display: block;">
+
+    <!-- Date Stepper Bar (Full-width) -->
+    <div style="background: var(--bg-card); border-radius: 14px; padding: 14px 20px; border: 1px solid var(--border-subtle); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">DATE</span>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="factoryModule.prevDay()">◀</button>
+          <input type="date" id="factDateInput" class="form-input mono" style="width: 160px; height: 36px;" onchange="factoryModule.onDateChange()">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="factoryModule.nextDay()">▶</button>
+        </div>
+      </div>
+
+      <!-- Reconciliation Summary Cards -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="background: var(--bg-input); border-radius: 10px; padding: 10px 16px; border: 1px solid var(--border-subtle); text-align: center;">
+          <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px;">GARDEN COLLECTED</div>
+          <div id="factReconGarden" style="font-size: 18px; font-weight: 800; color: var(--accent-emerald); font-family: var(--font-mono);">0.00 kg</div>
+        </div>
+        <div style="background: var(--bg-input); border-radius: 10px; padding: 10px 16px; border: 1px solid var(--border-subtle); text-align: center;">
+          <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px;">TOTAL TO FACTORY</div>
+          <div id="factReconFactory" style="font-size: 18px; font-weight: 800; color: var(--accent-blue); font-family: var(--font-mono);">0.00 kg</div>
+        </div>
+        <div style="background: var(--bg-input); border-radius: 10px; padding: 10px 16px; border: 1px solid var(--border-subtle); text-align: center;">
+          <div style="font-size: 10px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px;">AUDIT BALANCE</div>
+          <div id="factReconBalance" style="font-size: 18px; font-weight: 800; color: var(--accent-amber); font-family: var(--font-mono);">0.00 kg</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full-Width: Delivery Log Table -->
+    <div style="background: var(--bg-card); border-radius: 14px; padding: 22px; border: 1px solid var(--border-subtle);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+        <div style="font-size: 12px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px;">FACTORY DELIVERY LOG</div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Factory</th>
+            <th>Challan</th>
+            <th>Delivered By</th>
+            <th>Gross (kg)</th>
+            <th>Ded %</th>
+            <th>Net (kg)</th>
+            <th>Rate (₹)</th>
+            <th>Amount (₹)</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="factDailyLogTableBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- TAB 2: MONTHLY PAYMENTS -->
+  <div id="factTabPayments" style="display: none;">
+    
+    <!-- Filter Row -->
+    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); border-radius: 12px; padding: 14px 20px; border: 1px solid var(--border-subtle); margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">Month / Year:</span>
+        <select id="factPayMonthSelect" class="form-select" style="width: 140px; height: 36px;" onchange="factoryModule.loadPaymentsData()">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <input type="number" id="factPayYearInput" class="form-input mono" style="width: 85px; height: 36px;" value="2026" onchange="factoryModule.loadPaymentsData()">
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="text-align: right;">
+          <div style="font-size: 10px; font-weight: 800; color: var(--text-muted);">TOTAL OUTSTANDING</div>
+          <div id="factHudOutstanding" style="font-size: 20px; font-weight: 800; color: #ef4444; font-family: var(--font-mono);">Rs. 0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Factory Cards List -->
+    <div id="factPaymentCardsOuter" style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 20px;"></div>
+
+    <!-- Settlement Workspace (Shown when card is selected) -->
+    <div id="factWorkspaceFrame" style="display: none; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-subtle); padding: 24px;">
+      <div style="display: grid; grid-template-columns: 340px 1fr; gap: 24px;">
+        
+        <!-- Left: Settlement Entry -->
+        <div>
+          <h3 id="factWsTitle" style="font-size: 16px; font-weight: 800; color: var(--accent-emerald-light); margin-bottom: 14px;">RECORD SETTLEMENT</h3>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Payment Date</label>
+            <input type="date" id="factPayDateInput" class="form-input mono">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Settlement Amount (₹)</label>
+            <input type="number" step="1" id="factPayAmountInput" class="form-input mono" placeholder="0.00" style="font-size: 18px; font-weight: 700;">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Payment Mode</label>
+            <select id="factPayModeSelect" class="form-select">
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Cheque">Cheque</option>
+              <option value="NEFT/RTGS">NEFT / RTGS</option>
+              <option value="Cash">Cash</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Transaction Ref / Cheque No</label>
+            <input type="text" id="factPayRefInput" class="form-input mono" placeholder="TXN ID / CHQ NO">
+          </div>
+
+          <button type="button" class="btn btn-primary" style="width: 100%; height: 46px; font-weight: 700; border-radius: 12px; justify-content: center;" onclick="factoryModule.commitPayment()">
+            ✅ &nbsp;COMMIT SETTLEMENT
+          </button>
+        </div>
+
+        <!-- Right: Audit Evidence Pane -->
+        <div>
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="font-size: 13px; font-weight: 800; color: var(--text-primary);">AUDIT EVIDENCE — DELIVERIES</div>
+            <div id="factEvPeriodBadge" style="font-size: 11px; color: var(--text-muted); background: var(--bg-input); padding: 4px 10px; border-radius: 6px;"></div>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Challan</th>
+                <th>Gross (kg)</th>
+                <th>Ded %</th>
+                <th>Net (kg)</th>
+                <th>Rate (₹)</th>
+                <th>Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody id="factAuditEvidenceTableBody"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB 3: BULK RATE ENTRY -->
+  <div id="factTabBulk" style="display: none;">
+    <div style="background: var(--bg-card); border-radius: 14px; padding: 20px; border: 1px solid var(--border-subtle); margin-bottom: 18px;">
+      
+      <!-- Row 1: Filters -->
+      <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 14px; flex-wrap: wrap;">
+        <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary);">Month / Year:</span>
+        <select id="factBulkMonthSelect" class="form-select" style="width: 130px; height: 34px;" onchange="factoryModule.loadBulkData()">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <input type="number" id="factBulkYearInput" class="form-input mono" style="width: 85px; height: 34px;" value="2026" onchange="factoryModule.loadBulkData()">
+
+        <span style="font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-left: 10px;">Factory:</span>
+        <select id="factBulkFactorySelect" class="form-select" style="width: 160px; height: 34px;" onchange="factoryModule.loadBulkData()">
+          <option value="ALL">All Factories</option>
+        </select>
+      </div>
+
+      <!-- Row 2: Range Selection Tools -->
+      <div style="background: var(--bg-input); border-radius: 10px; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 11px; color: var(--text-secondary);">From</span>
+          <input type="number" id="factRangeFromInput" class="form-input mono" style="width: 48px; height: 28px; padding: 2px 6px;" value="1">
+          <span style="font-size: 11px; color: var(--text-secondary);">To</span>
+          <input type="number" id="factRangeToInput" class="form-input mono" style="width: 48px; height: 28px; padding: 2px 6px;" value="31">
+
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; margin-left: 8px;">
+            <input type="checkbox" id="factExcludeSundays" checked style="accent-color: var(--accent-emerald);">
+            <span>No Sundays</span>
+          </label>
+
+          <span style="font-size: 11px; color: var(--text-secondary); margin-left: 12px;">Rate</span>
+          <input type="number" step="0.1" id="factRangeRateInput" class="form-input mono" placeholder="0.0" style="width: 65px; height: 28px; padding: 2px 6px;">
+
+          <span style="font-size: 11px; color: var(--text-secondary);">Ded%</span>
+          <input type="number" step="0.1" id="factRangeDedInput" class="form-input mono" placeholder="0.0" style="width: 55px; height: 28px; padding: 2px 6px;">
+
+          <button type="button" class="btn btn-primary btn-sm" style="height: 30px; font-weight: 700;" onclick="factoryModule.applyRange()">
+            Apply Range
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-danger btn-sm" style="height: 30px; font-weight: 700;" onclick="factoryModule.saveAllBulk()">
+          💾 &nbsp;Save All Changes
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Monthly KPI Cards Row -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;">
+      <div style="background: var(--bg-card); border-radius: 12px; padding: 14px 18px; border: 1px solid var(--border-subtle);">
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Monthly Gross</div>
+        <div id="factBulkGrossStat" style="font-size: 20px; font-weight: 800; color: #4a90e2; margin-top: 4px;">0 kg</div>
+      </div>
+      <div style="background: var(--bg-card); border-radius: 12px; padding: 14px 18px; border: 1px solid var(--border-subtle);">
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Monthly Net</div>
+        <div id="factBulkNetStat" style="font-size: 20px; font-weight: 800; color: #4caf50; margin-top: 4px;">0 kg</div>
+      </div>
+      <div style="background: var(--bg-card); border-radius: 12px; padding: 14px 18px; border: 1px solid var(--border-subtle);">
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary);">Total Receivable</div>
+        <div id="factBulkReceivableStat" style="font-size: 20px; font-weight: 800; color: #ff9800; margin-top: 4px;">Rs. 0</div>
+      </div>
+    </div>
+
+    <!-- Bulk Table -->
+    <div style="background: var(--bg-card); border-radius: 14px; border: 1px solid var(--border-subtle); overflow: hidden;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Factory Name</th>
+            <th>Gross Weight</th>
+            <th>Factory Rate (₹)</th>
+            <th>Ded (%)</th>
+            <th>Net Weight (kg)</th>
+            <th>Payable Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody id="factBulkTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: New Factory Daily Entry -->
+  <div id="modalFactoryEntry" class="modal-overlay">
+    <div class="modal-box" style="width: 520px;">
+      <div class="modal-header">
+        <h3 id="factModalTitle" class="modal-title">Log Factory Delivery</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('modalFactoryEntry')">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px 24px; display: flex; flex-direction: column; gap: 14px;">
+
+        <!-- Factory -->
+        <div class="form-group">
+          <label class="form-label">Factory</label>
+          <select id="factSelect" class="form-select">
+            <option value="">-- Select Factory --</option>
+          </select>
+        </div>
+
+        <!-- Challan No -->
+        <div class="form-group">
+          <label class="form-label">Challan / Vehicle No</label>
+          <input type="text" id="factChallanInput" class="form-input mono" placeholder="e.g. CH-9081">
+        </div>
+
+        <!-- Gross Weight -->
+        <div class="form-group">
+          <label class="form-label">Gross Weight (kg)</label>
+          <input type="number" step="0.01" id="factGrossInput" class="form-input mono" placeholder="0.00" oninput="factoryModule.updateDailyCalc()">
+        </div>
+
+        <!-- Split: Deduction % & Rate -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group" style="min-width: 0;">
+            <label class="form-label">Deduction %</label>
+            <input type="number" step="0.1" id="factDeducInput" class="form-input mono" value="0" style="width: 100%; box-sizing: border-box;" oninput="factoryModule.updateDailyCalc()">
+          </div>
+          <div class="form-group" style="min-width: 0;">
+            <label class="form-label">Factory Rate (₹)</label>
+            <input type="number" step="0.01" id="factRateInput" class="form-input mono" placeholder="0.00" style="width: 100%; box-sizing: border-box;" oninput="factoryModule.updateDailyCalc()">
+          </div>
+        </div>
+
+        <!-- Delivered By -->
+        <div class="form-group">
+          <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Delivered By</span>
+            <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">Company, Staff, or Custom Driver</span>
+          </label>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <select id="factDeliveredBySelect" class="form-select" onchange="factoryModule.onDeliveredBySelectChange(this.value)">
+              <option value="">-- Select Company / Staff / Custom --</option>
+              <option id="factOptCompany" value="__COMPANY__">🏢 Company</option>
+              <optgroup id="factDeliveredByStaffGroup" label="👷 Staff Members"></optgroup>
+              <option value="__CUSTOM__">✏️ Custom / Other Driver...</option>
+            </select>
+            <div id="factDeliveredByQuickChips" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+            <input type="text" id="factDeliveredByInput" class="form-input" placeholder="Driver / Agent / Staff Name" autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <input type="text" id="factNotesInput" class="form-input" placeholder="Optional delivery notes...">
+        </div>
+
+        <!-- Live Calc Summary -->
+        <div style="background: var(--bg-input); border-radius: 10px; padding: 12px 16px; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+          <div id="factAgentTotalLabel" style="font-size: 13px; font-weight: 700; color: var(--accent-blue);">Garden: 0 kg</div>
+          <div id="factCalcAmountLabel" style="font-size: 13px; font-weight: 700; color: var(--accent-amber);">Amount: Rs. 0</div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modalFactoryEntry')">Cancel</button>
+        <button type="button" id="factSaveBtn" class="btn btn-primary" style="min-width: 180px; justify-content: center;" onclick="factoryModule.saveDailyRecord()">
+          💾 &nbsp;Save Factory Record
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Manage Factories -->
+  <div id="modalManageFactories" class="modal-overlay">
+    <div class="modal-box" style="width: 760px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+            <span>🏭</span> Manage Factories
+          </h3>
+          <p style="margin: 3px 0 0 0; font-size: 12px; color: var(--text-secondary);">
+            Register and update tea factories, contact info, and default purchase rates
+          </p>
+        </div>
+        <button class="modal-close-btn" onclick="app.closeModal('modalManageFactories')">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px 24px; overflow-y: auto; flex: 1;">
+        
+        <!-- Add / Edit Factory Form Card -->
+        <div id="mFactFormCard" style="background: var(--bg-card); border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm); transition: border-color 0.2s ease;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+            <div id="mFactFormTitle" style="font-size: 12px; font-weight: 800; color: var(--accent-emerald); text-transform: uppercase; letter-spacing: 0.5px;">
+              ＋ ADD NEW FACTORY
+            </div>
+            <div id="mFactEditingBadge" style="display: none; font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(59, 130, 246, 0.15); color: #3b82f6; font-weight: 700;">
+              EDITING MODE
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Factory Name <span style="color: var(--accent-rose);">*</span></label>
+              <input type="text" id="mFactNameInput" class="form-input" placeholder="Enter Factory Name">
+            </div>
+            <div>
+              <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Phone Number (Optional)</label>
+              <input type="tel" id="mFactPhoneInput" class="form-input mono" placeholder="10-Digit Mobile" maxlength="10" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
+            </div>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-bottom: 16px;">
+            <div>
+              <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Address / Location</label>
+              <input type="text" id="mFactAddrInput" class="form-input" placeholder="e.g. Jorhat, Assam">
+            </div>
+            <div>
+              <label style="display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Default Rate (₹/kg)</label>
+              <input type="number" step="0.1" id="mFactRateInput" class="form-input mono" placeholder="0.00">
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="mFactCancelEditBtn" class="btn btn-secondary btn-sm" style="display: none; height: 36px; padding: 0 16px; font-weight: 600;" onclick="factoryModule.cancelFactoryEdit()">
+              Cancel
+            </button>
+            <button type="button" id="mFactSubmitBtn" class="btn btn-primary btn-sm" style="font-weight: 700; height: 36px; padding: 0 22px; justify-content: center;" onclick="factoryModule.saveFactory()">
+              ＋ Add Factory
+            </button>
+          </div>
+        </div>
+
+        <!-- Factory List Header -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <div style="font-size: 12px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Registered Factories</div>
+          <div id="mFactCountBadge" style="font-size: 12px; color: var(--text-muted); font-weight: 600;"></div>
+        </div>
+        
+        <!-- Factory List Body -->
+        <div id="mFactListBody" style="max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 2px;"></div>
+
+      </div>
+      <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="app.closeModal('modalManageFactories')">Close</button>
+      </div>
+    </div>
+  </div>
+
+</section>

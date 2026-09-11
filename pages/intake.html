@@ -1,0 +1,131 @@
+<section id="view-intake" class="view-page active">
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1>Rapid Intake Workbench</h1>
+      <p>Fast numeric collection entry with automatic bag deduction and instant receipt printing</p>
+    </div>
+    <div class="page-header-actions">
+      <span class="badge badge-emerald">Quick Key: F2</span>
+    </div>
+  </div>
+
+  <div class="workbench-layout">
+    <!-- Intake Form Panel -->
+    <div class="intake-card">
+      <form id="intakeForm" onsubmit="return false;">
+        <div class="form-group">
+          <label class="form-label">
+            <span>Planter Selection <span class="req">*</span></span>
+            <span id="intakeSelectedPlanterDetails" style="font-weight: normal; color: var(--accent-emerald);"></span>
+          </label>
+          <div style="position: relative;">
+            <input type="text" id="intakePlanterSearch" class="form-input" placeholder="Type planter name, code #, or phone..." autocomplete="off" autofocus>
+            <div id="intakeAutocompleteDropdown" class="autocomplete-dropdown"></div>
+          </div>
+          <input type="hidden" id="intakeSelectedPlanterId">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+          <div class="form-group">
+            <label class="form-label">Intake Date</label>
+            <input type="date" id="intakeDate" class="form-input mono">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Collector / Staff</label>
+            <input type="text" id="intakeCollector" class="form-input" value="Agent">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+          <label class="form-label">Gross Leaf Weight (kg) <span class="req">*</span></label>
+          <input type="number" step="0.01" id="intakeGrossWeight" class="form-input mono" placeholder="0.00" style="font-size: 20px; font-weight: 700; color: #fff;">
+        </div>
+
+        <div class="form-group" style="margin-top: 12px;">
+          <label class="form-label">
+            <span>Bag Tare / Deduction (kg)</span>
+            <span id="bagChipTotal" style="color: var(--text-muted); font-size: 11px;">0 bags</span>
+          </label>
+          <div style="display: flex; gap: 8px;">
+            <input type="number" step="0.01" id="intakeBagWeight" class="form-input mono" value="0.00" style="width: 140px;">
+            <div class="bag-preset-chips" style="align-items: center;">
+              <button type="button" class="chip" onclick="intakeModule.addBagTare(1)">+1 kg</button>
+              <button type="button" class="chip" onclick="intakeModule.addBagTare(2)">+2 kg</button>
+              <button type="button" class="chip" onclick="intakeModule.addBagTare(3)">+3 kg</button>
+              <button type="button" class="chip" onclick="intakeModule.clearBagTare()">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+          <div class="form-group">
+            <label class="form-label">Water/Deduction (%)</label>
+            <input type="number" step="0.1" id="intakeDedPct" class="form-input mono" value="0.0">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Rate / Kg (Optional)</label>
+            <input type="number" step="0.01" id="intakeRate" class="form-input mono" placeholder="0.00">
+          </div>
+        </div>
+
+        <div class="calc-display-panel" style="margin-top: 16px;">
+          <div class="calc-row">
+            <span>Gross Weight:</span>
+            <span id="calcGrossDisplay" class="num">0.00 kg</span>
+          </div>
+          <div class="calc-row">
+            <span>Total Deductions:</span>
+            <span id="calcDedDisplay" class="num" style="color: var(--accent-amber);">-0.00 kg</span>
+          </div>
+          <div class="calc-row primary">
+            <span style="font-weight: 700;">NET LEAF WEIGHT:</span>
+            <span id="calcNetDisplay" class="num">0.00 KG</span>
+          </div>
+          <div class="calc-row" id="calcAmountRow" style="display: none;">
+            <span>Estimated Payout:</span>
+            <span id="calcAmountDisplay" class="num" style="color: var(--accent-emerald);">₹0.00</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 18px;">
+          <button type="button" id="intakeSavePrintBtn" class="btn btn-primary" style="flex: 1; justify-content: center;" onclick="intakeModule.saveCollection(true)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+            Save & Print (Enter)
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="intakeModule.saveCollection(false)">
+            Save Only
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Today's Live Intake Log -->
+    <div class="table-card">
+      <div class="table-toolbar">
+        <h3 style="font-size: 14px; font-weight: 600;">Today's Completed Collections</h3>
+        <div class="search-box">
+          <input type="text" id="intakeLogFilter" placeholder="Filter today's log..." oninput="intakeModule.filterIntakeLog()">
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Planter</th>
+              <th>Gross</th>
+              <th>Ded</th>
+              <th>Net (KG)</th>
+              <th style="text-align: right;">Receipt</th>
+            </tr>
+          </thead>
+          <tbody id="intakeTodayLogTable">
+            <tr><td colspan="6" style="text-align: center; padding: 24px;">No collections recorded today yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>

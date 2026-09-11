@@ -1,0 +1,48 @@
+<section id="view-register" class="auth-viewport">
+  <div class="auth-card">
+    
+    <!-- Logo & Brand Title -->
+    <img src="assets/logo.png" class="auth-brand-logo" alt="Leaf Ledger Pro" onerror="this.src=''">
+    <h2 class="auth-title">Sign Up</h2>
+    <p class="auth-subtitle">Create Agent Account &bull; Leaf Ledger Pro</p>
+
+    <!-- Error/Notice Display -->
+    <div id="registerErrorMsg" class="auth-error-badge" style="display: none;"></div>
+
+    <form id="registerForm" onsubmit="return false;">
+      <!-- Business Name -->
+      <div class="auth-input-box">
+        <span class="auth-input-icon">🏢</span>
+        <input type="text" id="regBizNameInput" class="auth-input-field" placeholder="Business / Garden Name" required autofocus>
+      </div>
+
+      <!-- Mobile -->
+      <div class="auth-input-box">
+        <span class="auth-input-icon">📞</span>
+        <input type="tel" id="regMobileInput" class="auth-input-field mono" placeholder="+91 | 10-Digit Mobile" maxlength="10" required autocomplete="tel" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
+      </div>
+
+      <!-- 6-Digit MPIN -->
+      <div class="auth-input-box">
+        <span class="auth-input-icon">🔒</span>
+        <input type="password" id="regMpinInput" class="auth-input-field mono" placeholder="Create 6-Digit MPIN" maxlength="6" required autocomplete="new-password" style="letter-spacing: 2px;">
+      </div>
+
+      <!-- Confirm MPIN -->
+      <div class="auth-input-box">
+        <span class="auth-input-icon">🔐</span>
+        <input type="password" id="regConfMpinInput" class="auth-input-field mono" placeholder="Confirm 6-Digit MPIN" maxlength="6" required autocomplete="new-password" style="letter-spacing: 2px;">
+      </div>
+
+      <button type="submit" id="registerSubmitBtn" class="auth-primary-btn" onclick="registerModule.submitRegistration()">
+        <span>Sign Up</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+
+      <button type="button" class="auth-secondary-btn" onclick="app.navTo('login')">
+        Already have an account? Login
+      </button>
+    </form>
+
+  </div>
+</section>

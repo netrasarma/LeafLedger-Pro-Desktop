@@ -1,0 +1,43 @@
+<section id="view-planters" class="view-page active">
+  <div class="page-header">
+    <div class="page-title-group">
+      <h1>Planters Directory</h1>
+      <p>Manage tea growers, code identifiers, tare deductions, and passbooks</p>
+    </div>
+    <div class="page-header-actions">
+      <button class="btn btn-primary" onclick="plantersModule.openNewModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add New Planter
+      </button>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-toolbar">
+      <div class="search-box" style="width: 320px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="planterSearchInput" placeholder="Search by name, code, village, phone..." oninput="plantersModule.filter()">
+      </div>
+      <span id="plantersTotalBadge" class="badge badge-slate">0 Planters</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Full Name</th>
+            <th>Village</th>
+            <th>Phone Number</th>
+            <th>Default Ded (%)</th>
+            <th>Total Leaf (KG)</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="plantersTableBody">
+          <tr><td colspan="7" style="text-align: center; padding: 24px;">Loading planters...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

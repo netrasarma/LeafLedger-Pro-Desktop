@@ -1,0 +1,171 @@
+<section id="view-dashboard" class="view-page active" style="padding: 24px 32px;">
+  
+  <!-- Dashboard Top Header Bar -->
+  <header style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <h1 style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-primary); margin: 0;">Dashboard</h1>
+    </div>
+
+    <!-- Right Header Actions -->
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div id="dashSessionLabel" style="font-size: 12px; font-weight: 700; color: var(--accent-emerald); background: var(--bg-card); border: 1px solid var(--border-medium); padding: 6px 12px; border-radius: 8px; box-shadow: var(--shadow-sm);">
+        📍 Session: Main Season
+      </div>
+
+      <div id="dashDateLabel" style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">
+        Mon, 08 Sep 2026
+      </div>
+
+      <button type="button" class="btn btn-danger btn-sm" style="height: 32px; border-radius: 8px; font-weight: 700; gap: 6px;" onclick="app.signOut()">
+        🚪 Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- License Warning Banner (Dynamic) -->
+  <div id="dashLicenseWarnBanner" style="display: none; margin-bottom: 20px; padding: 12px 18px; border-radius: 10px; background: #ef4444; color: #ffffff; font-size: 13px; font-weight: 700; text-align: center;">
+    ⚠️ License warning
+  </div>
+
+  <!-- 5 Shell Stat Cards Row (Responsive Grid) -->
+  <div class="dash-kpi-grid">
+    
+    <!-- 1. Garden Owners -->
+    <div class="stat-card dash-kpi-card">
+      <div class="dash-kpi-header">
+        <span class="dash-kpi-title">Garden Owners</span>
+        <img src="assets/sidebar/owners.png" class="dash-kpi-icon" alt="Owners">
+      </div>
+      <div id="dashStatOwnersVal" class="dash-kpi-val">0</div>
+      <div id="dashStatOwnersSub" class="dash-kpi-sub">Active partners</div>
+    </div>
+
+    <!-- 2. Today's Collection -->
+    <div class="stat-card dash-kpi-card">
+      <div class="dash-kpi-header">
+        <span class="dash-kpi-title">Today's Leaf</span>
+        <img src="assets/sidebar/collections.png" class="dash-kpi-icon" alt="Collections">
+      </div>
+      <div id="dashStatTodayVal" class="dash-kpi-val">0 kg</div>
+      <div class="dash-kpi-sub">
+        <span id="dashStatTodayGross">Gross: 0 kg</span> • <span id="dashStatTodaySub">0 owners today</span>
+      </div>
+    </div>
+
+    <!-- 3. Monthly Weight -->
+    <div class="stat-card dash-kpi-card">
+      <div class="dash-kpi-header">
+        <span class="dash-kpi-title">Monthly Leaf</span>
+        <img src="assets/sidebar/monthly.png" class="dash-kpi-icon" alt="Monthly">
+      </div>
+      <div id="dashStatMonthVal" class="dash-kpi-val">0 kg</div>
+      <div class="dash-kpi-sub">
+        <span id="dashStatMonthGross">Gross: 0 kg</span> • <span id="dashStatMonthSub">This Month</span>
+      </div>
+    </div>
+
+    <!-- 4. Net Profits -->
+    <div class="stat-card dash-kpi-card">
+      <div class="dash-kpi-header">
+        <span class="dash-kpi-title">Net Profits</span>
+        <img src="assets/sidebar/factory.png" class="dash-kpi-icon" alt="Profit">
+      </div>
+      <div id="dashStatProfitVal" class="dash-kpi-val" style="color: var(--accent-emerald);">Rs.0.00</div>
+      <div id="dashStatProfitSub" class="dash-kpi-sub">Est. factory payout</div>
+    </div>
+
+    <!-- 5. Pending Advances -->
+    <div class="stat-card dash-kpi-card">
+      <div class="dash-kpi-header">
+        <span class="dash-kpi-title">Pending Advances</span>
+        <img src="assets/sidebar/advances.png" class="dash-kpi-icon" alt="Advances">
+      </div>
+      <div id="dashStatAdvancesVal" class="dash-kpi-val" style="color: var(--accent-amber);">Rs.0.00</div>
+      <div id="dashStatAdvancesSub" class="dash-kpi-sub">Total outstanding</div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Main Content Container: Quick Actions & Today's Collections -->
+  <div class="dash-split-grid">
+    
+    <!-- Left: Quick Actions -->
+    <div style="background: var(--bg-card); border-radius: 14px; padding: 22px 20px; border: 1px solid var(--border-subtle);">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h3 style="font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 0;">Quick Actions</h3>
+        <button type="button" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 8px; gap: 4px;" onclick="app.openModal('modalShortcutsHelp')" title="Keyboard Shortcuts Guide">
+          <span>⌨️</span> Keys
+        </button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        
+        <button type="button" class="btn btn-secondary" style="height: 48px; justify-content: space-between; font-weight: 600; font-size: 13.5px; border-radius: 10px; padding: 0 14px;" onclick="app.openNewLeafEntry()">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="assets/sidebar/collections.png" style="width: 22px; height: 22px; object-fit: contain;" alt="Collection">
+            <span>Add Today's Collection</span>
+          </div>
+          <kbd class="shortcut-kbd">F2</kbd>
+        </button>
+
+        <button type="button" class="btn btn-secondary" style="height: 48px; justify-content: space-between; font-weight: 600; font-size: 13.5px; border-radius: 10px; padding: 0 14px;" onclick="app.openNewAdvanceEntry()">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="assets/sidebar/advances.png" style="width: 22px; height: 22px; object-fit: contain;" alt="Advances">
+            <span>Record Advance</span>
+          </div>
+          <kbd class="shortcut-kbd">F3</kbd>
+        </button>
+
+        <button type="button" class="btn btn-secondary" style="height: 48px; justify-content: space-between; font-weight: 600; font-size: 13.5px; border-radius: 10px; padding: 0 14px;" onclick="app.openNewExpenseEntry()">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="assets/sidebar/expenses.png" style="width: 22px; height: 22px; object-fit: contain;" alt="Expenses">
+            <span>Record Expense</span>
+          </div>
+          <kbd class="shortcut-kbd">F4</kbd>
+        </button>
+
+        <button type="button" class="btn btn-secondary" style="height: 48px; justify-content: space-between; font-weight: 600; font-size: 13.5px; border-radius: 10px; padding: 0 14px;" onclick="app.navTo('rates')">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 18px; width: 22px; text-align: center;">🏷️</span>
+            <span>Rates & Pricing Desk</span>
+          </div>
+          <kbd class="shortcut-kbd">F5</kbd>
+        </button>
+
+        <button type="button" class="btn btn-secondary" style="height: 48px; justify-content: space-between; font-weight: 600; font-size: 13.5px; border-radius: 10px; padding: 0 14px;" onclick="app.navTo('monthly')">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="assets/sidebar/monthly.png" style="width: 22px; height: 22px; object-fit: contain;" alt="Statement">
+            <span>Generate Statement</span>
+          </div>
+          <kbd class="shortcut-kbd">F6</kbd>
+        </button>
+
+        <button type="button" class="btn btn-secondary" style="height: 48px; justify-content: space-between; font-weight: 600; font-size: 13.5px; border-radius: 10px; padding: 0 14px;" onclick="app.navTo('owners')">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="assets/sidebar/owners.png" style="width: 22px; height: 22px; object-fit: contain;" alt="Owners">
+            <span>Manage Garden Owners</span>
+          </div>
+          <span style="font-size: 12px; color: var(--text-muted);">&rarr;</span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Right: Today's Collections List -->
+    <div style="background: var(--bg-card); border-radius: 14px; padding: 22px 20px; border: 1px solid var(--border-subtle); min-height: 420px; display: flex; flex-direction: column;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h3 id="dashRcTitle" style="font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 0;">Today's Collections</h3>
+        <button type="button" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 700;" onclick="app.navTo('collections')">
+          View All &rarr;
+        </button>
+      </div>
+
+      <div id="dashTodayCollectionsList" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; max-height: 450px;">
+        <div style="text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 14px;">
+          No collections recorded today.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</section>

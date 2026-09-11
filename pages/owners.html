@@ -1,0 +1,189 @@
+<section id="view-owners" class="view-page active" style="padding: 24px 32px;">
+  
+  <!-- Top Bar -->
+  <header style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 14px;">
+    <div>
+      <h1 style="font-size: 26px; font-weight: 800; color: var(--text-primary); margin: 0;">Garden Owners</h1>
+      <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Manage grower profiles & advance balances</p>
+    </div>
+
+    <button type="button" class="btn btn-primary btn-sm" style="height: 34px; border-radius: 8px; font-weight: 700; padding: 0 14px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px;" onclick="ownersModule.openAddDialog()">
+      <span>＋</span>
+      <span>Add Owner</span>
+    </button>
+  </header>
+
+  <!-- Search Card -->
+  <div style="background: var(--bg-card); border-radius: 12px; padding: 12px 18px; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+    <div style="display: flex; align-items: center; gap: 10px; flex: 1; max-width: 400px;">
+      <span style="font-size: 15px; color: var(--text-muted);">🔍</span>
+      <input type="text" id="ownerSearchInput" class="form-input" placeholder="Search by name or phone…" style="height: 38px; border-radius: 10px;" oninput="ownersModule.filterOwners()">
+    </div>
+    <div id="ownersCountLabel" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">
+      0 owners total
+    </div>
+  </div>
+
+  <!-- Column Header Row -->
+  <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 10px 18px; display: grid; grid-template-columns: 2fr 1.3fr 1.6fr 1.2fr 1.2fr 1fr 1.6fr; gap: 10px; font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+    <div>Owner</div>
+    <div>Phone</div>
+    <div>Address</div>
+    <div>Agreement</div>
+    <div>Adv. Balance</div>
+    <div>Status</div>
+    <div style="text-align: right;">Actions</div>
+  </div>
+
+  <!-- Scrollable List of Owners -->
+  <div id="ownersListContainer" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; max-height: calc(100vh - 270px);">
+    <div style="text-align: center; color: var(--text-muted); padding: 50px 0;">
+      Loading owners...
+    </div>
+  </div>
+
+  <!-- Modal: Add / Edit Owner -->
+  <div id="modalAddOwner" class="modal-overlay">
+    <div class="modal-box" style="width: 600px; max-width: 95vw;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalOwnerTitle">Add New Garden Owner</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('modalAddOwner')">✕</button>
+      </div>
+      <div class="modal-body" style="max-height: 65vh; overflow-y: auto; padding: 20px 24px;">
+        <form id="ownerForm" onsubmit="return false;">
+          
+          <!-- Section 1: Basic Information -->
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <div style="width: 3px; height: 16px; background: var(--accent-emerald); border-radius: 2px;"></div>
+            <span style="font-size: 13px; font-weight: 700; color: var(--accent-emerald-light);">👤 &nbsp;Basic Information</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Full Name <span class="req">*</span></label>
+            <input type="text" id="ownerNameInput" class="form-input" placeholder="e.g. Ramesh Gogoi" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Mobile Number (10 digits) <span class="req">*</span></label>
+            <input type="tel" id="ownerPhoneInput" class="form-input mono" placeholder="10-digit mobile number" maxlength="10" required oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label">Address / Village</label>
+            <input type="text" id="ownerAddressInput" class="form-input" placeholder="e.g. Duliajan, Dibrugarh">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Agreement Date</label>
+            <input type="date" id="ownerAgreementInput" class="form-input">
+          </div>
+
+          <!-- Section 2: Grower Portal Access -->
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 18px; margin-bottom: 8px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+            <div style="width: 3px; height: 16px; background: var(--accent-emerald); border-radius: 2px;"></div>
+            <span style="font-size: 13px; font-weight: 700; color: var(--accent-emerald-light);">🔐 &nbsp;Grower Portal Access</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 4px;">
+            <label class="form-label">Portal PIN (For Grower Login)</label>
+            <input type="password" id="ownerPinInput" class="form-input mono" placeholder="6-digit PIN" maxlength="6">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Give this PIN to the owner so they can view their profile on the web.</div>
+          </div>
+
+          <!-- Section 3: Bank Details -->
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 18px; margin-bottom: 12px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
+            <div style="width: 3px; height: 16px; background: var(--accent-emerald); border-radius: 2px;"></div>
+            <span style="font-size: 13px; font-weight: 700; color: var(--accent-emerald-light);">🏦 &nbsp;Bank Details</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="form-group">
+              <label class="form-label">Bank Name</label>
+              <input type="text" id="ownerBankNameInput" class="form-input" placeholder="e.g. SBI">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Account Number</label>
+              <input type="text" id="ownerBankAccInput" class="form-input mono" placeholder="A/C Number">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="form-group">
+              <label class="form-label">Account Holder Name</label>
+              <input type="text" id="ownerBankHolderInput" class="form-input" placeholder="Name as per passbook">
+            </div>
+            <div class="form-group">
+              <label class="form-label">IFSC Code</label>
+              <input type="text" id="ownerBankIfscInput" class="form-input mono" placeholder="e.g. SBIN0001234">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea id="ownerNotesInput" class="form-input" rows="2" placeholder="Optional planter notes..."></textarea>
+          </div>
+
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modalAddOwner')">Cancel</button>
+        <button class="btn btn-primary" onclick="ownersModule.saveOwner()">💾 &nbsp;Save Owner</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: View Owner Profile & Full History -->
+  <div id="modalViewOwner" class="modal-overlay">
+    <div class="modal-box" style="width: 860px; max-width: 95vw;">
+      <div class="modal-header" style="background: var(--accent-dark); padding: 16px 20px;">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div id="viewOwnerAvatar" style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); color: #ffffff; font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; border: 1.5px solid rgba(255, 255, 255, 0.4);"></div>
+          <div>
+            <h3 id="viewOwnerName" style="color: #ffffff; font-size: 18px; font-weight: 800; margin: 0;">Owner Name</h3>
+            <div id="viewOwnerPhone" style="font-size: 12px; color: #b0d8c8;">📞 +91 ----------</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="btn btn-secondary btn-sm" id="viewOwnerEditBtn">✎ Edit</button>
+          <button class="modal-close-btn" onclick="app.closeModal('modalViewOwner')">✕</button>
+        </div>
+      </div>
+
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 20px 24px;">
+        
+        <!-- Row 1: Profile Details & Advance Balance -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+          
+          <div style="background: var(--bg-card); border-radius: 12px; padding: 16px; border: 1px solid var(--border-subtle);">
+            <div style="font-size: 12px; font-weight: 700; color: var(--accent-emerald-light); margin-bottom: 10px;">👤 Profile & Contact</div>
+            <div id="viewOwnerDetails" style="font-size: 12px; line-height: 1.8; color: var(--text-secondary);"></div>
+          </div>
+
+          <div style="background: var(--bg-card); border-radius: 12px; padding: 16px; border: 1px solid var(--border-subtle);">
+            <div style="font-size: 12px; font-weight: 700; color: var(--accent-amber); margin-bottom: 10px;">💰 Advance Balance</div>
+            <div id="viewOwnerBalanceChip" style="display: inline-block; padding: 6px 14px; border-radius: 10px; font-size: 20px; font-weight: 800; font-family: var(--font-mono); margin-bottom: 6px;"></div>
+            <div id="viewOwnerBalanceNote" style="font-size: 11px; color: var(--text-muted);">Outstanding balance</div>
+          </div>
+
+        </div>
+
+        <!-- Row 2: Advance History -->
+        <div style="background: var(--bg-card); border-radius: 12px; padding: 16px; border: 1px solid var(--border-subtle); margin-bottom: 16px;">
+          <div style="font-size: 12px; font-weight: 700; color: var(--accent-emerald-light); margin-bottom: 10px;">💸 Advance History</div>
+          <div id="viewOwnerAdvanceHistory" style="max-height: 160px; overflow-y: auto;"></div>
+        </div>
+
+        <!-- Row 3: Monthly Collection History -->
+        <div style="background: var(--bg-card); border-radius: 12px; padding: 16px; border: 1px solid var(--border-subtle);">
+          <div style="font-size: 12px; font-weight: 700; color: var(--accent-emerald-light); margin-bottom: 10px;">🍃 Collection History (Monthly)</div>
+          <div id="viewOwnerCollectionHistory" style="max-height: 180px; overflow-y: auto;"></div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modalViewOwner')">Close</button>
+      </div>
+    </div>
+  </div>
+
+</section>

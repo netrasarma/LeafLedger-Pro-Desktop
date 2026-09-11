@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaf Ledger Pro — Enterprise Executive Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    (function() {
+      try {
+        // Enforce strictly light mode for initial authentication portal
+        document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- ========================================================================
+       Frameless Top Window Titlebar
+       ======================================================================== -->
+  <header class="window-titlebar">
+    <div class="titlebar-brand">
+      <img src="assets/logo_new.png" style="width: 22px; height: 22px; object-fit: contain; border-radius: 4px; margin-right: 2px;" alt="LLP" onerror="this.src='assets/logo new.png'">
+      <span>LEAF LEDGER PRO</span>
+      <span class="titlebar-badge">ENTERPRISE</span>
+    </div>
+
+    <!-- Top Window Quick Action Shortcut Buttons -->
+    <div class="titlebar-quick-actions" id="topQuickShortcuts" style="display: none;">
+      <button type="button" class="titlebar-shortcut-btn" onclick="app.openNewLeafEntry()" title="New Leaf Intake Entry (F2)">
+        <span>🍃 ＋Leaf</span>
+        <kbd class="shortcut-kbd">F2</kbd>
+      </button>
+      <button type="button" class="titlebar-shortcut-btn" onclick="app.openNewAdvanceEntry()" title="Record Planter Advance (F3)">
+        <span>💰 ＋Advance</span>
+        <kbd class="shortcut-kbd">F3</kbd>
+      </button>
+      <button type="button" class="titlebar-shortcut-btn" onclick="app.openNewExpenseEntry()" title="Record Daily Expense (F4)">
+        <span>🧾 ＋Expense</span>
+        <kbd class="shortcut-kbd">F4</kbd>
+      </button>
+      <button type="button" class="titlebar-shortcut-btn" onclick="app.openModal('modalShortcutsHelp')" title="Keyboard Shortcuts Guide (?)">
+        <span>⌨️ Keys</span>
+        <kbd class="shortcut-kbd">?</kbd>
+      </button>
+    </div>
+
+    <div class="titlebar-actions">
+      <!-- Quick Refresh Button (Icon Only - Hidden in Auth/Login) -->
+      <button id="topRefreshBtn" class="win-btn titlebar-icon-btn" title="Refresh Data" onclick="app.refreshCurrentScreen()" style="display: none;">
+        <svg id="topRefreshIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+      </button>
+
+      <!-- Quick Theme Toggle -->
+      <button id="topThemeToggleBtn" class="win-btn titlebar-icon-btn" title="Switch Theme (Light / Dark)" onclick="app.toggleTheme()">
+        <span id="themeToggleIcon" style="display: flex; align-items: center; justify-content: center; font-size: 14px;">☀️</span>
+      </button>
+
+      <!-- Active Season Quick-Switcher (Hidden in Auth/Login) -->
+      <div class="season-pill-dropdown" id="topSeasonContainer" style="display: none;">
+        <button id="topSeasonBtn" class="season-pill-btn" onclick="app.toggleSeasonMenu()" title="Active Plucking Season (Click to switch)">
+          <span>🌿</span>
+          <span id="topSeasonName">Season 2027</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div id="topSeasonDropdown" class="season-dropdown-menu" style="display: none;">
+          <div class="season-menu-header">Active Plucking Season</div>
+          <div id="topSeasonList" class="season-list-items"></div>
+        </div>
+      </div>
+
+      <!-- Sync Status Button (Hidden in Auth/Login) -->
+      <button id="topSyncBtn" class="sync-status-btn" title="Click to sync cloud data" style="display: none;">
+        <div id="syncDot" class="sync-dot"></div>
+        <span id="syncText">Connected</span>
+      </button>
+
+      <div class="window-controls">
+        <button id="winMinBtn" class="win-btn" title="Minimize">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button id="winMaxBtn" class="win-btn" title="Maximize">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        </button>
+        <button id="winCloseBtn" class="win-btn close" title="Close">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       App Layout: Sidebar & Dynamic Main Container
+       ======================================================================== -->
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside id="appSidebar" class="sidebar">
+      <div class="sidebar-header" style="padding: 16px 12px 10px; text-align: center; border-bottom: 1px solid var(--border-subtle);">
+        <img src="assets/logo_new.png" alt="Leaf Ledger Pro" style="width: 58px; height: 58px; object-fit: contain; margin-bottom: 6px;" onerror="this.src='assets/logo new.png'">
+        <div id="brandAgentNameDisplay" style="font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.2px;">Leaf Ledger Pro</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Enterprise Tea ERP</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-item active" data-view="dashboard">
+          <img src="assets/sidebar/dashboard.png" class="nav-icon-img" alt="Dashboard" onerror="this.src=''">
+          <span>Dashboard</span>
+        </div>
+
+        <div class="nav-item" data-view="owners">
+          <img src="assets/sidebar/owners.png" class="nav-icon-img" alt="Garden Owners" onerror="this.src=''">
+          <span>Garden Owners</span>
+        </div>
+
+        <div class="nav-item" data-view="advances">
+          <img src="assets/sidebar/advances.png" class="nav-icon-img" alt="Advances" onerror="this.src=''">
+          <span>Advances</span>
+        </div>
+
+        <div class="nav-item" data-view="collections">
+          <img src="assets/sidebar/collections.png" class="nav-icon-img" alt="Leaf Collection" onerror="this.src=''">
+          <span>Leaf Collection</span>
+        </div>
+
+        <div class="nav-item" data-view="rates">
+          <img src="assets/sidebar/rates.png" class="nav-icon-img" alt="Rates" onerror="this.src=''">
+          <span>Rates</span>
+        </div>
+
+        <div class="nav-item" data-view="monthly">
+          <img src="assets/sidebar/monthly.png" class="nav-icon-img" alt="Monthly Ledger" onerror="this.src=''">
+          <span>Monthly Ledger</span>
+        </div>
+
+        <div class="nav-item" data-view="factory">
+          <img src="assets/sidebar/factory.png" class="nav-icon-img" alt="Factory Records" onerror="this.src=''">
+          <span>Factory Records</span>
+        </div>
+
+        <div class="nav-item" data-view="expenses">
+          <img src="assets/sidebar/expenses.png" class="nav-icon-img" alt="Expenses" onerror="this.src=''">
+          <span>Expenses</span>
+        </div>
+
+        <div class="nav-item" data-view="reports">
+          <img src="assets/sidebar/reports.png" class="nav-icon-img" alt="Reports" onerror="this.src=''">
+          <span>Reports</span>
+        </div>
+
+        <div class="nav-item" data-view="settings">
+          <img src="assets/sidebar/settings.png" class="nav-icon-img" alt="Settings" onerror="this.src=''">
+          <span>Settings</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="operator-profile">
+          <div class="operator-avatar" id="operatorAvatarDisplay">AG</div>
+          <div class="operator-info">
+            <div id="operatorNameDisplay" class="operator-name">Tea Agent</div>
+            <div id="licenseBadgeDisplay" class="operator-role">v2.8.7 Enterprise</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" style="padding: 6px 8px;" title="Sign Out" onclick="app.signOut()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main View Dynamic Container (Loads pages/*.html dynamically) -->
+    <main id="mainViewContainer" class="main-view-container"></main>
+  </div>
+
+  <!-- ========================================================================
+       SHARED GLOBAL MODALS
+       ======================================================================== -->
+
+
+
+  <!-- Modal: Thermal Receipt Simulator & Print -->
+  <div id="modalReceipt" class="modal-overlay">
+    <div class="modal-box" style="width: 380px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Receipt Preview</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('modalReceipt')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="background: var(--bg-tertiary);">
+        <div id="receiptPaperContainer" class="receipt-paper-preview"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeModal('modalReceipt')">Close</button>
+        <button id="modalReceiptPrintBtn" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+          Print Receipt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Document & Statement A4 Preview -->
+  <div id="modalDocPreview" class="modal-overlay" style="z-index: 10005;">
+    <div class="modal-box" style="width: 860px; max-width: 95vw; height: 92vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+      <div class="modal-header" style="flex-shrink: 0; padding: 14px 22px; border-bottom: 1px solid var(--border-subtle);">
+        <div>
+          <h3 class="modal-title" id="docPreviewModalTitle" style="font-size: 16px; display: flex; align-items: center; gap: 8px;">
+            <span>📄</span> <span>Document Print Preview</span>
+          </h3>
+          <p id="docPreviewModalSubtitle" style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Review official procurement statement layout before printing or exporting to PDF</p>
+        </div>
+        <button class="modal-close-btn" onclick="app.closeModal('modalDocPreview')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="background: #1e293b; padding: 20px; overflow-y: auto; flex: 1; display: flex; justify-content: center; align-items: flex-start;">
+        <iframe id="docPreviewFrame" style="width: 780px; max-width: 100%; height: 780px; min-height: 550px; border: none; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); background: #ffffff;"></iframe>
+      </div>
+      <div class="modal-footer" style="flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; padding: 12px 22px; border-top: 1px solid var(--border-subtle); background: var(--bg-card);">
+        <button type="button" class="btn btn-secondary" onclick="app.closeModal('modalDocPreview')">Close Preview</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button type="button" id="docPreviewExportPdfBtn" class="btn btn-secondary" style="font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+            <span>📥</span>
+            <span>Save as PDF</span>
+          </button>
+          <button type="button" id="docPreviewPrintBtn" class="btn btn-primary" style="font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+            <span>🖨️</span>
+            <span>Print Document</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Keyboard Shortcuts & Quick Actions Cheat Sheet -->
+  <div id="modalShortcutsHelp" class="modal-overlay">
+    <div class="modal-box" style="width: 520px; max-width: 95vw;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">⌨️</span>
+          <h3 class="modal-title">Keyboard Shortcuts Guide</h3>
+        </div>
+        <button class="modal-close-btn" onclick="app.closeModal('modalShortcutsHelp')">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 20px; gap: 10px;">
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">
+          Speed up your daily workflow using these global keyboard shortcuts:
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 16px;">🍃</span>
+              <span style="font-weight: 600; font-size: 13px; color: var(--text-primary);">New Leaf Intake Entry</span>
+            </div>
+            <kbd class="shortcut-kbd" style="font-size: 12px; padding: 4px 10px;">F2</kbd>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 16px;">💰</span>
+              <span style="font-weight: 600; font-size: 13px; color: var(--text-primary);">Record Planter Advance</span>
+            </div>
+            <kbd class="shortcut-kbd" style="font-size: 12px; padding: 4px 10px;">F3</kbd>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 16px;">🧾</span>
+              <span style="font-weight: 600; font-size: 13px; color: var(--text-primary);">Record Daily Expense</span>
+            </div>
+            <kbd class="shortcut-kbd" style="font-size: 12px; padding: 4px 10px;">F4</kbd>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 16px;">🏷️</span>
+              <span style="font-weight: 600; font-size: 13px; color: var(--text-primary);">Rates & Pricing Desk</span>
+            </div>
+            <kbd class="shortcut-kbd" style="font-size: 12px; padding: 4px 10px;">F5</kbd>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 16px;">📄</span>
+              <span style="font-weight: 600; font-size: 13px; color: var(--text-primary);">Monthly Ledger & Statements</span>
+            </div>
+            <kbd class="shortcut-kbd" style="font-size: 12px; padding: 4px 10px;">F6</kbd>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 16px;">⚡</span>
+              <span style="font-weight: 600; font-size: 13px; color: var(--text-primary);">New Entry inside Screen</span>
+            </div>
+            <kbd class="shortcut-kbd" style="font-size: 12px; padding: 4px 10px;">N</kbd>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 16px;">💾</span>
+              <span style="font-weight: 600; font-size: 13px; color: var(--text-primary);">Save Modal Form</span>
+            </div>
+            <kbd class="shortcut-kbd" style="font-size: 12px; padding: 4px 10px;">Enter</kbd>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 16px;">✕</span>
+              <span style="font-weight: 600; font-size: 13px; color: var(--text-primary);">Close Any Active Modal</span>
+            </div>
+            <kbd class="shortcut-kbd" style="font-size: 12px; padding: 4px 10px;">Esc</kbd>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="app.closeModal('modalShortcutsHelp')">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Center -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Modular Screen Scripts Matching Python Codebase -->
+  <script src="pages/login.js"></script>
+  <script src="pages/register.js"></script>
+  <script src="pages/activation.js"></script>
+  <script src="pages/dashboard.js"></script>
+  <script src="pages/owners.js"></script>
+  <script src="pages/advances.js"></script>
+  <script src="pages/collections.js"></script>
+  <script src="pages/rates.js"></script>
+  <script src="pages/monthly.js"></script>
+  <script src="pages/factory.js"></script>
+  <script src="pages/expenses.js"></script>
+  <script src="pages/reports.js"></script>
+  <script src="pages/settings.js"></script>
+
+  <!-- Core App Shell & Page Router -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{
+  "appId": "com.leafledger.pro.desktop",
+  "productName": "Leaf Ledger Pro",
+  "asar": true,
+  "afterPack": "./apply_fuses.js",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "main.js",
+    "preload.js",
+    "database.js",
+    "security.js",
+    "sync.js",
+    "printer.js",
+    "secrets.js",
+    "index.html",
+    "splash.html",
+    "update.html",
+    "styles.css",
+    "app.js",
+    "video.mp4",
+    "assets/**/*",
+    "pages/**/*",
+    "node_modules/**/*"
+  ],
+  "win": {
+    "target": ["nsis"],
+    "artifactName": "LeafLedgerPro_Setup_${version}.${ext}",
+    "publisherName": "Leaf Ledger Pro"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Leaf Ledger Pro",
+    "deleteAppDataOnUninstall": false
+  },
+  "mac": {
+    "target": ["dmg"],
+    "category": "public.app-category.business"
+  },
+  "linux": {
+    "target": ["AppImage", "deb"],
+    "category": "Office"
+  }
+}

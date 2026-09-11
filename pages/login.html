@@ -1,0 +1,301 @@
+<section id="view-login" class="auth-split-viewport">
+
+  <!-- ========================================================================
+       LEFT SECTION: High-Resolution Brand Showcase & Value Pillars
+       ======================================================================== -->
+  <div class="auth-showcase-panel">
+    <!-- Visual Image Asset -->
+    <img src="assets/login_page_image.png" class="auth-showcase-bg" alt="Leaf Ledger Pro Plantation" onerror="this.src='assets/bg_garden.png'">
+    <div class="auth-showcase-overlay"></div>
+
+    <!-- Showcase Foreground Content -->
+    <div class="auth-showcase-content">
+      
+      <!-- Top Brand Tag -->
+      <div class="auth-showcase-brand">
+        <img src="assets/logo_new.png" class="auth-showcase-logo" alt="Leaf Ledger Pro" onerror="this.src='assets/logo new.png'">
+        <div>
+          <h2 class="auth-showcase-title">Leaf Ledger Pro</h2>
+          <span class="auth-showcase-badge">Enterprise ERP Suite</span>
+        </div>
+      </div>
+
+      <!-- Bottom Minimal Headline -->
+      <div class="auth-showcase-hero" style="margin-top: auto; margin-bottom: 20px;">
+        <h1 class="auth-hero-headline" style="font-size: 26px; line-height: 1.35; margin-bottom: 8px;">
+          Smart Leaf Accounting for Modern Tea Estates
+        </h1>
+        <p class="auth-hero-tagline" style="font-size: 13.5px; margin-bottom: 0; color: #cbd5e1;">
+          Automated Daily Intake • Live Weighbridge • Direct Planter Settlements
+        </p>
+      </div>
+
+      <!-- Bottom Showcase Footer -->
+      <div class="auth-showcase-footer" style="padding-top: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 13px;">📞</span>
+          <span style="font-weight: 600; letter-spacing: 0.2px; color: #ffffff;">Support: <strong style="color: #a7f3d0; font-weight: 700;">+91 8638149032</strong></span>
+        </div>
+        <div style="font-weight: 700; color: #a7f3d0;">
+          v2.8.7 Enterprise
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       RIGHT SECTION: Dynamic Authentication & Workbench Panel
+       ======================================================================== -->
+  <div class="auth-form-panel">
+
+    <!-- Top Form Header: Brand Logo -->
+    <div class="auth-form-header">
+      <img src="assets/logo_new.png" class="auth-form-logo" alt="Leaf Ledger Pro" onerror="this.src='assets/logo new.png'">
+    </div>
+
+    <!-- DYNAMIC ERROR / STATUS ALERT BANNER -->
+    <div id="authAlertBox" class="auth-alert-box" role="alert">
+      <span id="authAlertIcon" class="auth-alert-icon">⚠️</span>
+      <span id="authAlertText" class="auth-alert-text"></span>
+    </div>
+
+    <!-- FORM CARD CONTAINER (With Shake Effect on Error) -->
+    <div id="authCard" class="auth-body-container">
+
+      <!-- ==================================================================
+           MODE 1: UNIFIED EXECUTIVE SIGN IN (Mobile + MPIN)
+           ================================================================== -->
+      <div id="authLoginMode">
+        <h2 class="auth-form-title">Sign In to Agency Portal</h2>
+        <p class="auth-form-subtitle">Access your estate accounts, daily leaf intake, and planter books.</p>
+
+        <!-- 10-Digit Mobile Number Field -->
+        <div class="auth-field-group">
+          <div class="auth-field-header">
+            <label for="loginMobileInput" class="auth-field-label">Registered Mobile Number</label>
+          </div>
+          <div class="auth-input-wrapper">
+            <div class="auth-input-prefix">
+              <span>🇮🇳</span>
+              <span>+91</span>
+            </div>
+            <input 
+              type="tel" 
+              id="loginMobileInput" 
+              class="auth-input-elem" 
+              placeholder="10-Digit Mobile Number" 
+              maxlength="10" 
+              autocomplete="tel" 
+              autofocus 
+              oninput="loginModule.onMobileInput(this)"
+            >
+            <span id="loginMobileValid" class="auth-valid-check">✓</span>
+          </div>
+        </div>
+
+        <!-- 6-Digit MPIN Field -->
+        <div class="auth-field-group">
+          <div class="auth-field-header">
+            <label for="loginMpinInput" class="auth-field-label">6-Digit Security MPIN</label>
+          </div>
+          <div class="auth-input-wrapper">
+            <div class="auth-input-prefix">
+              <span>🔒</span>
+            </div>
+            <input 
+              type="password" 
+              id="loginMpinInput" 
+              class="auth-input-elem mono" 
+              placeholder="••••••" 
+              maxlength="6" 
+              autocomplete="current-password" 
+              oninput="loginModule.onMpinInput(this)"
+            >
+            <button 
+              type="button" 
+              id="btnToggleMpin" 
+              class="auth-toggle-btn" 
+              onclick="loginModule.toggleMpin()" 
+              title="Show or Hide MPIN"
+            >
+              SHOW
+            </button>
+          </div>
+        </div>
+
+        <!-- Options Row: Remember Me & Need Help -->
+        <div class="auth-options-row">
+          <label class="auth-checkbox-label">
+            <input type="checkbox" id="loginRememberMe" class="auth-checkbox" checked>
+            <span>Remember me on this workstation</span>
+          </label>
+          <a href="#" class="auth-link" onclick="loginModule.showHelp(event)">Forgot MPIN?</a>
+        </div>
+
+        <!-- Primary Submit Button with Dynamic Spinner -->
+        <button type="button" id="btnLoginSubmit" class="auth-btn-primary" onclick="loginModule.submitLogin()">
+          <span id="loginSpinner" class="auth-spinner" style="display: none;"></span>
+          <span id="loginBtnText">Sign In to Agency Portal ➔</span>
+        </button>
+
+        <!-- Divider -->
+        <div class="auth-divider">
+          <span>OR QUICK ACTIONS</span>
+        </div>
+
+        <!-- Secondary Actions -->
+        <button type="button" class="auth-btn-secondary" onclick="loginModule.showRegister()">
+          <span>🏢 Create New Agency Account</span>
+        </button>
+
+        <button type="button" class="auth-btn-secondary" onclick="loginModule.showActivation()">
+          <span>🔑 Activate Hardware Product License</span>
+        </button>
+      </div>
+
+      <!-- ==================================================================
+           MODE 2: INLINE REGISTRATION (Create New Agency)
+           ================================================================== -->
+      <div id="authRegisterMode" style="display: none;">
+        <button type="button" class="auth-btn-back" onclick="loginModule.showLogin()">
+          <span>← Back to Sign In</span>
+        </button>
+
+        <h2 class="auth-form-title">Create Agency Account</h2>
+        <p class="auth-form-subtitle">Register your tea agency profile on this computer.</p>
+
+        <!-- Business Name -->
+        <div class="auth-field-group">
+          <div class="auth-field-header">
+            <label for="regBizNameInput" class="auth-field-label">Agency / Business Name</label>
+          </div>
+          <div class="auth-input-wrapper compact">
+            <div class="auth-input-prefix">🏢</div>
+            <input 
+              type="text" 
+              id="regBizNameInput" 
+              class="auth-input-elem" 
+              placeholder="e.g. Borbheta Tea Agency" 
+              autocomplete="organization"
+              oninput="loginModule.clearAlert()"
+            >
+          </div>
+        </div>
+
+        <!-- Mobile Number -->
+        <div class="auth-field-group">
+          <div class="auth-field-header">
+            <label for="regMobileInput" class="auth-field-label">10-Digit Mobile Number</label>
+          </div>
+          <div class="auth-input-wrapper compact">
+            <div class="auth-input-prefix">🇮🇳 +91</div>
+            <input 
+              type="tel" 
+              id="regMobileInput" 
+              class="auth-input-elem" 
+              placeholder="10-digit mobile number" 
+              maxlength="10" 
+              autocomplete="tel"
+              oninput="loginModule.onRegMobileInput(this)"
+            >
+          </div>
+        </div>
+
+        <!-- MPIN & Confirm MPIN (Two Columns) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="auth-field-group">
+            <div class="auth-field-header">
+              <label for="regMpinInput" class="auth-field-label">Create MPIN</label>
+            </div>
+            <div class="auth-input-wrapper compact">
+              <div class="auth-input-prefix">🔒</div>
+              <input 
+                type="password" 
+                id="regMpinInput" 
+                class="auth-input-elem mono" 
+                placeholder="6 digits" 
+                maxlength="6"
+                oninput="loginModule.onRegMpinInput(this)"
+              >
+            </div>
+          </div>
+
+          <div class="auth-field-group">
+            <div class="auth-field-header">
+              <label for="regConfMpinInput" class="auth-field-label">Confirm MPIN</label>
+            </div>
+            <div class="auth-input-wrapper compact">
+              <div class="auth-input-prefix">🔐</div>
+              <input 
+                type="password" 
+                id="regConfMpinInput" 
+                class="auth-input-elem mono" 
+                placeholder="6 digits" 
+                maxlength="6"
+                oninput="loginModule.onRegConfMpinInput(this)"
+              >
+            </div>
+          </div>
+        </div>
+
+        <button type="button" id="btnRegisterSubmit" class="auth-btn-primary compact" style="margin-top: 6px;" onclick="loginModule.submitRegistration()">
+          <span id="regSpinner" class="auth-spinner" style="display: none;"></span>
+          <span id="regBtnText">Create Agency Account</span>
+        </button>
+      </div>
+
+      <!-- ==================================================================
+           MODE 3: INLINE PRODUCT LICENSE ACTIVATION
+           ================================================================== -->
+      <div id="authActivationMode" style="display: none;">
+        <button type="button" class="auth-btn-back" onclick="loginModule.showLogin()">
+          <span>← Back to Sign In</span>
+        </button>
+
+        <h2 class="auth-form-title">Product License Activation</h2>
+        <p class="auth-form-subtitle">Enter your 16-character hardware product key to unlock enterprise features.</p>
+
+        <!-- Product Key Input -->
+        <div class="auth-field-group">
+          <div class="auth-field-header">
+            <label for="actKeyInput" class="auth-field-label">Product License Key</label>
+          </div>
+          <div class="auth-input-wrapper">
+            <div class="auth-input-prefix">🔑</div>
+            <input 
+              type="text" 
+              id="actKeyInput" 
+              class="auth-input-elem mono" 
+              placeholder="XXXX-XXXX-XXXX-XXXX" 
+              maxlength="19"
+              oninput="loginModule.onActivationKeyInput(this)"
+            >
+          </div>
+        </div>
+
+        <!-- Official Support & Serial Verification Box -->
+        <div class="auth-desk-box">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <span style="font-size: 11px; font-weight: 700; color: #16a34a; letter-spacing: 0.5px;">OFFICIAL ENTERPRISE DESK</span>
+            <span style="font-size: 11px; color: #64748b;">Toll-Free Assam</span>
+          </div>
+          <div style="font-size: 15px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">
+            +91 8638149032
+          </div>
+          <div style="font-size: 11.5px; color: #64748b; margin-top: 4px; line-height: 1.4;">
+            Don't have a license? Contact our support desk for instant hardware-locked serial generation.
+          </div>
+        </div>
+
+        <button type="button" id="btnActivateSubmit" class="auth-btn-primary" onclick="loginModule.submitActivation()">
+          <span id="actSpinner" class="auth-spinner" style="display: none;"></span>
+          <span id="actBtnText">Activate License Online</span>
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+</section>

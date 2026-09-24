@@ -162,12 +162,7 @@ const reportsModule = {
     const content = document.getElementById('repContentArea');
     if (!content) return;
 
-    content.innerHTML = `
-      <div style="text-align: center; color: var(--text-muted); padding: 50px 0;">
-        <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
-        <div>Compiling executive analytics & intelligence...</div>
-      </div>
-    `;
+    content.innerHTML = app.getLoadingStateHtml('Compiling executive analytics & intelligence...');
 
     const { datePrefix, periodLabel } = this.getDateFilter();
     const selectedOwnerId = document.getElementById('repOwnerSelect')?.value || 'ALL';
@@ -511,7 +506,10 @@ const reportsModule = {
 
   renderVolumeTrendSVG(gardenRows, factoryRows) {
     if (gardenRows.length === 0) {
-      return '<div style="text-align: center; color: var(--text-muted); padding: 40px 0;">No daily collection trends recorded for this period.</div>';
+      return app.getEmptyStateHtml({
+        title: 'No Trends Recorded',
+        message: 'No daily collection trends recorded for this period.'
+      });
     }
 
     const factMap = new Map(factoryRows.map(r => [r.date, r.factory_net]));
@@ -707,9 +705,11 @@ const reportsModule = {
               </tr>
             </thead>
             <tbody>
-              ${auditRows.length === 0 ? `
-                <tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 40px;">No transit data available for this period.</td></tr>
-              ` : auditRows.map(r => {
+              ${auditRows.length === 0 ? 
+                app.getEmptyStateTableRow(10, {
+                  title: 'No Transit Records',
+                  message: 'No transit dispatch data available for this period.'
+                }) : auditRows.map(r => {
                 const isLoss = r.diff < 0;
                 const isHighLoss = r.varPct < -2.5;
                 const statusColor = isHighLoss ? '#ef4444' : (isLoss ? '#f59e0b' : '#10b981');
@@ -1217,9 +1217,11 @@ const reportsModule = {
             </tr>
           </thead>
           <tbody>
-            ${rows.length === 0 ? `
-              <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No deliveries found for this period.</td></tr>
-            ` : rows.map(r => `
+            ${rows.length === 0 ? 
+              app.getEmptyStateTableRow(6, {
+                title: 'No Deliveries Found',
+                message: 'No factory deliveries found for this period.'
+              }) : rows.map(r => `
               <tr style="border-bottom: 1px solid var(--border-subtle);">
                 <td style="padding: 10px 14px;" class="mono">${r.date}</td>
                 <td style="padding: 10px 14px; text-align: right;" class="mono">${Math.round(r.gross_weight_kg)} kg</td>
@@ -1338,9 +1340,11 @@ const reportsModule = {
               </tr>
             </thead>
             <tbody>
-              ${factList.length === 0 ? `
-                <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px;">No registered factories found.</td></tr>
-              ` : factList.map(f => `
+              ${factList.length === 0 ? 
+                app.getEmptyStateTableRow(8, {
+                  title: 'No Factories Found',
+                  message: 'No registered factory delivery records found.'
+                }) : factList.map(f => `
                 <tr style="border-bottom: 1px solid var(--border-subtle); transition: background 0.15s ease;">
                   <td style="padding: 10px 14px; font-weight: 700; color: var(--text-primary);">
                     ${this.escapeHtml(f.name)}
@@ -1566,9 +1570,11 @@ const reportsModule = {
               </tr>
             </thead>
             <tbody>
-              ${expensesList.length === 0 ? `
-                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 40px;">No operational expenses recorded for ${periodLabel}.</td></tr>
-              ` : expensesList.map(e => {
+              ${expensesList.length === 0 ? 
+                app.getEmptyStateTableRow(5, {
+                  title: 'No Expenses Recorded',
+                  message: `No operational expenses recorded for ${periodLabel}.`
+                }) : expensesList.map(e => {
                 const pct = totalSpent > 0 ? ((e.amount / totalSpent) * 100) : 0;
                 return `
                   <tr style="border-bottom: 1px solid var(--border-subtle); transition: background 0.15s ease;">

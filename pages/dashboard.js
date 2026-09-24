@@ -104,6 +104,11 @@ const dashboardModule = {
       if (advVal) advVal.innerText = `₹${pendingAdv.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
       // 7. Today's Collections List
+      const listContainer = document.getElementById('dashTodayCollectionsList');
+      if (listContainer) {
+        listContainer.innerHTML = app.getLoadingStateHtml('Loading today\'s pickups...');
+      }
+
       const todayListRes = await window.electronAPI.db.query(`
         SELECT dc.*, o.name as owner_name 
         FROM daily_collections dc
@@ -123,11 +128,10 @@ const dashboardModule = {
     if (!listContainer) return;
 
     if (!collections || collections.length === 0) {
-      listContainer.innerHTML = `
-        <div style="text-align: center; color: var(--text-muted); padding: 50px 0; font-size: 14px;">
-          No collections recorded today.
-        </div>
-      `;
+      listContainer.innerHTML = app.getEmptyStateHtml({
+        title: 'No Pickups Today',
+        message: 'No leaf collections have been recorded yet today.'
+      });
       return;
     }
 

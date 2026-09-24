@@ -134,6 +134,9 @@ const expensesModule = {
 
     sql += " ORDER BY date DESC, created_at DESC";
 
+    const tbody = document.getElementById('expTableBody');
+    if (tbody) tbody.innerHTML = app.getLoadingStateTableRow(5, 'Loading operating expenses...');
+
     try {
       const res = await window.electronAPI.db.query(sql, params);
       this.expensesList = res?.data || [];
@@ -185,7 +188,10 @@ const expensesModule = {
     if (badge) badge.innerText = `${filtered.length} ${filtered.length === 1 ? 'entry' : 'entries'}`;
 
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 40px;">No expenses recorded for this period.</td></tr>';
+      tbody.innerHTML = app.getEmptyStateTableRow(5, {
+        title: 'No Expenses Recorded',
+        message: 'No operating expenses logged for this period.'
+      });
       return;
     }
 

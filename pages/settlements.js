@@ -15,6 +15,9 @@ window.settlementsModule = {
     const monthStr = String(month).padStart(2, '0');
     const startPattern = `${year}-${monthStr}-%`;
 
+    const tbody = document.getElementById('settlementsTableBody');
+    if (tbody) tbody.innerHTML = app.getLoadingStateTableRow(8, 'Calculating grower settlements...');
+
     const res = await window.electronAPI.db.query(
       `SELECT
          o.id as owner_id,
@@ -41,11 +44,13 @@ window.settlementsModule = {
     const rows = res.data || [];
     const uniformRate = parseFloat(document.getElementById('settleUniformRate')?.value || 0);
 
-    const tbody = document.getElementById('settlementsTableBody');
     if (!tbody) return;
 
     if (rows.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 24px;">No collection data found for this month.</td></tr>`;
+      tbody.innerHTML = app.getEmptyStateTableRow(8, {
+        title: 'No Collections Found',
+        message: 'No collection data found for this month.'
+      });
       return;
     }
 

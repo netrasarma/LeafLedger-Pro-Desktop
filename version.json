@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "mobile_version": "2.0.8",
+  "name": "leaf-ledger-pro",
+  "required": false,
+  "release_date": "2026-09-24",
+  "download_urls": {
+    "windows": "https://leafledger-update-gateway.officialnetrasarma.workers.dev/api/v1/desktop/download/latest",
+    "android": "https://leafledger-update-gateway.officialnetrasarma.workers.dev/api/v1/mobile/download/latest.apk"
+  },
+  "mobile_notes": [
+    "Real-time WebSocket synchronization with Desktop portal",
+    "Instant advance disbursements and repayments",
+    "Enhanced thermal receipt print formatting"
+  ]
+}

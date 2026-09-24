@@ -6,6 +6,7 @@
 const ownersModule = {
   ownersList: [],
   editingId: null,
+  statusFilter: 'all', // 'all', 'active', 'disabled'
 
   async init() {
     await this.loadOwners();
@@ -27,14 +28,14 @@ const ownersModule = {
 
   async loadOwners() {
     const container = document.getElementById('ownersListContainer');
-    if (container) container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px 0;">Loading garden owners...</div>';
+    if (container) container.innerHTML = app.getLoadingStateHtml('Loading garden owners...');
 
     try {
-      // 1. Fetch owners
+      // 1. Fetch all owners (both active and disabled)
       const ownersRes = await window.electronAPI.db.query(
-        "SELECT * FROM owners WHERE is_active = 1 ORDER BY name ASC"
+        "SELECT * FROM owners ORDER BY is_active DESC, name ASC"
       );
-      const owners = ownersRes?.data || [];
+      const owners = Array.isArray(ownersRes) ? ownersRes : (ownersRes?.data || []);
 
       // 2. Fetch advance balances for all owners
       const advTotalRes = await window.electronAPI.db.query(
@@ -44,8 +45,8 @@ const ownersModule = {
         "SELECT owner_id, COALESCE(SUM(advance_deducted), 0) as total_rec FROM monthly_payments GROUP BY owner_id"
       );
 
-      const totalMap = new Map((advTotalRes?.data || []).map(r => [r.owner_id, r.total_adv]));
-      const recMap = new Map((advRecRes?.data || []).map(r => [r.owner_id, r.total_rec]));
+      const totalMap = new Map((Array.isArray(advTotalRes) ? advTotalRes : (advTotalRes?.data || [])).map(r => [r.owner_id, r.total_adv]));
+      const recMap = new Map((Array.isArray(advRecRes) ? advRecRes : (advRecRes?.data || [])).map(r => [r.owner_id, r.total_rec]));
 
       this.ownersList = owners.map(o => {
         const adv = totalMap.get(o.id) || 0;
@@ -54,25 +55,62 @@ const ownersModule = {
         return { ...o, advance_balance: balance };
       });
 
-      this.renderOwners(this.ownersList);
+      // Update filter counts
+      const activeCount = this.ownersList.filter(o => o.is_active === 1 || o.is_active === '1').length;
+      const disabledCount = this.ownersList.length - activeCount;
+      
+      const elAll = document.getElementById('cntAll');
+      if (elAll) elAll.innerText = String(this.ownersList.length);
+      const elAct = document.getElementById('cntActive');
+      if (elAct) elAct.innerText = String(activeCount);
+      const elDis = document.getElementById('cntDisabled');
+      if (elDis) elDis.innerText = String(disabledCount);
+
+      this.filterOwners();
     } catch (e) {
       console.error('[OwnersModule] Load owners error:', e);
       if (container) container.innerHTML = `<div style="text-align: center; color: var(--accent-red); padding: 30px;">Error loading owners: ${e.message}</div>`;
     }
   },
 
+  setStatusFilter(filter) {
+    this.statusFilter = filter;
+    
+    // Update button styles
+    ['tabFilterAll', 'tabFilterActive', 'tabFilterDisabled'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const isActive = (id === 'tabFilterAll' && filter === 'all') ||
+                       (id === 'tabFilterActive' && filter === 'active') ||
+                       (id === 'tabFilterDisabled' && filter === 'disabled');
+      btn.style.background = isActive ? 'var(--bg-card)' : 'transparent';
+      btn.style.color = isActive ? 'var(--text-primary)' : 'var(--text-muted)';
+      btn.style.boxShadow = isActive ? '0 1px 2px rgba(0,0,0,0.06)' : 'none';
+    });
+
+    this.filterOwners();
+  },
+
   filterOwners() {
     const term = (document.getElementById('ownerSearchInput')?.value || '').toLowerCase().trim();
-    if (!term) {
-      this.renderOwners(this.ownersList);
-      return;
+    
+    let filtered = this.ownersList;
+
+    // Apply status filter
+    if (this.statusFilter === 'active') {
+      filtered = filtered.filter(o => o.is_active === 1 || o.is_active === '1');
+    } else if (this.statusFilter === 'disabled') {
+      filtered = filtered.filter(o => o.is_active === 0 || o.is_active === '0');
     }
 
-    const filtered = this.ownersList.filter(o => 
-      (o.name || '').toLowerCase().includes(term) ||
-      (o.phone || '').includes(term) ||
-      (o.address || '').toLowerCase().includes(term)
-    );
+    // Apply search filter
+    if (term) {
+      filtered = filtered.filter(o => 
+        (o.name || '').toLowerCase().includes(term) ||
+        (o.phone || '').includes(term) ||
+        (o.address || '').toLowerCase().includes(term)
+      );
+    }
 
     this.renderOwners(filtered);
   },
@@ -82,17 +120,17 @@ const ownersModule = {
     const countLbl = document.getElementById('ownersCountLabel');
 
     if (countLbl) {
-      countLbl.innerText = `${list.length} owner${list.length === 1 ? '' : 's'} total`;
+      const activeTotal = this.ownersList.filter(o => o.is_active === 1 || o.is_active === '1').length;
+      countLbl.innerText = `${activeTotal} active · ${this.ownersList.length} total`;
     }
 
     if (!container) return;
 
     if (list.length === 0) {
-      container.innerHTML = `
-        <div style="text-align: center; color: var(--text-muted); padding: 50px 0; font-size: 14px;">
-          No garden owners found.
-        </div>
-      `;
+      container.innerHTML = app.getEmptyStateHtml({
+        title: 'No Planters Found',
+        message: 'No registered garden owners match your filter or search query.'
+      });
       return;
     }
 
@@ -106,16 +144,21 @@ const ownersModule = {
       const balBg = bal > 0 ? 'var(--accent-amber-dim)' : 'var(--accent-emerald-dim)';
       const balBorder = bal > 0 ? 'rgba(217, 119, 6, 0.25)' : 'rgba(22, 163, 74, 0.25)';
       const agrDate = o.agreement_date || '—';
+      const isActive = (o.is_active === 1 || o.is_active === '1');
+      const safeName = (o.name || '').replace(/'/g, "\\'");
 
       return `
-        <div style="background: var(--bg-card); border-radius: 10px; padding: 12px 18px; border: 1px solid var(--border-subtle); display: grid; grid-template-columns: 2fr 1.3fr 1.6fr 1.2fr 1.2fr 1fr 1.6fr; gap: 10px; align-items: center; font-size: 13px;">
+        <div style="background: var(--bg-card); border-radius: 10px; padding: 12px 18px; border: 1px solid var(--border-subtle); display: grid; grid-template-columns: 2fr 1.3fr 1.6fr 1.2fr 1.2fr 1fr 1.6fr; gap: 10px; align-items: center; font-size: 13px; opacity: ${isActive ? '1' : '0.72'};">
           
           <!-- Owner & Avatar -->
           <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 36px; height: 36px; border-radius: 50%; background: ${color}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: ${isActive ? color : '#94a3b8'}; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0;">
               ${initials}
             </div>
-            <div style="font-weight: 700; color: var(--text-primary);">${o.name}</div>
+            <div>
+              <div style="font-weight: 700; color: var(--text-primary);">${o.name}</div>
+              ${!isActive ? '<div style="font-size: 10.5px; color: #d97706; font-weight: 600;">Hidden from Dropdowns</div>' : ''}
+            </div>
           </div>
 
           <!-- Phone -->
@@ -134,16 +177,20 @@ const ownersModule = {
             </span>
           </div>
 
-          <!-- Status -->
+          <!-- Status Badge -->
           <div>
-            <span class="badge badge-success" style="font-size: 11px;">Active</span>
+            ${isActive 
+              ? '<span class="badge badge-success" style="font-size: 11px; padding: 2px 8px;">Active</span>' 
+              : '<span style="display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.3);">Disabled</span>'}
           </div>
 
-          <!-- Actions -->
+          <!-- Actions: View, Edit, Disable/Enable (NO DELETE) -->
           <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
-            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 8px; color: var(--accent-emerald);" onclick="ownersModule.openViewDialog('${o.id}')">View</button>
-            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 8px; color: var(--accent-blue);" onclick="ownersModule.openEditDialog('${o.id}')">Edit</button>
-            <button type="button" class="btn btn-danger btn-sm" style="font-size: 11px; padding: 4px 8px;" onclick="ownersModule.deleteOwner('${o.id}', '${o.name}')">✕</button>
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 8px; color: var(--accent-emerald);" onclick="ownersModule.openViewDialog('${o.id}')" title="View Ledger & Receipts">View</button>
+            <button type="button" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 8px; color: var(--accent-blue);" onclick="ownersModule.openEditDialog('${o.id}')" title="Edit Profile Details">Edit</button>
+            ${isActive 
+              ? `<button type="button" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 8px; color: #d97706; border-color: rgba(217, 119, 6, 0.3);" onclick="ownersModule.toggleStatus('${o.id}', '${safeName}', 1)" title="Disable planter from dropdowns">Disable</button>`
+              : `<button type="button" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 8px; color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.3);" onclick="ownersModule.toggleStatus('${o.id}', '${safeName}', 0)" title="Re-enable planter in dropdowns">Enable</button>`}
           </div>
 
         </div>
@@ -193,6 +240,13 @@ const ownersModule = {
   },
 
   async saveOwner() {
+    // Strict commercial license verification
+    const isAct = (await window.electronAPI.db.getSetting('is_activated', '0')) === '1';
+    if (!isAct) {
+      app.showToast('Active license key required to register or edit garden owners.', 'error');
+      return;
+    }
+
     const name = document.getElementById('ownerNameInput')?.value.trim();
     const phone = document.getElementById('ownerPhoneInput')?.value.trim().replace(/\D/g, '').slice(0, 10);
     const address = document.getElementById('ownerAddressInput')?.value.trim();
@@ -239,6 +293,12 @@ const ownersModule = {
 
       app.closeModal('modalAddOwner');
       await this.loadOwners();
+
+      // Refresh intake & advance dropdowns across the application
+      if (window.app?.loadPlanters) {
+        await window.app.loadPlanters();
+      }
+
       window.electronAPI.sync.smartSync('owners');
     } catch (e) {
       console.error('[OwnersModule] Save owner error:', e);
@@ -246,17 +306,41 @@ const ownersModule = {
     }
   },
 
-  async deleteOwner(id, name) {
-    if (!confirm(`Are you sure you want to deactivate and remove ${name}?`)) return;
+  async toggleStatus(id, name, currentActive) {
+    const isAct = (await window.electronAPI.db.getSetting('is_activated', '0')) === '1';
+    if (!isAct) {
+      app.showToast('Active license required to modify garden owner status.', 'error');
+      return;
+    }
+
+    const newStatus = currentActive ? 0 : 1;
+    const actionText = currentActive ? 'disabled' : 'enabled';
+    const confirmMsg = currentActive
+      ? `Disable ${name}?\n\n• They will be hidden from Daily Leaf Intake & Advance dropdowns.\n• All existing leaf receipts and advance history are safely preserved.\n• You can re-enable them anytime from the Disabled tab.`
+      : `Re-enable ${name}?\n\n• They will reappear in Daily Leaf Intake & Advance dropdowns.`;
+
+    if (!confirm(confirmMsg)) return;
 
     try {
-      await window.electronAPI.db.run("UPDATE owners SET is_active = 0, sync_status = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [id]);
-      app.showToast(`Owner ${name} removed.`, 'info');
+      await window.electronAPI.db.run(
+        "UPDATE owners SET is_active = ?, sync_status = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?", 
+        [newStatus, id]
+      );
+      app.showToast(`Owner ${name} ${actionText} successfully.`, 'info');
       await this.loadOwners();
-      window.electronAPI.sync.smartSync('owners');
+
+      // Refresh in-memory planters cache for intake & advance dropdowns
+      if (window.app?.loadPlanters) {
+        await window.app.loadPlanters();
+      }
+
+      // Sync status to cloud immediately so it never reverts
+      if (window.electronAPI?.sync?.smartSync) {
+        window.electronAPI.sync.smartSync('owners');
+      }
     } catch (e) {
-      console.error('[OwnersModule] Delete error:', e);
-      app.showToast(`Error removing owner: ${e.message}`, 'error');
+      console.error('[OwnersModule] Toggle status error:', e);
+      app.showToast(`Error: ${e.message}`, 'error');
     }
   },
 

@@ -55,6 +55,11 @@ const monthlyModule = {
     const monthPrefix = `${y}-${String(m).padStart(2, '0')}`;
     const sid = this.activeSessionId;
 
+    const pTbody = document.getElementById('mPendingTableBody');
+    const cTbody = document.getElementById('mCompletedTableBody');
+    if (pTbody) pTbody.innerHTML = app.getLoadingStateTableRow(8, 'Auditing monthly grower accounts...');
+    if (cTbody) cTbody.innerHTML = app.getLoadingStateTableRow(8, 'Loading completed settlements...');
+
     try {
       // 1. Fetch collections for this month grouped by owner (with missing rate detection)
       let collQuery = `
@@ -181,7 +186,10 @@ const monthlyModule = {
       );
 
       if (filtered.length === 0) {
-        pTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px 0;">No pending payments for this month. All verified!</td></tr>';
+        pTbody.innerHTML = app.getEmptyStateTableRow(8, {
+          title: 'All Accounts Reconciled',
+          message: 'No pending grower payments for this month. All verified!'
+        });
       } else {
         pTbody.innerHTML = filtered.map(o => {
           const hasMissingRates = (o.missing_rate_count || 0) > 0;
@@ -221,7 +229,10 @@ const monthlyModule = {
       );
 
       if (filtered.length === 0) {
-        cTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 40px 0;">No completed transactions recorded yet.</td></tr>';
+        cTbody.innerHTML = app.getEmptyStateTableRow(8, {
+          title: 'No Completed Settlements',
+          message: 'No finalized monthly payout records for this period.'
+        });
       } else {
         cTbody.innerHTML = filtered.map(p => {
           const paidAmt = p.final_paid_amount || p.net_paid || p.net_payable || p.total_amount || 0;
@@ -403,12 +414,38 @@ const monthlyModule = {
 
       if (logTbody) {
         if (rows.length === 0) {
-          logTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px 0;">No leaf collections found for this period.</td></tr>';
+          logTbody.innerHTML = app.getEmptyStateTableRow(7, {
+            title: 'No Collections Recorded',
+            message: 'No leaf collections found for this grower during this billing period.'
+          });
         } else {
           logTbody.innerHTML = rows.map(r => {
             const hasRate = r.rate_per_kg && Number(r.rate_per_kg) > 0;
             const rateStr = hasRate ? `₹${Number(r.rate_per_kg).toFixed(2)}` : '<span style="color: #ef4444; font-weight: 700;">⚠️ 0.00</span>';
             const amtStr = hasRate ? `₹${Math.round(r.amount).toLocaleString('en-IN')}` : '<span style="color: #ef4444; font-weight: 700;">₹0</span>';
+
+            let noteContent = r.notes || '—';
+            let dedBadges = '';
+            if (r.notes && r.notes.includes('Deductions: [')) {
+              const dedPart = r.notes.split('Deductions: [')[1].split(']')[0];
+              const tags = dedPart.split(', ');
+              dedBadges = tags.map(t => {
+                const tClean = t.trim();
+                let cls = 'long';
+                let icon = '<i class="fa-solid fa-leaf"></i>';
+                if (tClean.toLowerCase().includes('wet')) { cls = 'wet'; icon = '<i class="fa-solid fa-droplet"></i>'; }
+                else if (tClean.toLowerCase().includes('hard')) { cls = 'hard'; icon = '<i class="fa-solid fa-shield-halved"></i>'; }
+                return `<span class="deduction-pill ${cls}" style="font-size: 9px; padding: 1px 6px;">${icon} ${tClean}</span>`;
+              }).join(' ');
+
+              const userNote = r.notes.replace(/Deductions: \[.*?\]( \| )?/, '').trim();
+              noteContent = `
+                <div style="display: flex; flex-direction: column; gap: 3px;">
+                  <div style="display: flex; gap: 4px; flex-wrap: wrap;">${dedBadges}</div>
+                  ${userNote ? `<span style="color: var(--text-secondary); font-size: 11px;">${userNote}</span>` : ''}
+                </div>
+              `;
+            }
 
             return `
               <tr>
@@ -418,7 +455,7 @@ const monthlyModule = {
                 <td class="mono" style="color: var(--accent-emerald-light); font-weight: 700;">${Math.round(r.net_weight_kg || 0)}</td>
                 <td class="mono">${rateStr}</td>
                 <td class="mono" style="font-weight: 700;">${amtStr}</td>
-                <td style="color: var(--text-muted); font-size: 11px;">${r.notes || '—'}</td>
+                <td>${noteContent}</td>
               </tr>
             `;
           }).join('');

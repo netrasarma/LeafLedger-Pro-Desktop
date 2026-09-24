@@ -8,7 +8,7 @@ const collectionsModule = {
   editingId: null,
   cachedOwners: [],
   cachedCollections: [],
-  defaultRate: 24.0,
+  defaultRate: 0,
 
   async init() {
     const dateInput = document.getElementById('collDateInput');
@@ -117,7 +117,7 @@ const collectionsModule = {
       }
 
       const rateInput = document.getElementById('collRateInput');
-      if (rateInput && !rateInput.value) {
+      if (rateInput && !this.editingId) {
         rateInput.value = this.defaultRate;
       }
 
@@ -142,10 +142,18 @@ const collectionsModule = {
     const netLbl = document.getElementById('collCalcNetLabel');
     const amtLbl = document.getElementById('collCalcAmountLabel');
     const sumBadge = document.getElementById('collModalSummaryBadge');
+    const sumNet = document.getElementById('collModalSummaryNet');
+    const sumAmt = document.getElementById('collModalSummaryAmt');
 
     if (netLbl) netLbl.innerText = `Net: ${net} kg`;
     if (amtLbl) amtLbl.innerText = `Total: Rs. ${total.toLocaleString('en-IN')}`;
     if (sumBadge) sumBadge.innerText = `${net} kg • ₹${total.toLocaleString('en-IN')}`;
+    if (sumNet) sumNet.innerText = `${net} KG`;
+    if (sumAmt) sumAmt.innerText = `₹${total.toLocaleString('en-IN')}`;
+  },
+
+  toggleDeductionChip(btn) {
+    if (btn) btn.classList.toggle('active');
   },
 
   async openNewEntryModal() {
@@ -160,6 +168,8 @@ const collectionsModule = {
     if (modalDateIn) {
       modalDateIn.value = this.currentDate || new Date().toISOString().split('T')[0];
     }
+
+    document.querySelectorAll('#collDeductionChips .leaf-chip').forEach(c => c.classList.remove('active'));
 
     app.openModal('modalCollectionEntry');
 
@@ -179,6 +189,9 @@ const collectionsModule = {
     if (dateInput && dateInput.value) {
       this.currentDate = dateInput.value;
     }
+
+    const tbody = document.getElementById('collTableBody');
+    if (tbody) tbody.innerHTML = app.getLoadingStateTableRow(10, 'Loading leaf collections...');
 
     try {
       const collsRes = await window.electronAPI.db.query(`
@@ -245,13 +258,10 @@ const collectionsModule = {
     if (badge) badge.innerText = `${filtered.length} ${filtered.length === 1 ? 'entry' : 'entries'}`;
 
     if (filtered.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 50px 0; font-size: 14px;">
-            No collections found for the selected date and filter.
-          </td>
-        </tr>
-      `;
+      tbody.innerHTML = app.getEmptyStateTableRow(10, {
+        title: 'No Leaf Collections Recorded',
+        message: 'No collection entries match your date or staff filter selection.'
+      });
       return;
     }
 
@@ -259,6 +269,7 @@ const collectionsModule = {
 
     tbody.innerHTML = filtered.map((row, idx) => {
       const name = row.owner_name || 'Grower';
+      const phone = row.owner_phone || '';
       const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
       const avColor = AVATAR_COLORS[idx % AVATAR_COLORS.length];
       const timeStr = row.created_at ? new Date(row.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—';
@@ -268,7 +279,48 @@ const collectionsModule = {
       const rate = row.rate_per_kg || 0;
       const amount = Math.round(row.amount || 0);
       const staff = row.collector_name || 'Agent-Computer';
-      const phone = row.owner_phone || '';
+      
+      // Parse deductions from notes (Wet leaves, Long Leaves, Hard Leaves)
+      let dedBadges = '';
+      const rowNotes = row.notes || '';
+      const detectedDeductions = [];
+
+      if (rowNotes.includes('Deductions: [')) {
+        const dedContent = rowNotes.split('Deductions: [')[1].split(']')[0];
+        dedContent.split(', ').forEach(t => {
+          const clean = t.trim();
+          if (clean && !detectedDeductions.includes(clean)) {
+            detectedDeductions.push(clean);
+          }
+        });
+      } else if (rowNotes) {
+        const lower = rowNotes.toLowerCase();
+        if (lower.includes('wet') && !detectedDeductions.some(d => d.toLowerCase().includes('wet'))) {
+          detectedDeductions.push('Wet leaves');
+        }
+        if (lower.includes('hard') && !detectedDeductions.some(d => d.toLowerCase().includes('hard'))) {
+          detectedDeductions.push('Hard Leaves');
+        }
+        if (lower.includes('long') && !detectedDeductions.some(d => d.toLowerCase().includes('long'))) {
+          detectedDeductions.push('Long Leaves');
+        }
+      }
+
+      if (detectedDeductions.length > 0) {
+        dedBadges = detectedDeductions.map(t => {
+          const tClean = t.trim();
+          let cls = 'long';
+          let icon = '<i class="fa-solid fa-leaf"></i>';
+          if (tClean.toLowerCase().includes('wet')) {
+            cls = 'wet';
+            icon = '<i class="fa-solid fa-droplet"></i>';
+          } else if (tClean.toLowerCase().includes('hard')) {
+            cls = 'hard';
+            icon = '<i class="fa-solid fa-shield-halved"></i>';
+          }
+          return `<span class="deduction-pill ${cls}" style="font-size: 10px; padding: 2px 7px;">${icon} ${tClean}</span>`;
+        }).join(' ');
+      }
 
       return `
         <tr>
@@ -280,8 +332,13 @@ const collectionsModule = {
               </div>
               <div>
                 <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">${name}</div>
-                ${phone ? `<div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">${phone}</div>` : ''}
+                ${phone ? `<div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 1px;">${phone}</div>` : ''}
               </div>
+            </div>
+          </td>
+          <td>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+              ${dedBadges || '<span style="color: var(--text-muted); font-size: 11px;">Standard</span>'}
             </div>
           </td>
           <td class="mono" style="text-align: right; font-weight: 600;">${gross} kg</td>
@@ -357,6 +414,13 @@ const collectionsModule = {
   },
 
   async saveEntry() {
+    // Strict license check
+    const isAct = (await window.electronAPI.db.getSetting('is_activated', '0')) === '1';
+    if (!isAct) {
+      app.showToast('Active license required to record leaf collections.', 'error');
+      return;
+    }
+
     const ownerId = document.getElementById('collOwnerSelect')?.value;
     const entryDate = document.getElementById('collModalDateInput')?.value || this.currentDate || new Date().toISOString().split('T')[0];
     const gross = parseFloat(document.getElementById('collGrossInput')?.value) || 0;
@@ -376,6 +440,15 @@ const collectionsModule = {
       return;
     }
 
+    // Extract active leaf deduction chips (Mobile Parity: Wet leaves, Long Leaves, Hard Leaves)
+    const activeChips = Array.from(document.querySelectorAll('#collDeductionChips .leaf-chip.active'))
+      .map(c => c.getAttribute('data-val') || c.innerText.trim());
+
+    let finalNotes = notes;
+    if (activeChips.length > 0) {
+      finalNotes = `Deductions: [${activeChips.join(', ')}]${notes ? ' | ' + notes : ''}`;
+    }
+
     const net = Math.max(0, Math.round(gross * (1 - ded / 100)));
     const amount = Math.round(net * rate);
 
@@ -388,7 +461,7 @@ const collectionsModule = {
           UPDATE daily_collections 
           SET owner_id = ?, date = ?, gross_weight_kg = ?, bag_weight_kg = ?, net_weight_kg = ?, rate_per_kg = ?, amount = ?, collector_name = ?, notes = ?, sync_status = 0, updated_at = CURRENT_TIMESTAMP
           WHERE id = ?
-        `, [ownerId, entryDate, gross, ded, net, rate, amount, staff, notes, this.editingId]);
+        `, [ownerId, entryDate, gross, ded, net, rate, amount, staff, finalNotes, this.editingId]);
 
         app.showToast('Collection entry updated successfully!', 'success');
       } else {
@@ -399,7 +472,7 @@ const collectionsModule = {
         await window.electronAPI.db.run(`
           INSERT INTO daily_collections (id, app_user_id, owner_id, session_id, date, gross_weight_kg, bag_weight_kg, net_weight_kg, rate_per_kg, amount, collector_name, notes, sync_id, sync_status, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
-        `, [id, currentUid, ownerId, sid, entryDate, gross, ded, net, rate, amount, staff, notes, syncId]);
+        `, [id, currentUid, ownerId, sid, entryDate, gross, ded, net, rate, amount, staff, finalNotes, syncId]);
 
         app.showToast('Collection entry saved!', 'success');
       }
@@ -442,7 +515,27 @@ const collectionsModule = {
     if (grossInput) grossInput.value = entry.gross_weight_kg;
     if (dedInput) dedInput.value = entry.bag_weight_kg;
     if (rateInput) rateInput.value = entry.rate_per_kg;
-    if (notesInput) notesInput.value = entry.notes || '';
+
+    // Peel Deductions from notes and activate corresponding chips
+    const activeDeductions = [];
+    let cleanNotes = entry.notes || '';
+    if (cleanNotes.includes('Deductions: [')) {
+      const parts = cleanNotes.split('Deductions: [');
+      const dedContent = parts[1].split(']')[0];
+      dedContent.split(', ').forEach(t => activeDeductions.push(t.trim()));
+      cleanNotes = cleanNotes.replace(/Deductions: \[.*?\]( \| )?/, '');
+    }
+
+    document.querySelectorAll('#collDeductionChips .leaf-chip').forEach(chip => {
+      const val = chip.getAttribute('data-val');
+      if (activeDeductions.includes(val)) {
+        chip.classList.add('active');
+      } else {
+        chip.classList.remove('active');
+      }
+    });
+
+    if (notesInput) notesInput.value = cleanNotes.trim();
     if (staffSelect) staffSelect.value = entry.collector_name || 'Agent-Computer';
 
     this.onOwnerChange();
@@ -480,11 +573,14 @@ const collectionsModule = {
   clearForm() {
     const grossInput = document.getElementById('collGrossInput');
     const dedInput = document.getElementById('collDeducInput');
+    const rateInput = document.getElementById('collRateInput');
     const notesInput = document.getElementById('collNotesInput');
 
     if (grossInput) grossInput.value = '';
     if (dedInput) dedInput.value = '0';
+    if (rateInput) rateInput.value = '0';
     if (notesInput) notesInput.value = '';
+    document.querySelectorAll('#collDeductionChips .leaf-chip').forEach(c => c.classList.remove('active'));
 
     this.updateCalc();
   },
@@ -503,14 +599,49 @@ const collectionsModule = {
     if (title) title.innerText = `Daily Collections Log (${this.currentDate})`;
     if (body) {
       if (this.cachedCollections.length === 0) {
-        body.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: var(--text-muted);">No collections recorded on this date.</td></tr>';
+        body.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 30px; color: var(--text-muted);">No collections recorded on this date.</td></tr>';
       } else {
         body.innerHTML = this.cachedCollections.map(row => {
           const time = row.created_at ? new Date(row.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—';
+          let dedBadges = '';
+          const rowNotes = row.notes || '';
+          const detectedDeductions = [];
+
+          if (rowNotes.includes('Deductions: [')) {
+            const dedContent = rowNotes.split('Deductions: [')[1].split(']')[0];
+            dedContent.split(', ').forEach(t => {
+              const clean = t.trim();
+              if (clean && !detectedDeductions.includes(clean)) detectedDeductions.push(clean);
+            });
+          } else if (rowNotes) {
+            const lower = rowNotes.toLowerCase();
+            if (lower.includes('wet') && !detectedDeductions.some(d => d.toLowerCase().includes('wet'))) detectedDeductions.push('Wet leaves');
+            if (lower.includes('hard') && !detectedDeductions.some(d => d.toLowerCase().includes('hard'))) detectedDeductions.push('Hard Leaves');
+            if (lower.includes('long') && !detectedDeductions.some(d => d.toLowerCase().includes('long'))) detectedDeductions.push('Long Leaves');
+          }
+
+          if (detectedDeductions.length > 0) {
+            dedBadges = detectedDeductions.map(t => {
+              const tClean = t.trim();
+              let cls = 'long';
+              let icon = '<i class="fa-solid fa-leaf"></i>';
+              if (tClean.toLowerCase().includes('wet')) { cls = 'wet'; icon = '<i class="fa-solid fa-droplet"></i>'; }
+              else if (tClean.toLowerCase().includes('hard')) { cls = 'hard'; icon = '<i class="fa-solid fa-shield-halved"></i>'; }
+              return `<span class="deduction-pill ${cls}" style="font-size: 10px; padding: 2px 7px;">${icon} ${tClean}</span>`;
+            }).join(' ');
+          }
+
           return `
             <tr>
               <td class="mono">${time}</td>
-              <td style="font-weight: 700; color: var(--text-primary);">${row.owner_name}</td>
+              <td>
+                <div style="font-weight: 700; color: var(--text-primary);">${row.owner_name}</div>
+              </td>
+              <td>
+                <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+                  ${dedBadges || '<span style="color: var(--text-muted); font-size: 11px;">Standard</span>'}
+                </div>
+              </td>
               <td class="mono">${Math.round(row.gross_weight_kg)} kg</td>
               <td class="mono" style="color: #ef4444;">${Math.round(row.bag_weight_kg)}%</td>
               <td class="mono" style="color: var(--accent-emerald); font-weight: 700;">${Math.round(row.net_weight_kg)} kg</td>
@@ -558,6 +689,7 @@ const collectionsModule = {
         rate: row.rate_per_kg,
         totalAmount: row.amount,
         collectorName: row.collector_name || 'Agent-Computer',
+        notes: row.notes || '',
       };
 
       this._currentPrintConfig = { agentName, agentPhone, agentLocation: agentAddress, signatureDataUrl, authorityName };

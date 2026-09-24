@@ -122,8 +122,8 @@ const ratesModule = {
     const daysScroll = document.getElementById('ratesDaysScrollContainer');
     const ledgerScroll = document.getElementById('ratesLedgerScrollContainer');
 
-    if (daysScroll) daysScroll.innerHTML = '<div style="text-align:center; padding: 40px; color: var(--text-muted); font-size: 13px;">⏳ Loading daily rate records...</div>';
-    if (ledgerScroll) ledgerScroll.innerHTML = '<div style="text-align:center; padding: 40px; color: var(--text-muted); font-size: 13px;">⏳ Calculating monthly audit ledger...</div>';
+    if (daysScroll) daysScroll.innerHTML = app.getLoadingStateHtml('Loading daily rate records...');
+    if (ledgerScroll) ledgerScroll.innerHTML = app.getLoadingStateHtml('Calculating monthly audit ledger...');
 
     try {
       const res = await window.electronAPI.collections.getMonthlySummary(month, year);
@@ -407,31 +407,60 @@ const ratesModule = {
 
     if (title) title.innerText = `Collections Breakdown — ${dateStr}`;
     if (sub) sub.innerText = `${slipCount} garden owner collection receipt${slipCount === 1 ? '' : 's'} recorded`;
-    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">⏳ Loading farmer slips...</td></tr>';
+    if (tbody) tbody.innerHTML = app.getLoadingStateTableRow(7, 'Loading farmer slips...');
 
     app.openModal('ratesDayInspectorModal');
 
     try {
-      const rows = await window.electronAPI.db.query(
-        `SELECT id, created_at, owner_name, gross_weight_kg, bag_weight_kg, net_weight_kg, rate_per_kg, amount
-         FROM daily_collections
-         WHERE date = ?
-         ORDER BY created_at ASC`,
+      const res = await window.electronAPI.db.query(
+        `SELECT dc.id, dc.created_at, COALESCE(o.name, 'Unknown Grower') as owner_name,
+                dc.gross_weight_kg, dc.bag_weight_kg, dc.net_weight_kg, dc.rate_per_kg, dc.amount, dc.notes
+         FROM daily_collections dc
+         LEFT JOIN owners o ON dc.owner_id = o.id
+         WHERE dc.date = ?
+         ORDER BY dc.created_at ASC`,
         [dateStr]
       );
 
+      if (res && res.error) {
+        throw new Error(res.error);
+      }
+
+      const rows = Array.isArray(res) ? res : (res?.data || []);
+
       if (!rows || rows.length === 0) {
-        if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">No records found.</td></tr>';
+        if (tbody) tbody.innerHTML = app.getEmptyStateTableRow(7, {
+          title: 'No Collection Slips',
+          message: 'No individual grower slips recorded for this date.'
+        });
         return;
       }
 
       let html = '';
       rows.forEach(r => {
         const time = r.created_at ? new Date(r.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—';
+        let dedBadges = '';
+        const rowNotes = r.notes || '';
+        if (rowNotes.includes('Deductions: [')) {
+          const dedContent = rowNotes.split('Deductions: [')[1].split(']')[0];
+          const tags = dedContent.split(', ');
+          dedBadges = tags.map(t => {
+            const tClean = t.trim();
+            let cls = 'long';
+            let icon = '<i class="fa-solid fa-leaf"></i>';
+            if (tClean.toLowerCase().includes('wet')) { cls = 'wet'; icon = '<i class="fa-solid fa-droplet"></i>'; }
+            else if (tClean.toLowerCase().includes('hard')) { cls = 'hard'; icon = '<i class="fa-solid fa-shield-halved"></i>'; }
+            return `<span class="deduction-pill ${cls}" style="font-size: 9px; padding: 1px 6px;">${icon} ${tClean}</span>`;
+          }).join(' ');
+        }
+
         html += `
           <tr style="border-bottom: 1px solid var(--border-subtle); font-size: 12px;">
             <td style="padding: 8px; font-family: var(--font-mono); color: var(--text-muted);">${time}</td>
-            <td style="padding: 8px; font-weight: 700; color: var(--text-primary);">${r.owner_name}</td>
+            <td style="padding: 8px;">
+              <div style="font-weight: 700; color: var(--text-primary);">${r.owner_name}</div>
+              ${dedBadges ? `<div style="margin-top: 2px; display: flex; gap: 4px; flex-wrap: wrap;">${dedBadges}</div>` : ''}
+            </td>
             <td style="padding: 8px; text-align: right; font-family: var(--font-mono); color: var(--accent-blue);">${Math.round(r.gross_weight_kg)} kg</td>
             <td style="padding: 8px; text-align: center; font-family: var(--font-mono); color: var(--accent-amber);">${Number(r.bag_weight_kg).toFixed(1)}%</td>
             <td style="padding: 8px; text-align: right; font-family: var(--font-mono); color: var(--accent-emerald-light); font-weight: 700;">${Math.round(r.net_weight_kg)} kg</td>

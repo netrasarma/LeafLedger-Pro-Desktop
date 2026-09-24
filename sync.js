@@ -35,7 +35,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-
 
 const TABLE_SCHEMAS = {
   factories: ['id', 'app_user_id', 'name', 'address', 'phone', 'is_active', 'sync_id', 'created_at', 'updated_at'],
-  owners: ['id', 'app_user_id', 'name', 'phone', 'address', 'bank_name', 'account_holder_name', 'bank_acc', 'bank_ifsc', 'notes', 'agreement_date', 'portal_pin', 'sync_id', 'created_at', 'updated_at'],
+  owners: ['id', 'app_user_id', 'name', 'phone', 'address', 'bank_name', 'account_holder_name', 'bank_acc', 'bank_ifsc', 'notes', 'agreement_date', 'portal_pin', 'is_active', 'sync_id', 'created_at', 'updated_at'],
   daily_collections: ['id', 'app_user_id', 'owner_id', 'session_id', 'date', 'gross_weight_kg', 'bag_weight_kg', 'net_weight_kg', 'rate_per_kg', 'amount', 'notes', 'meta', 'collector_name', 'staff_id', 'sync_id', 'created_at', 'updated_at'],
   factory_collections: ['id', 'app_user_id', 'session_id', 'factory_name', 'factory_id', 'date', 'gross_weight_kg', 'bag_weight_kg', 'net_weight_kg', 'rate_per_kg', 'amount', 'notes', 'sync_id', 'created_at', 'updated_at'],
   expenses: ['id', 'app_user_id', 'session_id', 'date', 'category', 'amount', 'notes', 'sync_id', 'created_at', 'updated_at'],
@@ -1105,6 +1105,75 @@ class SyncEngine extends EventEmitter {
       clearInterval(this._heartbeatTimer);
       this._heartbeatTimer = null;
     }
+  }
+
+  /**
+   * Fetches dynamic mobile app APK download URL and version from Supabase app_metadata
+   * Eliminates need to update desktop software whenever mobile app APK updates.
+   */
+  async getMobileAppDownloadInfo() {
+    let resultUrl = null;
+    let resultVersion = null;
+
+    if (this.client) {
+      try {
+        const { data, error } = await this.client
+          .from('app_metadata')
+          .select('key, value');
+
+        if (!error && Array.isArray(data) && data.length > 0) {
+          for (const item of data) {
+            const k = (item.key || '').trim().toLowerCase();
+            const v = item.value;
+            if (!v) continue;
+
+            if (['mobile_apk_url', 'mobile_app_url', 'mobile_drive_url', 'mobile_url', 'apk_url'].includes(k)) {
+              resultUrl = String(v).trim();
+            } else if (['mobile_version', 'mobile_app_version', 'app_version'].includes(k)) {
+              resultVersion = String(v).trim();
+            } else if (k === 'mobile_app' || k === 'mobile_config' || k === 'mobile_info') {
+              try {
+                const parsed = typeof v === 'string' ? JSON.parse(v) : v;
+                if (parsed.url || parsed.apk_url || parsed.download_url || parsed.mobile_url) {
+                  resultUrl = parsed.url || parsed.apk_url || parsed.download_url || parsed.mobile_url;
+                }
+                if (parsed.version || parsed.mobile_version) {
+                  resultVersion = parsed.version || parsed.mobile_version;
+                }
+              } catch (_) {}
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[SyncEngine] Error querying app_metadata for mobile app:', err.message);
+      }
+    }
+
+    if (resultUrl && this.localDb) {
+      try {
+        this.localDb.setSetting('cached_mobile_apk_url', resultUrl);
+        if (resultVersion) this.localDb.setSetting('cached_mobile_apk_version', resultVersion);
+      } catch (_) {}
+      return { url: resultUrl, version: resultVersion, source: 'supabase' };
+    }
+
+    // Check cached value from local SQLite
+    if (this.localDb) {
+      try {
+        const cachedUrl = this.localDb.getSetting('cached_mobile_apk_url', '');
+        const cachedVersion = this.localDb.getSetting('cached_mobile_apk_version', '');
+        if (cachedUrl) {
+          return { url: cachedUrl, version: cachedVersion, source: 'cache' };
+        }
+      } catch (_) {}
+    }
+
+    // Ultimate fallback default
+    return {
+      url: 'https://drive.google.com/uc?export=download&id=1VXKZ0t7IMsevOAA1uBytAJqmuAKTO62E',
+      version: '2.0.7',
+      source: 'default',
+    };
   }
 }
 

@@ -512,6 +512,11 @@ function registerIpcHandlers() {
     return true;
   });
 
+  ipcMain.handle('sync:getMobileAppInfo', async () => {
+    if (!syncEngine) return { url: 'https://drive.google.com/uc?export=download&id=1VXKZ0t7IMsevOAA1uBytAJqmuAKTO62E', version: '2.0.7', source: 'default' };
+    return await syncEngine.getMobileAppDownloadInfo();
+  });
+
   // --- Auth & Account IPC ---
   ipcMain.handle('auth:signIn', async (_, { phone, password }) => {
     const res = await syncEngine.signIn(phone, password);
@@ -767,77 +772,115 @@ function startUpdateDownload(remoteVersion, downloadUrl) {
 }
 
 function checkForUpdates(isManual = false) {
-  const token = secrets.GITHUB_TOKEN;
-  const headers = {
-    'User-Agent': 'Leaf-Ledger-Pro-Desktop',
-    'Accept': 'application/vnd.github.v3+json',
-  };
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  const currentVersion = app.getVersion();
+
+  function promptUpdate(remoteVersion, downloadUrl, changelog) {
+    if (isNewerVersion(currentVersion, remoteVersion)) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        buttons: ['Update Now', 'Later'],
+        title: 'Leaf Ledger Pro Update Available',
+        message: `A new version of Leaf Ledger Pro (v${remoteVersion}) is available!`,
+        detail: changelog || 'This update contains critical improvements and new features.',
+        defaultId: 0,
+        cancelId: 1,
+      }).then((res) => {
+        if (res.response === 0) {
+          startUpdateDownload(remoteVersion, downloadUrl);
+        }
+      });
+    } else if (isManual) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'info',
+        buttons: ['OK'],
+        title: 'Leaf Ledger Pro Up to Date',
+        message: 'You are using the latest version.',
+        detail: `Leaf Ledger Pro v${currentVersion} is currently up to date.`,
+      });
+    }
   }
 
-  const options = {
-    hostname: 'api.github.com',
-    path: '/repos/netrasarma/LeafLedger-Pro-Desktop/releases/latest',
-    headers,
-  };
+  // 1. Try Cloudflare Worker Gateway first (Zero-token client architecture)
+  const defaultGateway = 'https://leafledger-update-gateway.officialnetrasarma.workers.dev';
+  const gatewayUrl = (db ? db.getSetting('update_gateway_url', defaultGateway) : defaultGateway).trim();
 
-  https.get(options, (res) => {
-    let data = '';
-    res.on('data', (c) => { data += c; });
-    res.on('end', () => {
-      if (res.statusCode === 200) {
-        try {
-          const release = JSON.parse(data);
-          const currentVersion = app.getVersion();
-          const remoteTag = release.tag_name || release.name || '';
-          const remoteVersion = remoteTag.replace(/^v/, '');
+  if (gatewayUrl) {
+    try {
+      const parsedGwy = new URL('/api/v1/desktop/latest', gatewayUrl);
+      const proto = parsedGwy.protocol === 'https:' ? https : http;
+      const gwyReq = proto.get(parsedGwy.toString(), { headers: { 'User-Agent': 'Leaf-Ledger-Pro-Desktop' } }, (res) => {
+        if (res.statusCode === 200) {
+          let body = '';
+          res.on('data', c => { body += c; });
+          res.on('end', () => {
+            try {
+              const info = JSON.parse(body);
+              if (info.version && info.downloadUrl) {
+                return promptUpdate(info.version, info.downloadUrl, info.changelog);
+              }
+            } catch (_) {}
+            fallbackToGitHub();
+          });
+        } else {
+          fallbackToGitHub();
+        }
+      });
+      gwyReq.on('error', () => fallbackToGitHub());
+      return;
+    } catch (_) {
+      fallbackToGitHub();
+    }
+  } else {
+    fallbackToGitHub();
+  }
 
-          if (isNewerVersion(currentVersion, remoteVersion)) {
+  // 2. Fallback to Direct GitHub API (using XOR token in secrets.js)
+  function fallbackToGitHub() {
+    const token = secrets.GITHUB_TOKEN;
+    const headers = {
+      'User-Agent': 'Leaf-Ledger-Pro-Desktop',
+      'Accept': 'application/vnd.github.v3+json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const options = {
+      hostname: 'api.github.com',
+      path: '/repos/netrasarma/LeafLedger-Pro-Desktop/releases/latest',
+      headers,
+    };
+
+    https.get(options, (res) => {
+      let data = '';
+      res.on('data', (c) => { data += c; });
+      res.on('end', () => {
+        if (res.statusCode === 200) {
+          try {
+            const release = JSON.parse(data);
+            const remoteTag = release.tag_name || release.name || '';
+            const remoteVersion = remoteTag.replace(/^v/, '');
             const exeAsset = (release.assets || []).find(a => a.name.endsWith('.exe')) || release.assets?.[0];
-            // Prefer API endpoint for authenticated binary asset streaming in private repos
             const downloadUrl = (exeAsset && exeAsset.url) ? exeAsset.url : (exeAsset ? exeAsset.browser_download_url : release.html_url);
 
-            dialog.showMessageBox(mainWindow, {
-              type: 'info',
-              buttons: ['Update Now', 'Later'],
-              title: 'Leaf Ledger Pro Update Available',
-              message: `A new version of Leaf Ledger Pro (v${remoteVersion}) is available!`,
-              detail: release.body || 'This update contains critical improvements and new features.',
-              defaultId: 0,
-              cancelId: 1,
-            }).then((res) => {
-              if (res.response === 0 && exeAsset) {
-                startUpdateDownload(remoteVersion, downloadUrl);
-              } else if (res.response === 0) {
-                shell.openExternal(downloadUrl);
-              }
-            });
-          } else if (isManual) {
-            dialog.showMessageBox(mainWindow, {
-              type: 'info',
-              buttons: ['OK'],
-              title: 'Leaf Ledger Pro Up to Date',
-              message: 'You are using the latest version.',
-              detail: `Leaf Ledger Pro v${currentVersion} is currently up to date.`,
-            });
+            promptUpdate(remoteVersion, downloadUrl, release.body);
+          } catch (e) {
+            if (isManual) dialog.showErrorBox('Update Check Failed', 'Could not parse update release details.');
           }
-        } catch (e) {
-          if (isManual) dialog.showErrorBox('Update Check Failed', 'Could not parse update release details.');
+        } else if (isManual) {
+          dialog.showMessageBox(mainWindow, {
+            type: 'info',
+            buttons: ['OK'],
+            title: 'Update Check',
+            message: 'No new updates found.',
+            detail: `Leaf Ledger Pro v${currentVersion} is the current active version.`,
+          });
         }
-      } else if (isManual) {
-        dialog.showMessageBox(mainWindow, {
-          type: 'info',
-          buttons: ['OK'],
-          title: 'Update Check',
-          message: 'No new updates found.',
-          detail: `Leaf Ledger Pro v${app.getVersion()} is the current active version.`,
-        });
-      }
+      });
+    }).on('error', (err) => {
+      if (isManual) dialog.showErrorBox('Update Connection Error', `Could not connect to update release server:\n${err.message}`);
     });
-  }).on('error', (err) => {
-    if (isManual) dialog.showErrorBox('Update Connection Error', `Could not connect to update release server:\n${err.message}`);
-  });
+  }
 }
 
 app.whenReady().then(() => {

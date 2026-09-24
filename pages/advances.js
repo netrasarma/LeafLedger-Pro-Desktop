@@ -161,7 +161,10 @@ const advancesModule = {
     });
 
     if (owners.length === 0) {
-      listEl.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 50px 0;">No owner ledger entries match this criteria.</div>';
+      listEl.innerHTML = app.getEmptyStateHtml({
+        title: 'No Planters Found',
+        message: 'No owner ledger entries match this criteria.'
+      });
       return;
     }
 
@@ -245,7 +248,10 @@ const advancesModule = {
       if (!tbody) return;
 
       if (combined.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">No advance transactions for this owner.</td></tr>';
+        tbody.innerHTML = app.getEmptyStateTableRow(5, {
+          title: 'No Advance Records',
+          message: 'No advance transactions recorded for this owner.'
+        });
         return;
       }
 
@@ -283,6 +289,13 @@ const advancesModule = {
   },
 
   async saveAdvance() {
+    // Strict license check
+    const isAct = (await window.electronAPI.db.getSetting('is_activated', '0')) === '1';
+    if (!isAct) {
+      app.showToast('Active license required to issue planter advances.', 'error');
+      return;
+    }
+
     const ownerId = document.getElementById('advOwnerSelect')?.value;
     const amount = parseFloat(document.getElementById('advAmountInput')?.value);
     const date = document.getElementById('advDateInput')?.value || new Date().toISOString().split('T')[0];

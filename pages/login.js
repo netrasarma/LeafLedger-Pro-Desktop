@@ -44,6 +44,19 @@ class LoginModule {
 
     // Check database connection indicator
     this.checkDbStatus();
+    this.updateVersionDisplay();
+  }
+
+  async updateVersionDisplay() {
+    try {
+      if (window.electronAPI?.system?.getAppVersion) {
+        const ver = await window.electronAPI.system.getAppVersion();
+        const badge = document.getElementById('loginAppVersionBadge');
+        if (badge) {
+          badge.textContent = `v${ver} Enterprise`;
+        }
+      }
+    } catch (_) {}
   }
 
   async checkDbStatus() {
@@ -194,6 +207,28 @@ class LoginModule {
           await window.electronAPI.db.setSetting('last_login_username', isRem ? mobile : '');
         }
 
+        // Strict License Gating: Verify active commercial license before workspace admission
+        let isActivated = false;
+        if (res.activation && res.activation.isActivated) {
+          isActivated = true;
+        } else {
+          const licStatus = await window.electronAPI.security?.getLicenseStatus?.();
+          const dbAct = (await window.electronAPI.db?.getSetting('is_activated', '0')) === '1';
+          isActivated = Boolean(licStatus?.isActivated || dbAct);
+        }
+
+        if (!isActivated) {
+          this.setButtonLoading('btnLoginSubmit', 'loginSpinner', 'loginBtnText', false, 'Sign In to Agency Portal ➔');
+          this.showAlert('warning', 'Commercial License Required: This workstation is not activated.');
+
+          // Switch immediately to License Activation screen
+          setTimeout(() => {
+            this.showActivation();
+            this.showAlert('warning', 'Commercial License Required: Please enter your 16-character product key to activate this workstation and unlock Leaf Ledger Pro.');
+          }, 500);
+          return;
+        }
+
         this.showAlert('success', '✓ Access Granted! Initializing executive workspace...');
         
         const btnText = document.getElementById('loginBtnText');
@@ -332,9 +367,10 @@ class LoginModule {
   async submitActivation() {
     const actIn = document.getElementById('actKeyInput');
     const key = actIn?.value.trim() || '';
+    const cleanChars = key.replace(/[^A-Za-z0-9]/g, '');
 
-    if (!key || key.length < 19) {
-      this.showAlert('error', 'Please enter the complete 16-character hardware product key.');
+    if (!cleanChars || cleanChars.length < 16) {
+      this.showAlert('error', 'Please enter a complete product license key (at least 16 alphanumeric characters).');
       actIn?.focus();
       return;
     }
@@ -342,13 +378,29 @@ class LoginModule {
     this.setButtonLoading('btnActivateSubmit', 'actSpinner', 'actBtnText', true, 'Validating License Key...');
 
     try {
-      const res = await window.electronAPI.security.validateLicense(key);
+      let res = await window.electronAPI.security.validateLicense(key);
+      
+      // Fallback verification against Supabase activation_keys if user profile exists
+      if (!res || !res.valid) {
+        const currentUser = await window.electronAPI.auth.getCurrentUser();
+        if (currentUser?.id) {
+          const actRes = await window.electronAPI.auth.verifyActivationKey(key, currentUser.id);
+          if (actRes && actRes.success) {
+            res = { valid: true, message: actRes.message };
+          }
+        }
+      }
+
       if (res && res.valid) {
         if (window.electronAPI?.db?.setSetting) {
           await window.electronAPI.db.setSetting('is_activated', '1');
         }
+        if (window.app?.checkLicenseStatus) {
+          await window.app.checkLicenseStatus();
+        }
         this.showLogin();
-        this.showAlert('success', '✓ Enterprise License Activated Successfully!');
+        this.showAlert('success', '✓ Enterprise License Activated! Please enter your MPIN to open workspace.');
+        document.getElementById('loginMpinInput')?.focus();
       } else {
         this.showAlert('error', res?.message || 'Invalid or expired hardware product key. Contact official support.');
       }

@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
   <script>
     (function() {
@@ -166,7 +167,7 @@
           <div class="operator-avatar" id="operatorAvatarDisplay">AG</div>
           <div class="operator-info">
             <div id="operatorNameDisplay" class="operator-name">Tea Agent</div>
-            <div id="licenseBadgeDisplay" class="operator-role">v2.8.7 Enterprise</div>
+            <div id="licenseBadgeDisplay" data-app-version="v{version} Enterprise" class="operator-role">v1.0.0 Enterprise</div>
           </div>
           <button class="btn btn-secondary btn-sm" style="padding: 6px 8px;" title="Sign Out" onclick="app.signOut()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -282,7 +283,7 @@
 
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px;">
             <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 16px;">🏷️</span>
+              <img src="assets/sidebar/rates.png" style="width: 18px; height: 18px; object-fit: contain;" alt="Rates">
               <span style="font-weight: 600; font-size: 13px; color: var(--text-primary);">Rates & Pricing Desk</span>
             </div>
             <kbd class="shortcut-kbd" style="font-size: 12px; padding: 4px 10px;">F5</kbd>

@@ -451,13 +451,9 @@
         <div class="settings-card">
           <div class="settings-card-header">
             <h3 class="settings-card-title">SOFTWARE INFORMATION</h3>
-            <p class="settings-card-subtitle">You are running Leaf Ledger Pro v2.8.7</p>
+            <p id="softwareVersionSubtitle" data-app-version="You are running Leaf Ledger Pro v{version}" class="settings-card-subtitle">Checking version...</p>
           </div>
           <div class="settings-card-divider"></div>
-
-          <div style="display: flex; align-items: center; gap: 10px; background: var(--bg-input); border: 1px solid var(--accent-green); border-radius: 10px; padding: 12px 18px; margin-bottom: 20px;">
-            <span style="font-size: 11px; font-weight: 700; color: var(--accent-green);">● CLOUD CONNECTED</span>
-          </div>
 
           <button class="btn btn-primary" style="padding: 12px 28px; font-weight: 700; font-size: 14px;" onclick="settingsModule.checkForUpdates()">
             🔍 Check for Updates Now
@@ -488,15 +484,15 @@
               </p>
 
               <div style="background: #ffffff; padding: 14px; border-radius: 12px; display: inline-block; margin-bottom: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://drive.google.com/uc?export=download%26id=1VXKZ0t7IMsevOAA1uBytAJqmuAKTO62E" style="width: 160px; height: 160px; display: block;" alt="Leaf Ledger Pro Mobile QR">
+                <img id="mobileQrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://drive.google.com/uc?export=download%26id=1VXKZ0t7IMsevOAA1uBytAJqmuAKTO62E" style="width: 160px; height: 160px; display: block;" alt="Leaf Ledger Pro Mobile QR">
               </div>
 
               <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button class="btn btn-primary" style="width: 100%; height: 42px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;" onclick="settingsModule.downloadApk('mobile')">
+                <button id="btnDownloadApk" class="btn btn-primary" style="width: 100%; height: 42px; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;" onclick="settingsModule.downloadApk('mobile')">
                   <span>📥</span>
-                  <span>Download Mobile APK</span>
+                  <span id="btnDownloadApkText">Download Mobile APK</span>
                 </button>
-                <div style="font-size: 11px; color: var(--text-muted);">
+                <div id="mobileAppVersionSubtext" style="font-size: 11px; color: var(--text-muted);">
                   Compatible with Android 8.0+ &bull; Weighing scale bluetooth ready
                 </div>
               </div>
@@ -527,6 +523,7 @@
                 <span style="font-size: 10px; font-weight: 800; background: var(--accent-emerald); color: #fff; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.6px;">ENTERPRISE EDITION</span>
                 <span style="font-size: 10px; font-weight: 700; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 2px 8px; border-radius: 4px;">COMMERCIAL RELEASE</span>
                 <span style="font-size: 10px; font-weight: 700; background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 8px; border-radius: 4px;">ASSAM HERITAGE 🇮🇳</span>
+                <span style="font-size: 10px; font-weight: 800; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.35); padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px;">AN INITIATIVE BY ONESTOP E-SOLUTIONS</span>
               </div>
               <h2 style="font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px; letter-spacing: -0.4px;">
                 Leaf Ledger Pro
@@ -540,7 +537,7 @@
           <div class="settings-card-divider" style="margin: 18px 0 16px;"></div>
 
           <p style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.8; margin: 0;">
-            <b>Leaf Ledger Pro</b> is a dedicated agri-business software enterprise established in Assam, India—the heartland of world tea production. Our organization is committed to transforming how tea leaves are collected, accounted for, and settled across the tea value chain. We bridge traditional tea estate practices with modern commercial automation, empowering bought-leaf agents, estate managers, and smallholder growers with total transparency, zero calculation disputes, and reliable financial management.
+            <b>Leaf Ledger Pro</b> is an enterprise agri-business software platform established in Assam, India—an initiative conceptualized, engineered, and powered by <b>Onestop E-solutions</b>. Our organization is committed to transforming how tea leaves are collected, accounted for, and settled across the tea value chain. We bridge traditional tea estate practices with modern commercial automation, empowering bought-leaf agents, estate managers, and smallholder growers with total transparency, zero calculation disputes, and reliable financial management.
           </p>
         </div>
 
@@ -725,11 +722,11 @@
 
           <div style="border-top: 1px solid var(--border-subtle); padding-top: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
             <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
-              <b>Leaf Ledger Pro Commercial Enterprise</b> &bull; Developed with pride for the Tea Plantation Industry of Assam & North-East India 🇮🇳.<br>
-              Founder: <b>Netra Prasad Sarma</b> &bull; Official Email: <a href="mailto:support@leafledgerpro.com" style="color: var(--accent-emerald); text-decoration: none;">support@leafledgerpro.com</a>
+              <b>Leaf Ledger Pro Commercial Enterprise</b> &bull; An Initiative by <b>Onestop E-solutions</b> &bull; Developed with pride for the Tea Plantation Industry of Assam & North-East India 🇮🇳.<br>
+              Founder & Lead Architect: <b>Netra Prasad Sarma</b> &bull; Official Email: <a href="mailto:support@leafledgerpro.com" style="color: var(--accent-emerald); text-decoration: none;">support@leafledgerpro.com</a>
             </div>
             <div style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); text-align: right;">
-              &copy; 2026 Leaf Ledger Pro. All rights reserved.<br>
+              &copy; 2026 Leaf Ledger Pro &bull; Onestop E-solutions. All rights reserved.<br>
               <span style="font-size: 10.5px; color: var(--text-muted);">Confidential & Commercial Proprietary Platform</span>
             </div>
           </div>

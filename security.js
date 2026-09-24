@@ -224,10 +224,23 @@ class LicenseManager {
     let expiryDate = this.vault ? this.vault.get('expiry_date') || '' : '';
     let customerName = this.vault ? this.vault.get('customer_name') || '' : '';
 
-    if (this.db) {
-      if (!isActivated) {
-        isActivated = this.db.getSetting('is_activated', '0') === '1';
+    // Anti-Tamper: Verify SQLite settings with hardware HMAC signature to prevent manual DB edits
+    if (!isActivated && this.db) {
+      const dbAct = this.db.getSetting('is_activated', '0') === '1';
+      const sig = this.db.getSetting('activation_sig', '');
+      const dbLic = this.db.getSetting('active_license', '');
+      if (dbAct && sig && dbLic) {
+        const expectedSig = crypto.createHmac('sha256', machineId).update(`${dbLic}_1_LLP_SECURE`).digest('hex');
+        if (sig === expectedSig) {
+          isActivated = true;
+          licenseKey = dbLic;
+        } else {
+          console.warn('[Security] SQLite database tampering detected: invalid activation signature.');
+        }
       }
+    }
+
+    if (this.db) {
       if (!licenseKey) {
         licenseKey = this.db.getSetting('active_license', '');
       }
@@ -258,8 +271,11 @@ class LicenseManager {
     const hwid = getMachineId();
     const cleanKey = (licenseKey || '').trim().toUpperCase();
 
-    // Development/Bypass master key support for emergency recovery
-    if (cleanKey === 'LLP-MASTER-PRO-2026-DEV') {
+    // Emergency dev override strictly restricted to non-production dev environments
+    const { app } = require('electron');
+    const isDev = (!app || !app.isPackaged) && process.env.NODE_ENV !== 'production';
+    if (isDev && cleanKey === 'LLP-MASTER-PRO-2026-DEV') {
+      const hmacSig = crypto.createHmac('sha256', hwid).update(`${cleanKey}_1_LLP_SECURE`).digest('hex');
       if (this.vault) {
         this.vault.set('is_activated', 'true');
         this.vault.set('license_key', cleanKey);
@@ -271,6 +287,7 @@ class LicenseManager {
         this.db.setSetting('is_activated', '1');
         this.db.setSetting('active_license', cleanKey);
         this.db.setSetting('expiry_date', 'Lifetime');
+        this.db.setSetting('activation_sig', hmacSig);
       }
       return { success: true, valid: true, message: 'Master Developer License Activated' };
     }
@@ -279,37 +296,75 @@ class LicenseManager {
       return { success: false, valid: false, message: 'Please enter a valid License Key' };
     }
 
-    // Try cloud validation if client available
+    // Cloud validation against Supabase (supports both 'licenses' and 'activation_keys' tables)
     if (this.client) {
       try {
-        const { data, error } = await this.client
-          .from('licenses')
-          .select('*')
-          .eq('license_key', cleanKey)
-          .single();
+        let licRecord = null;
+        let sourceTable = 'licenses';
 
-        if (error || !data) {
+        // 1. Check licenses table
+        try {
+          const { data, error } = await this.client
+            .from('licenses')
+            .select('*')
+            .eq('license_key', cleanKey)
+            .maybeSingle();
+          if (data && !error) {
+            licRecord = data;
+            sourceTable = 'licenses';
+          }
+        } catch (_) {}
+
+        // 2. If not found in licenses, check activation_keys table
+        if (!licRecord) {
+          try {
+            const { data: actKeys } = await this.client
+              .from('activation_keys')
+              .select('*')
+              .eq('key', cleanKey)
+              .limit(1);
+            if (actKeys && actKeys.length > 0) {
+              const k = actKeys[0];
+              licRecord = {
+                id: k.id,
+                license_key: k.key,
+                customer_name: k.customer_name || 'Enterprise Client',
+                expiry_date: k.expiry_date,
+                is_active: k.is_active !== false,
+                machine_id: k.machine_id,
+              };
+              sourceTable = 'activation_keys';
+            }
+          } catch (_) {}
+        }
+
+        if (!licRecord) {
           return { success: false, valid: false, message: 'Invalid or unrecognized License Key' };
         }
 
-        if (data.is_active === false) {
+        if (licRecord.is_active === false) {
           return { success: false, valid: false, message: 'This License Key has been suspended or deactivated' };
         }
 
-        if (data.machine_id && data.machine_id !== hwid) {
+        if (licRecord.machine_id && licRecord.machine_id !== hwid) {
           return { success: false, valid: false, message: 'This License is locked to a different computer hardware ID' };
         }
 
         // Lock to this machine
-        if (!data.machine_id) {
+        if (!licRecord.machine_id) {
+          const matchCol = sourceTable === 'licenses' ? 'id' : 'id';
+          const updatePayload = sourceTable === 'licenses'
+            ? { machine_id: hwid, activated_at: new Date().toISOString() }
+            : { machine_id: hwid, activation_date: new Date().toISOString() };
           await this.client
-            .from('licenses')
-            .update({ machine_id: hwid, activated_at: new Date().toISOString() })
-            .eq('id', data.id);
+            .from(sourceTable)
+            .update(updatePayload)
+            .eq(matchCol, licRecord.id);
         }
 
-        const exp = data.expires_at || data.expiry_date || 'Lifetime';
-        const clientName = data.customer_name || 'Enterprise Client';
+        const exp = licRecord.expires_at || licRecord.expiry_date || 'Lifetime';
+        const clientName = licRecord.customer_name || 'Enterprise Client';
+        const hmacSig = crypto.createHmac('sha256', hwid).update(`${cleanKey}_1_LLP_SECURE`).digest('hex');
 
         if (this.vault) {
           this.vault.set('is_activated', 'true');
@@ -323,6 +378,7 @@ class LicenseManager {
           this.db.setSetting('is_activated', '1');
           this.db.setSetting('active_license', cleanKey);
           this.db.setSetting('expiry_date', exp);
+          this.db.setSetting('activation_sig', hmacSig);
         }
 
         return { success: true, valid: true, expiryDate: exp, message: 'License successfully activated and hardware-locked!' };
@@ -331,14 +387,14 @@ class LicenseManager {
       }
     }
 
-    // Offline check: if already activated with this key
+    // Offline check: only if already authenticated and cryptographically signed on this exact machine
     const currentKey = this.vault ? this.vault.get('license_key') : (this.db?.getSetting('active_license', ''));
-    const isAct = this.vault ? (this.vault.get('is_activated') === 'true') : (this.db?.getSetting('is_activated', '0') === '1');
+    const isAct = this.vault ? (this.vault.get('is_activated') === 'true') : false;
     if (currentKey === cleanKey && isAct) {
       return { success: true, valid: true, message: 'Verified from offline security cache' };
     }
 
-    return { success: false, valid: false, message: 'Internet required for initial license activation' };
+    return { success: false, valid: false, message: 'Internet connection required for initial license activation' };
   }
 
   deactivate() {

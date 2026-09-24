@@ -433,16 +433,19 @@ class LocalDatabase {
   }
 
   query(sql, params = []) {
+    if (!this.db) return [];
     const stmt = this.db.prepare(sql);
     return stmt.all(...params);
   }
 
   getOne(sql, params = []) {
+    if (!this.db) return null;
     const stmt = this.db.prepare(sql);
     return stmt.get(...params);
   }
 
   run(sql, params = []) {
+    if (!this.db) return { changes: 0, lastInsertRowid: 0 };
     const stmt = this.db.prepare(sql);
     return stmt.run(...params);
   }
@@ -463,12 +466,14 @@ class LocalDatabase {
 
   setSetting(key, value) {
     const valStr = value !== undefined && value !== null ? String(value) : '';
-    try {
-      this.globalDb.prepare(
-        'INSERT INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP'
-      ).run(key, valStr);
-    } catch (e) {
-      console.error('[DB] Failed to write global setting:', key, e);
+    if (this.globalDb) {
+      try {
+        this.globalDb.prepare(
+          'INSERT INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP'
+        ).run(key, valStr);
+      } catch (e) {
+        console.error('[DB] Failed to write global setting:', key, e);
+      }
     }
 
     if (this.db) {

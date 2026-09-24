@@ -155,6 +155,10 @@ window.intakeModule = {
     return { gross, bagTare, waterDeduction, netWeight, rate, totalAmount };
   },
 
+  toggleDeductionChip(btn) {
+    if (btn) btn.classList.toggle('active');
+  },
+
   async saveCollection(shouldPrint = true) {
     const planterId = document.getElementById('intakeSelectedPlanterId')?.value;
     if (!planterId) {
@@ -174,6 +178,15 @@ window.intakeModule = {
     const collector = document.getElementById('intakeCollector')?.value || 'Agent';
     const id = 'col_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
 
+    // Extract active leaf deduction chips (Mobile Parity: Wet leaves, Long Leaves, Hard Leaves)
+    const activeChips = Array.from(document.querySelectorAll('#intakeDeductionChips .leaf-chip.active'))
+      .map(c => c.getAttribute('data-val') || c.innerText.trim());
+
+    let notes = '';
+    if (activeChips.length > 0) {
+      notes = `Deductions: [${activeChips.join(', ')}]`;
+    }
+
     const record = {
       id,
       owner_id: planterId,
@@ -184,13 +197,14 @@ window.intakeModule = {
       rate_per_kg: rate,
       amount: totalAmount,
       collector_name: collector,
+      notes,
       sync_id: id,
     };
 
     const res = await window.electronAPI.db.run(
-      `INSERT INTO daily_collections (id, owner_id, date, gross_weight_kg, bag_weight_kg, net_weight_kg, rate_per_kg, amount, collector_name, sync_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [record.id, record.owner_id, record.date, record.gross_weight_kg, record.bag_weight_kg, record.net_weight_kg, record.rate_per_kg, record.amount, record.collector_name, record.sync_id]
+      `INSERT INTO daily_collections (id, owner_id, date, gross_weight_kg, bag_weight_kg, net_weight_kg, rate_per_kg, amount, collector_name, notes, sync_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [record.id, record.owner_id, record.date, record.gross_weight_kg, record.bag_weight_kg, record.net_weight_kg, record.rate_per_kg, record.amount, record.collector_name, record.notes, record.sync_id]
     );
 
     if (res.success) {
@@ -212,6 +226,7 @@ window.intakeModule = {
         rate: rate,
         totalAmount: totalAmount,
         collectorName: collector,
+        notes: notes,
       };
 
       if (shouldPrint) {
@@ -221,6 +236,7 @@ window.intakeModule = {
       // Reset
       document.getElementById('intakeGrossWeight').value = '';
       document.getElementById('intakeBagWeight').value = '0.00';
+      document.querySelectorAll('#intakeDeductionChips .leaf-chip').forEach(c => c.classList.remove('active'));
       this.recalc();
       this.loadTodayLog();
 
@@ -232,6 +248,9 @@ window.intakeModule = {
 
   async loadTodayLog() {
     const today = document.getElementById('intakeDate')?.value || new Date().toISOString().split('T')[0];
+    const tbody = document.getElementById('intakeTodayLogTable');
+    if (tbody) tbody.innerHTML = app.getLoadingStateTableRow(6, 'Loading daily collections...');
+
     const res = await window.electronAPI.db.query(
       `SELECT c.*, o.name as planter_name, o.code as planter_code
        FROM daily_collections c
@@ -258,16 +277,38 @@ window.intakeModule = {
     );
 
     if (filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 24px;">No matching collections found.</td></tr>`;
+      tbody.innerHTML = app.getEmptyStateTableRow(6, {
+        title: 'No Collections Found',
+        message: q ? 'No matching collections match your search filter.' : 'No collections recorded for this date.'
+      });
       return;
     }
 
     tbody.innerHTML = filtered
       .map(
-        (c) => `
+        (c) => {
+          let dedBadges = '';
+          const rowNotes = c.notes || '';
+          if (rowNotes.includes('Deductions: [')) {
+            const dedContent = rowNotes.split('Deductions: [')[1].split(']')[0];
+            const tags = dedContent.split(', ');
+            dedBadges = tags.map(t => {
+              const tClean = t.trim();
+              let cls = 'long';
+              let icon = '<i class="fa-solid fa-leaf"></i>';
+              if (tClean.toLowerCase().includes('wet')) { cls = 'wet'; icon = '<i class="fa-solid fa-droplet"></i>'; }
+              else if (tClean.toLowerCase().includes('hard')) { cls = 'hard'; icon = '<i class="fa-solid fa-shield-halved"></i>'; }
+              return `<span class="deduction-pill ${cls}" style="font-size: 10px; padding: 1px 6px;">${icon} ${tClean}</span>`;
+            }).join(' ');
+          }
+
+          return `
       <tr>
-        <td class="mono">${new Date(c.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</td>
-        <td class="font-bold">${c.planter_name || 'Planter'}</td>
+        <td class="mono">${new Date(c.created_at || Date.now()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</td>
+        <td>
+          <div class="font-bold">${c.planter_name || 'Planter'}</div>
+          ${dedBadges ? `<div style="margin-top: 2px;">${dedBadges}</div>` : ''}
+        </td>
         <td class="mono">${Number(c.gross_weight_kg).toFixed(2)}</td>
         <td class="mono">-${Number(c.bag_weight_kg).toFixed(2)}</td>
         <td class="mono font-bold" style="color: var(--accent-emerald);">${Number(c.net_weight_kg).toFixed(2)}</td>
@@ -275,7 +316,8 @@ window.intakeModule = {
           <button class="btn btn-secondary btn-sm" onclick='app.reprintCollection(${JSON.stringify(c)})'>Print</button>
         </td>
       </tr>
-    `
+    `;
+        }
       )
       .join('');
   },

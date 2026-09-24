@@ -109,6 +109,7 @@
           <tr>
             <th style="width: 85px;">Time</th>
             <th>Garden Owner</th>
+            <th style="width: 140px;">Leaf Quality</th>
             <th style="text-align: right;">Gross (kg)</th>
             <th style="text-align: right;">Ded %</th>
             <th style="text-align: right;">Net (kg)</th>
@@ -120,7 +121,7 @@
         </thead>
         <tbody id="collTableBody">
           <tr>
-            <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 50px 0;">
+            <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 50px 0;">
               No collections recorded for this date.
             </td>
           </tr>
@@ -130,100 +131,157 @@
 
   </div>
 
-  <!-- Modal 1: Add/Edit Collection Entry -->
+  <!-- Modal 1: Add/Edit Collection Entry (Landscape Layout) -->
   <div id="modalCollectionEntry" class="modal-overlay">
-    <div class="modal-box" style="width: 540px; max-width: 95vw;">
-      <div class="modal-header">
-        <h3 class="modal-title" id="collModalTitle">Add Collection Entry</h3>
+    <div class="modal-box" style="width: 860px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+      <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; font-size: 16px;">
+            🌿
+          </div>
+          <div>
+            <h3 class="modal-title" id="collModalTitle" style="margin: 0; font-size: 17px; font-weight: 800;">Add Collection Entry</h3>
+            <p style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted);">Record daily garden leaf collection, deductions & payouts</p>
+          </div>
+        </div>
         <button type="button" class="modal-close-btn" onclick="collectionsModule.closeEntryModal()">✕</button>
       </div>
       
-      <div class="modal-body" style="padding: 20px 24px;">
-        <form id="collEntryForm" onsubmit="event.preventDefault(); collectionsModule.saveEntry(); return false;" style="display: flex; flex-direction: column; gap: 14px;">
+      <div class="modal-body" style="padding: 20px 24px; overflow-y: auto; flex: 1;">
+        <form id="collEntryForm" onsubmit="event.preventDefault(); collectionsModule.saveEntry(); return false;">
           
-          <!-- Date & Garden Owner 2-Col Split -->
-          <div style="display: grid; grid-template-columns: 155px minmax(0, 1fr); gap: 12px;">
-            <div class="form-group" style="min-width: 0;">
-              <label class="form-label">Date <span class="req">*</span></label>
-              <input type="date" id="collModalDateInput" class="form-input" style="height: 38px; font-weight: 700; font-family: var(--font-mono); font-size: 13px;">
-            </div>
+          <!-- 2-Column Landscape Split -->
+          <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 20px; align-items: start;">
+            
+            <!-- LEFT COLUMN: Form Inputs -->
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              
+              <!-- Date & Garden Owner 2-Col Split -->
+              <div style="display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 10px;">
+                <div class="form-group" style="min-width: 0; margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 11px;">Date <span class="req">*</span></label>
+                  <input type="date" id="collModalDateInput" class="form-input" style="height: 38px; font-weight: 700; font-family: var(--font-mono); font-size: 12.5px;">
+                </div>
 
-            <div class="form-group" style="min-width: 0;">
-              <label class="form-label">Garden Owner <span class="req">*</span></label>
-              <select id="collOwnerSelect" class="form-select" style="height: 38px;" onchange="collectionsModule.onOwnerChange()">
-                <option value="">-- Select Garden Owner --</option>
-              </select>
-              <div id="collOwnerInfoLabel" style="font-size: 11px; color: var(--accent-emerald); margin-top: 4px; min-height: 16px;"></div>
-            </div>
-          </div>
-
-          <!-- Gross Weight -->
-          <div class="form-group">
-            <label class="form-label">Gross Weight (kg) <span class="req">*</span></label>
-            <div style="position: relative; display: flex; align-items: center;">
-              <span style="position: absolute; left: 12px; font-size: 15px; color: var(--accent-emerald-light);">⚖️</span>
-              <input type="number" step="0.01" id="collGrossInput" class="form-input mono" placeholder="0.00" style="padding-left: 38px; font-size: 16px;" oninput="collectionsModule.updateCalc()">
-            </div>
-          </div>
-
-          <!-- 2-Col Split: Bag Deduc % and Rate per kg -->
-          <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px;">
-            <div class="form-group" style="min-width: 0;">
-              <label class="form-label">Bag Deduc (%)</label>
-              <div style="position: relative; display: flex; align-items: center;">
-                <span style="position: absolute; left: 10px; font-size: 14px; color: var(--accent-amber);">👜</span>
-                <input type="number" step="0.1" id="collDeducInput" class="form-input mono" value="0" style="padding-left: 32px;" oninput="collectionsModule.updateCalc()">
+                <div class="form-group" style="min-width: 0; margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 11px;">Garden Owner <span class="req">*</span></label>
+                  <select id="collOwnerSelect" class="form-select" style="height: 38px; font-size: 13px;" onchange="collectionsModule.onOwnerChange()">
+                    <option value="">-- Select Garden Owner --</option>
+                  </select>
+                  <div id="collOwnerInfoLabel" style="font-size: 11px; color: var(--accent-emerald); margin-top: 3px; min-height: 15px;"></div>
+                </div>
               </div>
-              <div id="collCalcNetLabel" style="font-size: 12px; font-weight: 700; color: #ef4444; margin-top: 4px;">Net: 0 kg</div>
-            </div>
 
-            <div class="form-group" style="min-width: 0;">
-              <label class="form-label">Rate per kg (₹)</label>
-              <div style="position: relative; display: flex; align-items: center;">
-                <span style="position: absolute; left: 10px; font-size: 14px; color: var(--accent-amber);">💰</span>
-                <input type="number" step="0.01" id="collRateInput" class="form-input mono" placeholder="0.00" style="padding-left: 32px;" oninput="collectionsModule.updateCalc()">
+              <!-- Gross Weight -->
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 11px;">Gross Weight (kg) <span class="req">*</span></label>
+                <div style="position: relative; display: flex; align-items: center;">
+                  <span style="position: absolute; left: 12px; font-size: 15px; color: var(--accent-emerald-light);">⚖️</span>
+                  <input type="number" step="0.01" id="collGrossInput" class="form-input mono" placeholder="0.00" style="padding-left: 38px; font-size: 16px; height: 42px;" oninput="collectionsModule.updateCalc()">
+                </div>
               </div>
-              <div id="collCalcAmountLabel" style="font-size: 12px; font-weight: 700; color: #16a34a; margin-top: 4px;">Total: Rs. 0</div>
+
+              <!-- 2-Col Split: Bag Deduc % and Rate per kg -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group" style="min-width: 0; margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 11px;">Bag Deduc (%)</label>
+                  <div style="position: relative; display: flex; align-items: center;">
+                    <span style="position: absolute; left: 10px; font-size: 13px; color: var(--accent-amber);">👜</span>
+                    <input type="number" step="0.1" id="collDeducInput" class="form-input mono" value="0" style="padding-left: 30px; height: 38px;" oninput="collectionsModule.updateCalc()">
+                  </div>
+                  <div id="collCalcNetLabel" style="font-size: 11px; font-weight: 700; color: #ef4444; margin-top: 3px;">Net: 0 kg</div>
+                </div>
+
+                <div class="form-group" style="min-width: 0; margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 11px;">Rate per kg (₹)</label>
+                  <div style="position: relative; display: flex; align-items: center;">
+                    <span style="position: absolute; left: 10px; font-size: 13px; color: var(--accent-amber);">💰</span>
+                    <input type="number" step="0.01" id="collRateInput" class="form-input mono" value="0" placeholder="0.00" style="padding-left: 30px; height: 38px;" oninput="collectionsModule.updateCalc()">
+                  </div>
+                  <div id="collCalcAmountLabel" style="font-size: 11px; font-weight: 700; color: #16a34a; margin-top: 3px;">Total: Rs. 0</div>
+                </div>
+              </div>
+
+              <!-- Leaf Quality Deductions (Wet leaves, Long Leaves, Hard Leaves) -->
+              <div class="form-group" style="margin-bottom: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <label class="form-label" style="margin-bottom: 0; font-size: 11px;">Leaf Quality Deductions</label>
+                  <span style="font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Condition Tags</span>
+                </div>
+                <div id="collDeductionChips" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button type="button" class="leaf-chip" data-val="Wet leaves" onclick="collectionsModule.toggleDeductionChip(this)">
+                    <i class="fa-solid fa-droplet"></i> Wet leaves
+                  </button>
+                  <button type="button" class="leaf-chip" data-val="Long Leaves" onclick="collectionsModule.toggleDeductionChip(this)">
+                    <i class="fa-solid fa-leaf"></i> Long Leaves
+                  </button>
+                  <button type="button" class="leaf-chip" data-val="Hard Leaves" onclick="collectionsModule.toggleDeductionChip(this)">
+                    <i class="fa-solid fa-shield-halved"></i> Hard Leaves
+                  </button>
+                </div>
+              </div>
+
+              <!-- Notes & Collected By -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 11px;">Notes (Optional)</label>
+                  <input type="text" id="collNotesInput" class="form-input" placeholder="e.g. 2 bags, plucking batch..." style="height: 36px; font-size: 12px;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 11px;">Collected By</label>
+                  <select id="collStaffSelect" class="form-select" style="height: 36px; font-size: 12px;">
+                    <option value="Agent-Computer">Agent-Computer</option>
+                  </select>
+                </div>
+              </div>
+
             </div>
-          </div>
 
-          <!-- Summary Badge -->
-          <div style="background: var(--bg-input); border-radius: 10px; padding: 10px 14px; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
-            <div style="font-size: 12px; color: var(--text-secondary);">Calculated Result:</div>
-            <div id="collModalSummaryBadge" style="font-size: 15px; font-weight: 800; color: var(--accent-emerald-light); font-family: var(--font-mono);">0 kg • ₹0</div>
-          </div>
+            <!-- RIGHT COLUMN: Calculated Summary Card & Recent History -->
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              
+              <!-- Live Calculated Result Card -->
+              <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(56, 189, 248, 0.05)); border-radius: 12px; padding: 14px 16px; border: 1px solid rgba(16, 185, 129, 0.25);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--accent-emerald-light); letter-spacing: 0.5px;">Calculated Payout</span>
+                  <span style="font-size: 11px; color: var(--text-muted);">Real-time</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                  <span style="font-size: 12px; color: var(--text-secondary);">Net Leaf Weight:</span>
+                  <span id="collModalSummaryNet" style="font-size: 20px; font-weight: 900; color: var(--accent-emerald-light); font-family: var(--font-mono);">0 KG</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                  <span style="font-size: 12px; color: var(--text-secondary);">Estimated Total:</span>
+                  <span id="collModalSummaryAmt" style="font-size: 20px; font-weight: 900; color: #10b981; font-family: var(--font-mono);">₹0</span>
+                </div>
+                <div id="collModalSummaryBadge" style="display: none;">0 kg • ₹0</div>
+              </div>
 
-          <!-- Notes -->
-          <div class="form-group">
-            <label class="form-label">Notes (Optional)</label>
-            <input type="text" id="collNotesInput" class="form-input" placeholder="e.g. Morning plucking, 2 bags...">
-          </div>
+              <!-- Owner Recent History -->
+              <div id="collOwnerHistoryContainer" style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 11.5px; font-weight: 800; color: var(--text-primary);">Recent Grower History</span>
+                  <span id="collHistoryOwnerName" style="font-size: 10.5px; color: var(--accent-emerald); font-weight: 700;"></span>
+                </div>
+                <div id="collOwnerHistoryBody" style="font-size: 11px; color: var(--text-muted); max-height: 180px; overflow-y: auto;">
+                  Select an owner to view recent collections.
+                </div>
+              </div>
 
-          <!-- Collected By -->
-          <div class="form-group">
-            <label class="form-label">Collected By</label>
-            <select id="collStaffSelect" class="form-select">
-              <option value="Agent-Computer">Agent-Computer</option>
-            </select>
-          </div>
-
-          <!-- Owner Recent History -->
-          <div id="collOwnerHistoryContainer" style="margin-top: 6px; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
-            <div style="font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px;">Recent History for Selected Owner</div>
-            <div id="collOwnerHistoryBody" style="font-size: 11px; color: var(--text-muted); max-height: 100px; overflow-y: auto;">
-              Select an owner to view recent collections.
             </div>
+
           </div>
 
         </form>
       </div>
 
-      <div class="modal-footer" style="display: flex; align-items: center; justify-content: space-between;">
+      <div class="modal-footer" style="padding: 12px 24px; border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; background: var(--bg-secondary); flex-shrink: 0;">
         <button type="button" class="btn btn-secondary" onclick="collectionsModule.closeEntryModal()">Cancel</button>
         
         <div style="display: flex; gap: 8px;">
           <button type="button" class="btn btn-secondary" style="font-size: 12px;" onclick="collectionsModule.clearForm()">Clear</button>
-          <button type="button" id="collSaveBtn" class="btn btn-primary" style="height: 42px; border-radius: 10px; font-weight: 700; padding: 0 20px;" onclick="collectionsModule.saveEntry()">
+          <button type="button" id="collSaveBtn" class="btn btn-primary" style="height: 38px; border-radius: 10px; font-weight: 700; padding: 0 22px; font-size: 13px;" onclick="collectionsModule.saveEntry()">
             💾 Save Entry
           </button>
         </div>
@@ -233,7 +291,7 @@
 
   <!-- Modal 2: Daily Full Screen Log -->
   <div id="modalFullScreenLog" class="modal-overlay">
-    <div class="modal-box" style="width: 900px; max-width: 95vw;">
+    <div class="modal-box" style="width: 960px; max-width: 95vw;">
       <div class="modal-header">
         <h3 class="modal-title" id="fullLogModalTitle">Daily Collections Log</h3>
         <button class="modal-close-btn" onclick="app.closeModal('modalFullScreenLog')">✕</button>
@@ -244,6 +302,7 @@
             <tr>
               <th>Time</th>
               <th>Owner Name</th>
+              <th>Leaf Quality</th>
               <th>Gross (kg)</th>
               <th>Ded %</th>
               <th>Net (kg)</th>

@@ -21,6 +21,8 @@
   --accent-emerald-dim: rgba(76, 175, 125, 0.15);
   --accent-emerald-glow: rgba(76, 175, 125, 0.25);
   --accent-dark: #2d8a58;
+  --brand-green: #10b981;
+  --brand-green-glow: rgba(16, 185, 129, 0.25);
 
   --accent-red: #ef4444;
   --accent-red-dim: rgba(239, 68, 68, 0.15);
@@ -2734,4 +2736,277 @@ body.auth-mode .win-btn:hover {
     color: #000 !important;
   }
 }
+
+/* ==========================================================================
+   Titan Organic Leaf Floating Loader & Mobile-Parity Empty State
+   Exact parity with Leaf Ledger Pro Web & Mobile Suite
+   ========================================================================== */
+
+/* --- Organic Leaf Floating Animations (Exact Web & Mobile Parity) --- */
+@keyframes leafFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(-6deg) scale(1);
+  }
+  50% {
+    transform: translateY(-14px) rotate(8deg) scale(1.06);
+  }
+}
+
+@keyframes leafSubFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(24deg) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) rotate(16deg) scale(1.03);
+  }
+}
+
+@keyframes leafShadow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(0.6);
+    opacity: 0.15;
+  }
+}
+
+@keyframes leafGlow {
+  0%, 100% {
+    filter: drop-shadow(0 4px 14px rgba(16, 185, 129, 0.45));
+  }
+  50% {
+    filter: drop-shadow(0 10px 24px rgba(16, 185, 129, 0.8));
+  }
+}
+
+@keyframes teaFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Leaf Floating Loader (.titan-leaf-loader & .tea-loading-state) --- */
+.titan-leaf-loader,
+.tea-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 24px;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  animation: teaFadeIn 0.3s ease-out;
+}
+
+.titan-leaf-float-wrap {
+  position: relative;
+  width: 80px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.titan-leaf-icon {
+  font-size: 44px;
+  width: 44px;
+  height: 44px;
+  color: var(--brand-green, #10b981);
+  animation: leafFloat 2.2s ease-in-out infinite, leafGlow 2.2s ease-in-out infinite;
+  transform-origin: bottom center;
+  display: inline-block;
+  fill: currentColor;
+}
+
+.titan-leaf-sub-icon {
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+  color: #34d399;
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  animation: leafSubFloat 2.2s ease-in-out infinite 0.25s;
+  transform-origin: bottom center;
+  opacity: 0.9;
+  display: inline-block;
+  fill: currentColor;
+}
+
+.titan-leaf-shadow {
+  width: 44px;
+  height: 8px;
+  background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.45) 0%, rgba(0, 0, 0, 0) 70%);
+  border-radius: 50%;
+  animation: leafShadow 2.2s ease-in-out infinite;
+  margin-top: -6px;
+}
+
+.titan-leaf-loader-text {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  letter-spacing: 0.2px;
+  text-align: center;
+}
+
+.titan-leaf-loader-sub {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: -8px;
+  text-align: center;
+}
+
+/* --- Mobile-Parity Dual-Leaf Empty State (.titan-empty-state & .tea-empty-state) --- */
+.titan-empty-state,
+.tea-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 25px;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  animation: teaFadeIn 0.3s ease-out;
+}
+
+.titan-empty-cluster,
+.tea-leaf-cluster {
+  width: 64px;
+  height: 64px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.titan-empty-state:hover .titan-empty-cluster,
+.tea-empty-state:hover .tea-leaf-cluster {
+  transform: translateY(-4px) scale(1.06);
+}
+
+.titan-empty-main-leaf,
+.tea-leaf-primary {
+  font-size: 52px;
+  width: 52px;
+  height: 52px;
+  color: var(--brand-green, #10b981);
+  transform: rotate(-18deg);
+  filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.35));
+  display: inline-block;
+  fill: currentColor;
+}
+
+.titan-empty-sub-leaf,
+.tea-leaf-secondary {
+  font-size: 34px;
+  width: 34px;
+  height: 34px;
+  color: #34d399;
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  transform: rotate(28deg);
+  opacity: 0.95;
+  display: inline-block;
+  filter: drop-shadow(0 2px 6px rgba(16, 185, 129, 0.25));
+  fill: currentColor;
+}
+
+.titan-empty-title,
+.tea-empty-title {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.2px;
+}
+
+.titan-empty-desc,
+.tea-empty-desc {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  max-width: 320px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.titan-empty-action,
+.tea-empty-action {
+  margin-top: 16px;
+}
+
+/* ==========================================================================
+   Leaf Quality Deduction Chips & Deduction Pills (Mobile & Web Parity)
+   ========================================================================== */
+.leaf-chip {
+  background: var(--bg-card, #242938);
+  border: 1px solid var(--border-subtle, #363d52);
+  color: var(--text-secondary, #94a3b8);
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  font-family: inherit;
+}
+
+.leaf-chip:hover {
+  border-color: var(--brand-green, #10b981);
+  color: var(--brand-green, #10b981);
+  transform: translateY(-1px);
+}
+
+.leaf-chip.active {
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: #10b981 !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+}
+
+.deduction-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  padding: 2px 8px;
+  border-radius: 50px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  white-space: nowrap;
+}
+
+.deduction-pill.wet {
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.28);
+}
+
+.deduction-pill.hard {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+.deduction-pill.long {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.28);
+}
+
 

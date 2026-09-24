@@ -268,6 +268,9 @@ const factoryModule = {
   },
 
   async loadDailyData() {
+    const tbody = document.getElementById('factDailyLogTableBody');
+    if (tbody) tbody.innerHTML = app.getLoadingStateTableRow(9, 'Loading factory delivery records...');
+
     try {
       // 1. Garden Total weight for this date
       const gardenRes = await window.electronAPI.db.getOne(
@@ -321,7 +324,10 @@ const factoryModule = {
     if (!tbody) return;
 
     if (this.cachedDailyDeliveries.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">No factory delivery records for this date.</td></tr>';
+      tbody.innerHTML = app.getEmptyStateTableRow(9, {
+        title: 'No Factory Deliveries Recorded',
+        message: 'No industrial factory dispatches logged for this date.'
+      });
       return;
     }
 

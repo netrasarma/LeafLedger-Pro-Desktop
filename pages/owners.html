@@ -13,12 +13,20 @@
     </button>
   </header>
 
-  <!-- Search Card -->
-  <div style="background: var(--bg-card); border-radius: 12px; padding: 12px 18px; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-    <div style="display: flex; align-items: center; gap: 10px; flex: 1; max-width: 400px;">
+  <!-- Search & Filter Card -->
+  <div style="background: var(--bg-card); border-radius: 12px; padding: 12px 18px; border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 14px; flex-wrap: wrap;">
+    <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 240px; max-width: 380px;">
       <span style="font-size: 15px; color: var(--text-muted);">🔍</span>
-      <input type="text" id="ownerSearchInput" class="form-input" placeholder="Search by name or phone…" style="height: 38px; border-radius: 10px;" oninput="ownersModule.filterOwners()">
+      <input type="text" id="ownerSearchInput" class="form-input" placeholder="Search by name, phone, address…" style="height: 38px; border-radius: 10px;" oninput="ownersModule.filterOwners()">
     </div>
+
+    <!-- Status Tabs: All | Active | Disabled -->
+    <div style="display: flex; align-items: center; gap: 4px; background: var(--bg-hover, #f1f5f9); padding: 3px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+      <button type="button" class="btn btn-sm owner-filter-btn active" id="tabFilterAll" onclick="ownersModule.setStatusFilter('all')" style="border-radius: 6px; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border: none; background: var(--bg-card); box-shadow: 0 1px 2px rgba(0,0,0,0.06); color: var(--text-primary); cursor: pointer;">All (<span id="cntAll">0</span>)</button>
+      <button type="button" class="btn btn-sm owner-filter-btn" id="tabFilterActive" onclick="ownersModule.setStatusFilter('active')" style="border-radius: 6px; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border: none; background: transparent; color: var(--text-muted); cursor: pointer;">Active (<span id="cntActive">0</span>)</button>
+      <button type="button" class="btn btn-sm owner-filter-btn" id="tabFilterDisabled" onclick="ownersModule.setStatusFilter('disabled')" style="border-radius: 6px; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border: none; background: transparent; color: var(--text-muted); cursor: pointer;">Disabled (<span id="cntDisabled">0</span>)</button>
+    </div>
+
     <div id="ownersCountLabel" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">
       0 owners total
     </div>
@@ -42,92 +50,122 @@
     </div>
   </div>
 
-  <!-- Modal: Add / Edit Owner -->
+  <!-- Modal: Add / Edit Owner (Landscape Layout) -->
   <div id="modalAddOwner" class="modal-overlay">
-    <div class="modal-box" style="width: 600px; max-width: 95vw;">
-      <div class="modal-header">
-        <h3 class="modal-title" id="modalOwnerTitle">Add New Garden Owner</h3>
+    <div class="modal-box" style="width: 860px; max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+      <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; font-size: 16px;">
+            👤
+          </div>
+          <div>
+            <h3 class="modal-title" id="modalOwnerTitle" style="margin: 0; font-size: 17px; font-weight: 800;">Add New Garden Owner</h3>
+            <p style="margin: 2px 0 0 0; font-size: 11px; color: var(--text-muted);">Register grower profile, portal authentication & banking coordinates</p>
+          </div>
+        </div>
         <button class="modal-close-btn" onclick="app.closeModal('modalAddOwner')">✕</button>
       </div>
-      <div class="modal-body" style="max-height: 65vh; overflow-y: auto; padding: 20px 24px;">
+
+      <div class="modal-body" style="padding: 20px 24px; overflow-y: auto; flex: 1;">
         <form id="ownerForm" onsubmit="return false;">
           
-          <!-- Section 1: Basic Information -->
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-            <div style="width: 3px; height: 16px; background: var(--accent-emerald); border-radius: 2px;"></div>
-            <span style="font-size: 13px; font-weight: 700; color: var(--accent-emerald-light);">👤 &nbsp;Basic Information</span>
-          </div>
+          <!-- 2-Column Landscape Split -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
+            
+            <!-- LEFT COLUMN: Basic Info & Portal Access -->
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              
+              <!-- Section 1 Header: Basic Information -->
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 3px; height: 16px; background: var(--accent-emerald); border-radius: 2px;"></div>
+                <span style="font-size: 13px; font-weight: 700; color: var(--accent-emerald-light);">👤 &nbsp;Basic Information</span>
+              </div>
 
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label class="form-label">Full Name <span class="req">*</span></label>
-            <input type="text" id="ownerNameInput" class="form-input" placeholder="e.g. Ramesh Gogoi" required>
-          </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 11px;">Full Name <span class="req">*</span></label>
+                <input type="text" id="ownerNameInput" class="form-input" placeholder="e.g. Ramesh Gogoi" required style="height: 38px;">
+              </div>
 
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label class="form-label">Mobile Number (10 digits) <span class="req">*</span></label>
-            <input type="tel" id="ownerPhoneInput" class="form-input mono" placeholder="10-digit mobile number" maxlength="10" required oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
-          </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 11px;">Mobile Number (10 digits) <span class="req">*</span></label>
+                <input type="tel" id="ownerPhoneInput" class="form-input mono" placeholder="10-digit mobile number" maxlength="10" required oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)" style="height: 38px;">
+              </div>
 
-          <div class="form-group" style="margin-bottom: 12px;">
-            <label class="form-label">Address / Village</label>
-            <input type="text" id="ownerAddressInput" class="form-input" placeholder="e.g. Duliajan, Dibrugarh">
-          </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 11px;">Address / Village</label>
+                <input type="text" id="ownerAddressInput" class="form-input" placeholder="e.g. Duliajan, Dibrugarh" style="height: 38px;">
+              </div>
 
-          <div class="form-group" style="margin-bottom: 16px;">
-            <label class="form-label">Agreement Date</label>
-            <input type="date" id="ownerAgreementInput" class="form-input">
-          </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 11px;">Agreement Date</label>
+                <input type="date" id="ownerAgreementInput" class="form-input" style="height: 38px; font-family: var(--font-mono); font-size: 12.5px;">
+              </div>
 
-          <!-- Section 2: Grower Portal Access -->
-          <div style="display: flex; align-items: center; gap: 8px; margin-top: 18px; margin-bottom: 8px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
-            <div style="width: 3px; height: 16px; background: var(--accent-emerald); border-radius: 2px;"></div>
-            <span style="font-size: 13px; font-weight: 700; color: var(--accent-emerald-light);">🔐 &nbsp;Grower Portal Access</span>
-          </div>
+              <!-- Section 2 Header: Grower Portal Access -->
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+                <div style="width: 3px; height: 16px; background: var(--accent-emerald); border-radius: 2px;"></div>
+                <span style="font-size: 13px; font-weight: 700; color: var(--accent-emerald-light);">🔐 &nbsp;Grower Portal Access</span>
+              </div>
 
-          <div class="form-group" style="margin-bottom: 4px;">
-            <label class="form-label">Portal PIN (For Grower Login)</label>
-            <input type="password" id="ownerPinInput" class="form-input mono" placeholder="6-digit PIN" maxlength="6">
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Give this PIN to the owner so they can view their profile on the web.</div>
-          </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 11px;">Portal PIN (For Grower Login)</label>
+                <input type="password" id="ownerPinInput" class="form-input mono" placeholder="6-digit PIN" maxlength="6" style="height: 38px;">
+                <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 4px;">Give this PIN to the owner so they can view their profile on the web.</div>
+              </div>
 
-          <!-- Section 3: Bank Details -->
-          <div style="display: flex; align-items: center; gap: 8px; margin-top: 18px; margin-bottom: 12px; border-top: 1px solid var(--border-subtle); padding-top: 14px;">
-            <div style="width: 3px; height: 16px; background: var(--accent-emerald); border-radius: 2px;"></div>
-            <span style="font-size: 13px; font-weight: 700; color: var(--accent-emerald-light);">🏦 &nbsp;Bank Details</span>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-            <div class="form-group">
-              <label class="form-label">Bank Name</label>
-              <input type="text" id="ownerBankNameInput" class="form-input" placeholder="e.g. SBI">
             </div>
-            <div class="form-group">
-              <label class="form-label">Account Number</label>
-              <input type="text" id="ownerBankAccInput" class="form-input mono" placeholder="A/C Number">
-            </div>
-          </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-            <div class="form-group">
-              <label class="form-label">Account Holder Name</label>
-              <input type="text" id="ownerBankHolderInput" class="form-input" placeholder="Name as per passbook">
-            </div>
-            <div class="form-group">
-              <label class="form-label">IFSC Code</label>
-              <input type="text" id="ownerBankIfscInput" class="form-input mono" placeholder="e.g. SBIN0001234">
-            </div>
-          </div>
+            <!-- RIGHT COLUMN: Bank Details & Notes -->
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              
+              <!-- Section 3 Header: Bank Details -->
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 3px; height: 16px; background: var(--accent-emerald); border-radius: 2px;"></div>
+                <span style="font-size: 13px; font-weight: 700; color: var(--accent-emerald-light);">🏦 &nbsp;Bank Details</span>
+              </div>
 
-          <div class="form-group">
-            <label class="form-label">Notes</label>
-            <textarea id="ownerNotesInput" class="form-input" rows="2" placeholder="Optional planter notes..."></textarea>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 11px;">Bank Name</label>
+                  <input type="text" id="ownerBankNameInput" class="form-input" placeholder="e.g. SBI" style="height: 38px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 11px;">Account Number</label>
+                  <input type="text" id="ownerBankAccInput" class="form-input mono" placeholder="A/C Number" style="height: 38px;">
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 11px;">Account Holder Name</label>
+                  <input type="text" id="ownerBankHolderInput" class="form-input" placeholder="Name as per passbook" style="height: 38px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label" style="font-size: 11px;">IFSC Code</label>
+                  <input type="text" id="ownerBankIfscInput" class="form-input mono" placeholder="e.g. SBIN0001234" style="height: 38px;">
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0; margin-top: 4px;">
+                <label class="form-label" style="font-size: 11px;">Planter Notes</label>
+                <textarea id="ownerNotesInput" class="form-input" rows="4" placeholder="Optional planter notes, garden landmark, estate area..." style="resize: vertical;"></textarea>
+              </div>
+
+              <!-- Quick Tip Card -->
+              <div style="background: var(--bg-card); border: 1px dashed var(--border-medium); border-radius: 10px; padding: 10px 14px; font-size: 11px; color: var(--text-secondary); line-height: 1.4;">
+                <span style="font-weight: 700; color: var(--accent-emerald-light);">💡 Tip:</span> Banking and phone details are automatically synced to monthly payout statements and payment vouchers.
+              </div>
+
+            </div>
+
           </div>
 
         </form>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="app.closeModal('modalAddOwner')">Cancel</button>
-        <button class="btn btn-primary" onclick="ownersModule.saveOwner()">💾 &nbsp;Save Owner</button>
+
+      <div class="modal-footer" style="padding: 12px 24px; border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: flex-end; gap: 10px; background: var(--bg-secondary); flex-shrink: 0;">
+        <button type="button" class="btn btn-secondary" onclick="app.closeModal('modalAddOwner')">Cancel</button>
+        <button type="button" class="btn btn-primary" style="height: 38px; border-radius: 10px; font-weight: 700; padding: 0 22px; font-size: 13px;" onclick="ownersModule.saveOwner()">💾 &nbsp;Save Owner</button>
       </div>
     </div>
   </div>

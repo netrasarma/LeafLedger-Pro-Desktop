@@ -12,7 +12,7 @@ const SECRETS_TO_ENCODE = {
   SUPABASE_KEY: process.env.SUPABASE_KEY || 'sb_publishable_zQi_aEStL8rzASwGExU84g_xfrY49yt',
   VAULT_SALT: process.env.VAULT_SALT || 'LLP_SAFE_VAULT_SALT_2026',
   HARDWARE_SEED: process.env.HARDWARE_SEED || 'LLP_TITAN_2026',
-  GITHUB_TOKEN: process.env.GITHUB_UPDATER_TOKEN || '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',
+  GITHUB_TOKEN: process.env.GITHUB_UPDATER_TOKEN || '',
 };
 
 function generateDynamicSecrets() {

@@ -8,6 +8,8 @@ class SettingsModule {
     this.currentTab = 'agent';
     this.sessions = [];
     this.staffList = [];
+    this.mobileApkUrl = 'https://drive.google.com/uc?export=download&id=1VXKZ0t7IMsevOAA1uBytAJqmuAKTO62E';
+    this.mobileApkVersion = '';
   }
 
   async init() {
@@ -15,6 +17,8 @@ class SettingsModule {
     await this.loadSessions();
     await this.loadActivationStatus();
     await this.loadStaffFleet();
+    this.loadMobileAppInfo();
+    this.loadSoftwareInfo();
     this.switchTab('agent');
   }
 
@@ -44,6 +48,12 @@ class SettingsModule {
     }
     if (tabKey === 'users') {
       this.loadStaffFleet();
+    }
+    if (tabKey === 'mobile') {
+      this.loadMobileAppInfo();
+    }
+    if (tabKey === 'update') {
+      this.loadSoftwareInfo();
     }
   }
 
@@ -793,15 +803,64 @@ class SettingsModule {
   }
 
   // --- Tab 6: OTA Updates ---
-  checkForUpdates() {
-    app.showToast('Checking for updates... You are already running latest v2.8.7', 'success');
+  async loadSoftwareInfo() {
+    try {
+      let ver = '1.0.0';
+      if (window.electronAPI?.system?.getAppVersion) {
+        ver = await window.electronAPI.system.getAppVersion();
+      }
+      const el = document.getElementById('softwareVersionSubtitle');
+      if (el) {
+        el.textContent = `You are running Leaf Ledger Pro v${ver}`;
+      }
+    } catch (_) {}
+  }
+
+  async checkForUpdates() {
+    if (window.electronAPI?.updater?.checkForUpdates) {
+      window.electronAPI.updater.checkForUpdates();
+    } else {
+      app.showToast('Checking for updates...', 'info');
+    }
   }
 
   // --- Tab 7: Mobile App ---
+  async loadMobileAppInfo() {
+    try {
+      if (window.electronAPI?.sync?.getMobileAppInfo) {
+        const info = await window.electronAPI.sync.getMobileAppInfo();
+        if (info && info.url) {
+          this.mobileApkUrl = info.url;
+          this.mobileApkVersion = info.version || '';
+          this.renderMobileAppUI();
+        }
+      }
+    } catch (e) {
+      console.warn('[Settings] Failed to fetch dynamic mobile app link from Supabase:', e);
+    }
+  }
+
+  renderMobileAppUI() {
+    const url = this.mobileApkUrl || 'https://drive.google.com/uc?export=download&id=1VXKZ0t7IMsevOAA1uBytAJqmuAKTO62E';
+    const qrImg = document.getElementById('mobileQrCodeImg');
+    if (qrImg) {
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}`;
+    }
+    const btnText = document.getElementById('btnDownloadApkText');
+    if (btnText) {
+      btnText.textContent = this.mobileApkVersion ? `Download Mobile APK (v${this.mobileApkVersion})` : 'Download Mobile APK';
+    }
+    const versionSub = document.getElementById('mobileAppVersionSubtext');
+    if (versionSub && this.mobileApkVersion) {
+      versionSub.innerHTML = `Latest Release: <b style="color:var(--accent-green);">v${this.mobileApkVersion}</b> &bull; Android 8.0+ &bull; Weighing scale bluetooth ready`;
+    }
+  }
+
   downloadApk(type = 'mobile') {
-    const url = 'https://drive.google.com/uc?export=download&id=1VXKZ0t7IMsevOAA1uBytAJqmuAKTO62E';
+    const url = this.mobileApkUrl || 'https://drive.google.com/uc?export=download&id=1VXKZ0t7IMsevOAA1uBytAJqmuAKTO62E';
     app.openExternalLink(url);
-    app.showToast('Opening download link for Leaf Ledger Pro Mobile APK...', 'info');
+    const verText = this.mobileApkVersion ? ` (v${this.mobileApkVersion})` : '';
+    app.showToast(`Opening download link for Leaf Ledger Pro Mobile APK${verText}...`, 'info');
   }
 }
 

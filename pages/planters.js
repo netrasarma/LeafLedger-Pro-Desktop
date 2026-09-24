@@ -24,7 +24,10 @@ window.plantersModule = {
     );
 
     if (filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 24px;">No planters match your search.</td></tr>`;
+      tbody.innerHTML = app.getEmptyStateTableRow(7, {
+        title: 'No Planters Found',
+        message: q ? 'No planters match your search filter.' : 'No planters registered yet.'
+      });
       return;
     }
 

@@ -38,6 +38,7 @@ class AppRouter {
     await this.loadSettings();
     await this.loadPlanters();
     await this.checkLicenseStatus();
+    await this.updateVersionDisplays();
     await this.checkAuthState();
   }
 
@@ -62,6 +63,15 @@ class AppRouter {
     if (topSeason) topSeason.style.display = isAuthenticated ? 'inline-block' : 'none';
 
     if (isAuthenticated) {
+      await this.checkLicenseStatus();
+      if (!this.isActivated) {
+        this.isAuthenticated = false;
+        this.currentUser = null;
+        this.showToast('Active license required. Workstation access is locked.', 'warning');
+        this.navTo('login');
+        return;
+      }
+
       if (window.electronAPI?.window?.setMode) {
         await window.electronAPI.window.setMode('workspace');
       }
@@ -111,9 +121,15 @@ class AppRouter {
   }
 
   async navTo(viewName) {
+    let isAuthPage = ['login', 'register', 'activation'].includes(viewName);
+    // Strictly block unauthenticated or unactivated users from workspace views
+    if (!isAuthPage && (!this.isAuthenticated || !this.isActivated)) {
+      viewName = 'login';
+      isAuthPage = true;
+    }
+
     this.currentView = viewName;
     // Toggle sidebar and top quick actions visibility for auth vs workspace screens
-    const isAuthPage = ['login', 'register', 'activation'].includes(viewName);
     document.body.classList.toggle('auth-mode', isAuthPage);
 
     // Strictly enforce Light Mode on login/auth screens; restore saved preference in workspace
@@ -157,6 +173,10 @@ class AppRouter {
     if (!container) return;
 
     try {
+      if (!isAuthPage) {
+        container.innerHTML = this.getLoadingStateHtml(`Opening ${viewName.charAt(0).toUpperCase() + viewName.slice(1)}...`);
+      }
+
       // Fetch fresh page content
       const res = await fetch(`pages/${viewName}.html?t=${Date.now()}`);
       if (!res.ok) throw new Error(`Failed to load pages/${viewName}.html: ${res.statusText}`);
@@ -164,6 +184,7 @@ class AppRouter {
 
       container.classList.toggle('auth-mode', isAuthPage);
       container.innerHTML = html;
+      this.updateVersionDisplays(container);
 
       // Initialize dedicated module with robust naming lookup
       const moduleMap = {
@@ -588,6 +609,11 @@ class AppRouter {
           <span>Est. Payout:</span>
           <span>₹${Number(receiptData.totalAmount).toFixed(2)}</span>
         </div>` : ''}
+        ${receiptData.notes ? `
+        <div style="border-top: 1px dashed #444; margin: 6px 0 4px 0;"></div>
+        <div style="font-size: 10px; color: #333; font-style: italic; line-height: 1.3;">
+          ${receiptData.notes}
+        </div>` : ''}
         <div style="border-top: 1px dashed #444; margin-top: 8px; padding-top: 6px; text-align: center; font-size: 9px; color: #555;">
           Verified Digital Entry &bull; Leaf Ledger Pro
         </div>
@@ -710,13 +736,14 @@ class AppRouter {
       const isActDb = (await window.electronAPI.db.getSetting('is_activated', '0')) === '1';
       const expiryDateDb = await window.electronAPI.db.getSetting('expiry_date', '');
       const isActivated = Boolean(status?.isActivated || isActDb);
+      this.isActivated = isActivated;
       const rawExp = status?.expiryDate || expiryDateDb || '';
 
       const operatorRole = document.getElementById('licenseBadgeDisplay');
       if (operatorRole) {
         if (!isActivated) {
-          operatorRole.innerText = 'Evaluation Mode';
-          operatorRole.title = 'License Inactive - Evaluation Mode';
+          operatorRole.innerText = 'Unlicensed';
+          operatorRole.title = 'No active commercial license';
         } else {
           let expSnippet = '';
           if (rawExp) {
@@ -915,8 +942,144 @@ class AppRouter {
       this.showToast(`Error creating season: ${e.message}`, 'error');
     }
   }
+
+  // --------------------------------------------------------------------------
+  // Smart Dynamic Version Management
+  // Reads version once from Electron package.json and injects across all screens
+  // --------------------------------------------------------------------------
+  async getAppVersion() {
+    if (this._appVersion) return this._appVersion;
+    try {
+      if (window.electronAPI?.system?.getAppVersion) {
+        this._appVersion = await window.electronAPI.system.getAppVersion();
+      }
+    } catch (_) {}
+    this._appVersion = this._appVersion || '1.0.0';
+    return this._appVersion;
+  }
+
+  async updateVersionDisplays(root = document) {
+    const ver = await this.getAppVersion();
+    const scope = root && root.querySelectorAll ? root : document;
+
+    // 1. Update any element with [data-app-version] or .app-version-text
+    scope.querySelectorAll('[data-app-version], .app-version-text').forEach((el) => {
+      const template = el.getAttribute('data-app-version');
+      if (template && template.includes('{version}')) {
+        el.textContent = template.replace('{version}', ver);
+      } else {
+        el.textContent = `v${ver}`;
+      }
+    });
+
+    // 2. Automatically update known global badge locations
+    const loginBadge = document.getElementById('loginAppVersionBadge');
+    if (loginBadge) {
+      loginBadge.textContent = `v${ver} Enterprise`;
+    }
+
+    const licenseBadge = document.getElementById('licenseBadgeDisplay');
+    if (licenseBadge && (!licenseBadge.dataset.customLicense || licenseBadge.textContent.includes('v'))) {
+      licenseBadge.textContent = `v${ver} Enterprise`;
+    }
+
+    const versionSub = document.getElementById('softwareVersionSubtitle');
+    if (versionSub) {
+      versionSub.textContent = `You are running Leaf Ledger Pro v${ver}`;
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // Signature Titan Organic Leaf Empty State & Floating Loader Components
+  // Exact visual & animation parity with Leaf Ledger Pro Web & Mobile Suite
+  // --------------------------------------------------------------------------
+  getEmptyStateHtml({
+    title = 'No Records Found',
+    message = 'No recordings found for this selection.',
+    actionHtml = ''
+  } = {}) {
+    const leafPath = "M272 96c-78.6 0-145.1 51.5-167.7 122.5c33.6-17 71.5-26.5 111.7-26.5l88 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-16 0-72 0s0 0 0 0c-16.6 0-32.7 1.9-48.3 5.4c-25.9 5.9-49.9 16.4-71.4 30.7c0 0 0 0 0 0C38.3 298.8 0 364.9 0 440l0 16c0 13.3 10.7 24 24 24s24-10.7 24-24l0-16c0-48.7 20.7-92.5 53.8-123.2C121.6 392.3 190.3 448 272 448l1 0c132.1-.7 239-130.9 239-291.4c0-42.6-7.5-83.1-21.1-119.6c-2.6-6.9-12.7-6.6-16.2-.1C455.9 72.1 418.7 96 376 96L272 96z";
+
+    return `
+      <div class="titan-empty-state tea-empty-state">
+        <div class="titan-empty-cluster tea-leaf-cluster">
+          <svg class="titan-empty-main-leaf tea-leaf-primary" viewBox="0 0 512 512" fill="currentColor">
+            <path d="${leafPath}"/>
+          </svg>
+          <svg class="titan-empty-sub-leaf tea-leaf-secondary" viewBox="0 0 512 512" fill="currentColor">
+            <path d="${leafPath}"/>
+          </svg>
+        </div>
+        <h3 class="titan-empty-title tea-empty-title">${title}</h3>
+        <p class="titan-empty-desc tea-empty-desc">${message}</p>
+        ${actionHtml ? `<div class="titan-empty-action tea-empty-action">${actionHtml}</div>` : ''}
+      </div>
+    `;
+  }
+
+  getEmptyStateTableRow(colspan = 8, options = {}) {
+    return `
+      <tr>
+        <td colspan="${colspan}" style="padding: 10px 0; border: none; background: transparent;">
+          ${this.getEmptyStateHtml(options)}
+        </td>
+      </tr>
+    `;
+  }
+
+  renderEmptyState(container, options = {}) {
+    const el = typeof container === 'string' ? document.getElementById(container) : container;
+    if (el) el.innerHTML = this.getEmptyStateHtml(options);
+  }
+
+  getLoadingStateHtml(message = 'Synchronizing Data...', subMessage = 'Please wait a moment') {
+    const leafPath = "M272 96c-78.6 0-145.1 51.5-167.7 122.5c33.6-17 71.5-26.5 111.7-26.5l88 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-16 0-72 0s0 0 0 0c-16.6 0-32.7 1.9-48.3 5.4c-25.9 5.9-49.9 16.4-71.4 30.7c0 0 0 0 0 0C38.3 298.8 0 364.9 0 440l0 16c0 13.3 10.7 24 24 24s24-10.7 24-24l0-16c0-48.7 20.7-92.5 53.8-123.2C121.6 392.3 190.3 448 272 448l1 0c132.1-.7 239-130.9 239-291.4c0-42.6-7.5-83.1-21.1-119.6c-2.6-6.9-12.7-6.6-16.2-.1C455.9 72.1 418.7 96 376 96L272 96z";
+
+    return `
+      <div class="titan-leaf-loader tea-loading-state">
+        <div class="titan-leaf-float-wrap">
+          <svg class="titan-leaf-icon" viewBox="0 0 512 512" fill="currentColor">
+            <path d="${leafPath}"/>
+          </svg>
+          <svg class="titan-leaf-sub-icon" viewBox="0 0 512 512" fill="currentColor">
+            <path d="${leafPath}"/>
+          </svg>
+        </div>
+        <div class="titan-leaf-shadow"></div>
+        <div class="titan-leaf-loader-text">${message}</div>
+        ${subMessage ? `<div class="titan-leaf-loader-sub">${subMessage}</div>` : ''}
+      </div>
+    `;
+  }
+
+  getLoadingStateTableRow(colspan = 8, message = 'Synchronizing Data...', subMessage = '') {
+    return `
+      <tr>
+        <td colspan="${colspan}" style="padding: 10px 0; border: none; background: transparent;">
+          ${this.getLoadingStateHtml(message, subMessage)}
+        </td>
+      </tr>
+    `;
+  }
+
+  renderLoadingState(container, message = 'Synchronizing Data...', subMessage = '') {
+    const el = typeof container === 'string' ? document.getElementById(container) : container;
+    if (el) el.innerHTML = this.getLoadingStateHtml(message, subMessage);
+  }
 }
 
 // Instantiate global app router
 const app = new AppRouter();
 window.app = app;
+
+// Global helper attachments matching web and mobile parity
+window.getEmptyStateHtml = (opts) => app.getEmptyStateHtml(opts);
+window.getEmptyStateTableRow = (cs, opts) => app.getEmptyStateTableRow(cs, opts);
+window.renderEmptyState = (c, opts) => app.renderEmptyState(c, opts);
+
+window.getLoadingStateHtml = (msg, sub) => app.getLoadingStateHtml(msg, sub);
+window.getLoadingStateTableRow = (cs, msg, sub) => app.getLoadingStateTableRow(cs, msg, sub);
+window.renderLoadingState = (c, msg, sub) => app.renderLoadingState(c, msg, sub);
+
+window.getLeafLoaderHtml = (msg, sub) => app.getLoadingStateHtml(msg, sub);
+window.renderLeafLoader = (c, msg, sub) => app.renderLoadingState(c, msg, sub);

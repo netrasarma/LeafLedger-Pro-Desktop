@@ -70,6 +70,25 @@
           </div>
         </div>
 
+        <!-- Mobile & Web Parity: Leaf Quality Deduction Chips -->
+        <div class="form-group" style="margin-top: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label class="form-label" style="margin-bottom: 0;">Leaf Quality Deductions</label>
+            <span style="font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Mobile Parity</span>
+          </div>
+          <div id="intakeDeductionChips" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" class="leaf-chip" data-val="Wet leaves" onclick="intakeModule.toggleDeductionChip(this)">
+              <i class="fa-solid fa-droplet"></i> Wet leaves
+            </button>
+            <button type="button" class="leaf-chip" data-val="Long Leaves" onclick="intakeModule.toggleDeductionChip(this)">
+              <i class="fa-solid fa-leaf"></i> Long Leaves
+            </button>
+            <button type="button" class="leaf-chip" data-val="Hard Leaves" onclick="intakeModule.toggleDeductionChip(this)">
+              <i class="fa-solid fa-shield-halved"></i> Hard Leaves
+            </button>
+          </div>
+        </div>
+
         <div class="calc-display-panel" style="margin-top: 16px;">
           <div class="calc-row">
             <span>Gross Weight:</span>

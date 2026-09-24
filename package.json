@@ -1,6 +1,6 @@
 {
   "name": "leaf-ledger-pro-desktop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Leaf Ledger Pro - Enterprise Desktop Application",
   "main": "main.js",
   "private": true,

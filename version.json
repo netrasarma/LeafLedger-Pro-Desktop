@@ -1,9 +1,10 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "mobile_version": "2.0.8",
   "name": "leaf-ledger-pro",
   "required": false,
   "release_date": "2026-09-24",
+  "changelog": "v1.0.1: Layer 2 security hardening, 3D rates icon integration, and real-time WebSocket sync.",
   "download_urls": {
     "windows": "https://leafledger-update-gateway.officialnetrasarma.workers.dev/api/v1/desktop/download/latest",
     "android": "https://leafledger-update-gateway.officialnetrasarma.workers.dev/api/v1/mobile/download/latest.apk"

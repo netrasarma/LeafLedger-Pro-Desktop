@@ -517,6 +517,13 @@ function registerIpcHandlers() {
     return await syncEngine.getMobileAppDownloadInfo();
   });
 
+  ipcMain.handle('sync:getConfig', () => {
+    return {
+      url: db ? db.getSetting('supabase_url', DEFAULT_SUPABASE_URL) : DEFAULT_SUPABASE_URL,
+      key: db ? db.getSetting('supabase_anon_key', DEFAULT_SUPABASE_KEY) : DEFAULT_SUPABASE_KEY,
+    };
+  });
+
   // --- Auth & Account IPC ---
   ipcMain.handle('auth:signIn', async (_, { phone, password }) => {
     const res = await syncEngine.signIn(phone, password);

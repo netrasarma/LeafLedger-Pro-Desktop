@@ -706,9 +706,9 @@ class AppRouter {
     const savedWidth = await window.electronAPI.db.getSetting('printer_width', '58mm');
     const savedName = await window.electronAPI.db.getSetting('agent_name', 'LEAF LEDGER PRO');
     const savedContact = await window.electronAPI.db.getSetting('agent_contact', 'Assam, India');
-    const autoPrint = await window.electronAPI.db.getSetting('auto_print', '1');
-    const cloudUrl = await window.electronAPI.db.getSetting('supabase_url', 'https://tlyvlfhjkbaejsftmrvs.supabase.co');
-    const cloudKey = await window.electronAPI.db.getSetting('supabase_anon_key', 'sb_publishable_zQi_aEStL8rzASwGExU84g_xfrY49yt');
+    const cloudConfig = (await window.electronAPI?.sync?.getConfig?.()) || {};
+    const cloudUrl = await window.electronAPI.db.getSetting('supabase_url', cloudConfig.url || '');
+    const cloudKey = await window.electronAPI.db.getSetting('supabase_anon_key', cloudConfig.key || '');
     const savedTheme = await window.electronAPI.db.getSetting('app_theme', this.currentTheme);
     if (savedTheme && savedTheme !== this.currentTheme) {
       this.applyTheme(savedTheme);

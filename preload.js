@@ -59,6 +59,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     smartSync: (tableName) => ipcRenderer.invoke('sync:smartSync', { tableName }),
     testConnection: () => ipcRenderer.invoke('sync:testConnection'),
     configure: (url, key) => ipcRenderer.invoke('sync:configure', { url, key }),
+    getConfig: () => ipcRenderer.invoke('sync:getConfig'),
     getMobileAppInfo: () => ipcRenderer.invoke('sync:getMobileAppInfo'),
     onDataChanged: (callback) => {
       const handler = (_, data) => callback(data);

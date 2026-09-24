@@ -8,5 +8,7 @@ release/
 *.cer
 *.enc
 .build_protected_staging/
+.env
+.env*
 
 

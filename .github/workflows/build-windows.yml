@@ -45,6 +45,8 @@ jobs:
       - name: Generate Dynamic XOR Secrets
         run: node scripts/generate_secrets.js
         env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           GITHUB_UPDATER_TOKEN: ${{ secrets.GITHUB_UPDATER_TOKEN || secrets.GITHUB_TOKEN }}
         shell: pwsh
 

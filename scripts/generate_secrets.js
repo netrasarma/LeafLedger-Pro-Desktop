@@ -7,9 +7,28 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 
+// Load local .env file if running in local development
+try {
+  const envPath = path.join(__dirname, '..', '.env');
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+    for (const line of lines) {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (match) {
+        const key = match[1];
+        let val = (match[2] || '').trim();
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+          val = val.slice(1, -1);
+        }
+        if (!process.env[key]) process.env[key] = val;
+      }
+    }
+  }
+} catch (_) {}
+
 const SECRETS_TO_ENCODE = {
-  SUPABASE_URL: process.env.SUPABASE_URL || 'https://tlyvlfhjkbaejsftmrvs.supabase.co',
-  SUPABASE_KEY: process.env.SUPABASE_KEY || 'sb_publishable_zQi_aEStL8rzASwGExU84g_xfrY49yt',
+  SUPABASE_URL: process.env.SUPABASE_URL || '',
+  SUPABASE_KEY: process.env.SUPABASE_KEY || '',
   VAULT_SALT: process.env.VAULT_SALT || 'LLP_SAFE_VAULT_SALT_2026',
   HARDWARE_SEED: process.env.HARDWARE_SEED || 'LLP_TITAN_2026',
   GITHUB_TOKEN: process.env.GITHUB_UPDATER_TOKEN || '',

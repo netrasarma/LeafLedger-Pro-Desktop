@@ -26,6 +26,7 @@ class AppRouter {
     this.setupNavigation();
     this.setupKeyboardShortcuts();
     this.setupRealtimeSyncListeners();
+    this.setupUpdaterListeners();
 
     // Close season dropdown when clicking outside
     document.addEventListener('click', (e) => {
@@ -35,11 +36,16 @@ class AppRouter {
       }
     });
 
-    await this.loadSettings();
-    await this.loadPlanters();
-    await this.checkLicenseStatus();
-    await this.updateVersionDisplays();
-    await this.checkAuthState();
+    try {
+      await this.loadSettings();
+      await this.loadPlanters();
+      await this.checkLicenseStatus();
+      await this.updateVersionDisplays();
+    } catch (err) {
+      console.warn('[AppRouter] Startup data loading warning:', err);
+    } finally {
+      await this.checkAuthState();
+    }
   }
 
   async checkAuthState() {
@@ -106,8 +112,12 @@ class AppRouter {
     }
   }
 
-  async signOut() {
-    if (!confirm('Are you sure you want to sign out of Leaf Ledger Pro?')) return;
+  signOut() {
+    this.openModal('modalConfirmSignOut');
+  }
+
+  async confirmSignOut() {
+    this.closeModal('modalConfirmSignOut');
     await window.electronAPI.auth.signOut();
     this.showToast('Signed out successfully', 'info');
     this.setAuthenticatedState(false);
@@ -260,6 +270,106 @@ class AppRouter {
     }
   }
 
+  // --------------------------------------------------------------------------
+  // Auto-Updater Listeners & Custom Dialog Handling
+  // --------------------------------------------------------------------------
+  setupUpdaterListeners() {
+    if (!window.electronAPI?.updater?.onUpdateStatus) return;
+
+    window.electronAPI.updater.onUpdateStatus((info) => {
+      this.showUpdateDialog(info);
+    });
+  }
+
+  showUpdateDialog(info) {
+    if (!info) return;
+
+    const iconUpToDate = document.getElementById('updateIconUpToDate');
+    const iconAvailable = document.getElementById('updateIconAvailable');
+    const iconError = document.getElementById('updateIconError');
+    const titleEl = document.getElementById('updateModalTitle');
+    const msgEl = document.getElementById('updateModalMessage');
+    const changelogContainer = document.getElementById('updateModalChangelogContainer');
+    const changelogText = document.getElementById('updateModalChangelogText');
+    const cancelBtn = document.getElementById('updateModalCancelBtn');
+    const primaryBtn = document.getElementById('updateModalPrimaryBtn');
+
+    if (!titleEl || !msgEl || !primaryBtn) return;
+
+    this.pendingUpdate = null;
+
+    if (info.status === 'update-available' || info.hasUpdate) {
+      if (iconUpToDate) iconUpToDate.style.display = 'none';
+      if (iconError) iconError.style.display = 'none';
+      if (iconAvailable) iconAvailable.style.display = 'flex';
+
+      titleEl.innerText = `Update Available (v${info.remoteVersion || 'New'})`;
+      msgEl.innerText = `A new version of Leaf Ledger Pro is available. Current version is v${info.currentVersion || '1.0.1'}.`;
+
+      if (info.changelog && changelogContainer && changelogText) {
+        changelogText.innerText = info.changelog;
+        changelogContainer.style.display = 'block';
+      } else if (changelogContainer) {
+        changelogContainer.style.display = 'none';
+      }
+
+      if (cancelBtn) {
+        cancelBtn.style.display = 'block';
+        cancelBtn.innerText = 'Later';
+      }
+      primaryBtn.innerText = 'Download & Update';
+      primaryBtn.style.background = '#2563EB';
+      primaryBtn.style.color = '#FFFFFF';
+      primaryBtn.style.boxShadow = '0 2px 8px rgba(37, 99, 235, 0.25)';
+
+      this.pendingUpdate = {
+        remoteVersion: info.remoteVersion,
+        downloadUrl: info.downloadUrl,
+      };
+    } else if (info.status === 'error') {
+      if (iconUpToDate) iconUpToDate.style.display = 'none';
+      if (iconAvailable) iconAvailable.style.display = 'none';
+      if (iconError) iconError.style.display = 'flex';
+
+      titleEl.innerText = 'Update Check Failed';
+      msgEl.innerText = info.message || 'Unable to connect to the update service. Please check your internet connection.';
+      if (changelogContainer) changelogContainer.style.display = 'none';
+      if (cancelBtn) cancelBtn.style.display = 'none';
+      primaryBtn.innerText = 'Close';
+      primaryBtn.style.background = '';
+      primaryBtn.style.color = '';
+      primaryBtn.style.boxShadow = '';
+    } else {
+      // Up to date
+      if (iconAvailable) iconAvailable.style.display = 'none';
+      if (iconError) iconError.style.display = 'none';
+      if (iconUpToDate) iconUpToDate.style.display = 'flex';
+
+      titleEl.innerText = 'You are using the latest version.';
+      msgEl.innerText = `Leaf Ledger Pro v${info.currentVersion || '1.0.1'} is currently up to date.`;
+      if (changelogContainer) changelogContainer.style.display = 'none';
+      if (cancelBtn) cancelBtn.style.display = 'none';
+      primaryBtn.innerText = 'OK';
+      primaryBtn.style.background = '';
+      primaryBtn.style.color = '';
+      primaryBtn.style.boxShadow = '';
+    }
+
+    this.openModal('modalUpdateStatus');
+  }
+
+  handleUpdatePrimaryAction() {
+    if (this.pendingUpdate && this.pendingUpdate.downloadUrl) {
+      const { remoteVersion, downloadUrl } = this.pendingUpdate;
+      this.closeModal('modalUpdateStatus');
+      if (window.electronAPI?.updater?.startDownload) {
+        window.electronAPI.updater.startDownload(remoteVersion, downloadUrl);
+      }
+    } else {
+      this.closeModal('modalUpdateStatus');
+    }
+  }
+
   refreshActiveView(event) {
     const table = event?.table;
     const tables = event?.tables || (table ? [table] : []);
@@ -315,10 +425,21 @@ class AppRouter {
 
     if (minBtn) minBtn.onclick = () => window.electronAPI.window.minimize();
     if (maxBtn) maxBtn.onclick = () => window.electronAPI.window.maximize();
-    if (closeBtn) closeBtn.onclick = () => window.electronAPI.window.close();
+    if (closeBtn) closeBtn.onclick = () => this.promptExitConfirmation();
 
     const topSyncBtn = document.getElementById('topSyncBtn');
     if (topSyncBtn) topSyncBtn.onclick = () => this.triggerSync();
+  }
+
+  promptExitConfirmation() {
+    this.openModal('modalConfirmExit');
+  }
+
+  confirmExit() {
+    this.closeModal('modalConfirmExit');
+    if (window.electronAPI?.window?.close) {
+      window.electronAPI.window.close();
+    }
   }
 
   setupNavigation() {
@@ -335,6 +456,35 @@ class AppRouter {
       // Allow Esc to close any open modal anytime
       if (e.key === 'Escape') {
         this.closeAllModals();
+        return;
+      }
+
+      // Allow Enter to confirm exit or signout dialog if open
+      if (e.key === 'Enter') {
+        const exitModal = document.getElementById('modalConfirmExit');
+        if (exitModal && exitModal.classList.contains('active')) {
+          e.preventDefault();
+          this.confirmExit();
+          return;
+        }
+        const signOutModal = document.getElementById('modalConfirmSignOut');
+        if (signOutModal && signOutModal.classList.contains('active')) {
+          e.preventDefault();
+          this.confirmSignOut();
+          return;
+        }
+        const updateModal = document.getElementById('modalUpdateStatus');
+        if (updateModal && updateModal.classList.contains('active')) {
+          e.preventDefault();
+          this.handleUpdatePrimaryAction();
+          return;
+        }
+      }
+
+      // Ctrl+Q / Cmd+Q opens exit confirmation
+      if ((e.ctrlKey || e.metaKey) && (e.key || '').toLowerCase() === 'q') {
+        e.preventDefault();
+        this.promptExitConfirmation();
         return;
       }
 
@@ -701,28 +851,42 @@ class AppRouter {
   // Settings & Cloud Sync
   // --------------------------------------------------------------------------
   async loadSettings() {
-    this.machineId = await window.electronAPI.security.getMachineId();
+    try {
+      this.machineId = (await window.electronAPI?.security?.getMachineId?.()) || '';
 
-    const savedWidth = await window.electronAPI.db.getSetting('printer_width', '58mm');
-    const savedName = await window.electronAPI.db.getSetting('agent_name', 'LEAF LEDGER PRO');
-    const savedContact = await window.electronAPI.db.getSetting('agent_contact', 'Assam, India');
-    const cloudConfig = (await window.electronAPI?.sync?.getConfig?.()) || {};
-    const cloudUrl = await window.electronAPI.db.getSetting('supabase_url', cloudConfig.url || '');
-    const cloudKey = await window.electronAPI.db.getSetting('supabase_anon_key', cloudConfig.key || '');
-    const savedTheme = await window.electronAPI.db.getSetting('app_theme', this.currentTheme);
-    if (savedTheme && savedTheme !== this.currentTheme) {
-      this.applyTheme(savedTheme);
+      const savedWidth = await window.electronAPI?.db?.getSetting?.('printer_width', '58mm');
+      const savedName = await window.electronAPI?.db?.getSetting?.('agent_name', 'LEAF LEDGER PRO');
+      const savedContact = await window.electronAPI?.db?.getSetting?.('agent_contact', 'Assam, India');
+      const autoPrint = await window.electronAPI?.db?.getSetting?.('auto_print', '1');
+      const cloudConfig = (await window.electronAPI?.sync?.getConfig?.()) || {};
+      const cloudUrl = await window.electronAPI?.db?.getSetting?.('supabase_url', cloudConfig.url || '');
+      const cloudKey = await window.electronAPI?.db?.getSetting?.('supabase_anon_key', cloudConfig.key || '');
+      const savedTheme = await window.electronAPI?.db?.getSetting?.('app_theme', this.currentTheme);
+      if (savedTheme && savedTheme !== this.currentTheme) {
+        this.applyTheme(savedTheme);
+      }
+
+      this.settings = {
+        printer_width: savedWidth || '58mm',
+        agent_name: savedName || 'LEAF LEDGER PRO',
+        agent_contact: savedContact || 'Assam, India',
+        auto_print: autoPrint || '1',
+        supabase_url: cloudUrl || '',
+        supabase_anon_key: cloudKey || '',
+        app_theme: this.currentTheme,
+      };
+    } catch (err) {
+      console.warn('[AppRouter] loadSettings failed, using fallbacks:', err);
+      this.settings = {
+        printer_width: '58mm',
+        agent_name: 'LEAF LEDGER PRO',
+        agent_contact: 'Assam, India',
+        auto_print: '1',
+        supabase_url: '',
+        supabase_anon_key: '',
+        app_theme: this.currentTheme,
+      };
     }
-
-    this.settings = {
-      printer_width: savedWidth,
-      agent_name: savedName,
-      agent_contact: savedContact,
-      auto_print: autoPrint,
-      supabase_url: cloudUrl,
-      supabase_anon_key: cloudKey,
-      app_theme: this.currentTheme,
-    };
   }
 
   async checkLicenseStatus() {

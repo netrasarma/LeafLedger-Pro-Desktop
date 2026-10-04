@@ -40,6 +40,22 @@ function transitionFromSplash() {
   }
 }
 
+function getAppIcon() {
+  const icoPath = path.join(__dirname, 'assets', 'icon.ico');
+  const pngPath = path.join(__dirname, 'assets', 'icon.png');
+  const fallbackPng = path.join(__dirname, 'assets', 'logo_new.png');
+  if (process.platform === 'win32' && fs.existsSync(icoPath)) {
+    return icoPath;
+  }
+  if (fs.existsSync(pngPath)) {
+    return pngPath;
+  }
+  if (fs.existsSync(fallbackPng)) {
+    return fallbackPng;
+  }
+  return undefined;
+}
+
 function createSplashWindow() {
   const splashVideoPath = path.join(__dirname, 'video.mp4');
   if (!fs.existsSync(splashVideoPath)) {
@@ -59,6 +75,7 @@ function createSplashWindow() {
     alwaysOnTop: true,
     hasShadow: true,
     show: false,
+    icon: getAppIcon(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -170,6 +187,7 @@ function createMainWindow() {
     titleBarStyle: 'hidden',
     backgroundColor: '#ffffff',
     show: false,
+    icon: getAppIcon(),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -648,6 +666,11 @@ function registerIpcHandlers() {
     checkForUpdates(true);
     return true;
   });
+
+  ipcMain.handle('updater:startDownload', (_, { remoteVersion, downloadUrl }) => {
+    startUpdateDownload(remoteVersion, downloadUrl);
+    return true;
+  });
 }
 
 function isNewerVersion(current, remote) {
@@ -782,28 +805,19 @@ function checkForUpdates(isManual = false) {
   const currentVersion = app.getVersion();
 
   function promptUpdate(remoteVersion, downloadUrl, changelog) {
-    if (isNewerVersion(currentVersion, remoteVersion)) {
-      dialog.showMessageBox(mainWindow, {
-        type: 'info',
-        buttons: ['Update Now', 'Later'],
-        title: 'Leaf Ledger Pro Update Available',
-        message: `A new version of Leaf Ledger Pro (v${remoteVersion}) is available!`,
-        detail: changelog || 'This update contains critical improvements and new features.',
-        defaultId: 0,
-        cancelId: 1,
-      }).then((res) => {
-        if (res.response === 0) {
-          startUpdateDownload(remoteVersion, downloadUrl);
-        }
-      });
-    } else if (isManual) {
-      dialog.showMessageBox(mainWindow, {
-        type: 'info',
-        buttons: ['OK'],
-        title: 'Leaf Ledger Pro Up to Date',
-        message: 'You are using the latest version.',
-        detail: `Leaf Ledger Pro v${currentVersion} is currently up to date.`,
-      });
+    const hasUpdate = isNewerVersion(currentVersion, remoteVersion);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (hasUpdate || isManual) {
+        mainWindow.webContents.send('updater:status', {
+          status: hasUpdate ? 'update-available' : 'up-to-date',
+          hasUpdate,
+          currentVersion,
+          remoteVersion: remoteVersion || currentVersion,
+          downloadUrl: downloadUrl || '',
+          changelog: changelog || '',
+          isManual,
+        });
+      }
     }
   }
 
@@ -872,25 +886,46 @@ function checkForUpdates(isManual = false) {
 
             promptUpdate(remoteVersion, downloadUrl, release.body);
           } catch (e) {
-            if (isManual) dialog.showErrorBox('Update Check Failed', 'Could not parse update release details.');
+            if (isManual && mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('updater:status', {
+                status: 'error',
+                message: 'Could not parse update release details.',
+                currentVersion,
+                isManual: true,
+              });
+            }
           }
         } else if (isManual) {
-          dialog.showMessageBox(mainWindow, {
-            type: 'info',
-            buttons: ['OK'],
-            title: 'Update Check',
-            message: 'No new updates found.',
-            detail: `Leaf Ledger Pro v${currentVersion} is the current active version.`,
-          });
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('updater:status', {
+              status: 'up-to-date',
+              hasUpdate: false,
+              currentVersion,
+              remoteVersion: currentVersion,
+              isManual: true,
+            });
+          }
         }
       });
     }).on('error', (err) => {
-      if (isManual) dialog.showErrorBox('Update Connection Error', `Could not connect to update release server:\n${err.message}`);
+      if (isManual && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('updater:status', {
+          status: 'error',
+          message: `Could not connect to update release server: ${err.message}`,
+          currentVersion,
+          isManual: true,
+        });
+      }
     });
   }
 }
 
 app.whenReady().then(() => {
+  // Ensure Windows pins, groups and binds the taskbar icon to the installed desktop shortcut
+  if (process.platform === 'win32') {
+    app.setAppUserModelId('com.leafledger.pro.desktop');
+  }
+
   initServices();
   registerIpcHandlers();
   createSplashWindow();

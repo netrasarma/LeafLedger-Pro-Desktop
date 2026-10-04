@@ -26,6 +26,7 @@
   ],
   "win": {
     "target": ["nsis"],
+    "icon": "assets/icon.ico",
     "artifactName": "LeafLedgerPro_Setup_${version}.${ext}",
     "publisherName": "Leaf Ledger Pro"
   },
@@ -36,14 +37,19 @@
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
     "shortcutName": "Leaf Ledger Pro",
+    "installerIcon": "assets/icon.ico",
+    "uninstallerIcon": "assets/icon.ico",
+    "installerHeaderIcon": "assets/icon.ico",
     "deleteAppDataOnUninstall": false
   },
   "mac": {
     "target": ["dmg"],
+    "icon": "assets/icon.png",
     "category": "public.app-category.business"
   },
   "linux": {
     "target": ["AppImage", "deb"],
+    "icon": "assets/icon.png",
     "category": "Office"
   }
 }

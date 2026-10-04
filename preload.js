@@ -90,6 +90,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Auto-Update Engine
   updater: {
     checkForUpdates: () => ipcRenderer.invoke('updater:checkForUpdates'),
+    startDownload: (remoteVersion, downloadUrl) => ipcRenderer.invoke('updater:startDownload', { remoteVersion, downloadUrl }),
+    onUpdateStatus: (callback) => {
+      const handler = (_, data) => callback(data);
+      ipcRenderer.on('updater:status', handler);
+      return () => ipcRenderer.removeListener('updater:status', handler);
+    },
     onUpdateProgress: (callback) => {
       const handler = (_, data) => callback(data);
       ipcRenderer.on('updater:progress', handler);

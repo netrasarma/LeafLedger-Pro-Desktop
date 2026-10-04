@@ -18,7 +18,7 @@
     })();
   </script>
 </head>
-<body>
+<body class="auth-mode">
 
   <!-- ========================================================================
        Frameless Top Window Titlebar
@@ -103,7 +103,7 @@
   <div class="app-container">
     
     <!-- Sidebar Navigation -->
-    <aside id="appSidebar" class="sidebar">
+    <aside id="appSidebar" class="sidebar" style="display: none;">
       <div class="sidebar-header" style="padding: 16px 12px 10px; text-align: center; border-bottom: 1px solid var(--border-subtle);">
         <img src="assets/logo_new.png" alt="Leaf Ledger Pro" style="width: 58px; height: 58px; object-fit: contain; margin-bottom: 6px;" onerror="this.src='assets/logo new.png'">
         <div id="brandAgentNameDisplay" style="font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.2px;">Leaf Ledger Pro</div>
@@ -325,6 +325,133 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="app.closeModal('modalShortcutsHelp')">Got it</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Simple & Beautiful Exit Confirmation Dialog -->
+  <div id="modalConfirmExit" class="modal-overlay" style="z-index: 12000;">
+    <div class="modal-box" style="width: 410px; max-width: 92vw; padding: 0; overflow: hidden; border-radius: 18px; border: 1px solid var(--border-medium); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);">
+      
+      <!-- Modal Header with graphic -->
+      <div style="padding: 28px 24px 18px; text-align: center; background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-tertiary) 100%);">
+        <div class="dialog-icon-circle red">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+            <line x1="12" y1="2" x2="12" y2="12"></line>
+          </svg>
+        </div>
+        <h3 style="margin: 0 0 8px; font-size: 19px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px;">
+          Exit Leaf Ledger Pro?
+        </h3>
+        <p style="margin: 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">
+          Are you sure you want to close the workstation? Any unsaved edits in active forms may be lost.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 12px; padding: 16px 24px 22px; background: var(--bg-tertiary); border-top: 1px solid var(--border-subtle); justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" style="flex: 1; padding: 11px 16px; font-weight: 600; font-size: 13.5px; border-radius: 10px;" onclick="app.closeModal('modalConfirmExit')">
+          Cancel
+        </button>
+        <button type="button" id="confirmExitAppBtn" class="btn" style="flex: 1; padding: 11px 16px; font-weight: 600; font-size: 13.5px; border-radius: 10px; background: #DC2626; color: #FFFFFF; border: none; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25); cursor: pointer;" onclick="app.confirmExit()">
+          Exit Application
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Simple & Beautiful Sign Out Confirmation Dialog -->
+  <div id="modalConfirmSignOut" class="modal-overlay" style="z-index: 12000;">
+    <div class="modal-box" style="width: 410px; max-width: 92vw; padding: 0; overflow: hidden; border-radius: 18px; border: 1px solid var(--border-medium); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);">
+      
+      <!-- Modal Header with graphic -->
+      <div style="padding: 28px 24px 18px; text-align: center; background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-tertiary) 100%);">
+        <div class="dialog-icon-circle amber">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </div>
+        <h3 style="margin: 0 0 8px; font-size: 19px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px;">
+          Sign Out of Leaf Ledger Pro?
+        </h3>
+        <p style="margin: 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">
+          Are you sure you want to sign out? You will need your 6-digit MPIN to access the agency portal again.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 12px; padding: 16px 24px 22px; background: var(--bg-tertiary); border-top: 1px solid var(--border-subtle); justify-content: flex-end;">
+        <button type="button" class="btn btn-secondary" style="flex: 1; padding: 11px 16px; font-weight: 600; font-size: 13.5px; border-radius: 10px;" onclick="app.closeModal('modalConfirmSignOut')">
+          Cancel
+        </button>
+        <button type="button" id="confirmSignOutAppBtn" class="btn" style="flex: 1; padding: 11px 16px; font-weight: 600; font-size: 13.5px; border-radius: 10px; background: #D97706; color: #FFFFFF; border: none; box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25); cursor: pointer;" onclick="app.confirmSignOut()">
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Simple, Clean & Beautiful Update Status Dialog -->
+  <div id="modalUpdateStatus" class="modal-overlay" style="z-index: 12000;">
+    <div class="modal-box" style="width: 420px; max-width: 92vw; padding: 0; overflow: hidden; border-radius: 18px; border: 1px solid var(--border-medium); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);">
+      
+      <!-- Modal Content Header with visual badge -->
+      <div style="padding: 28px 24px 20px; text-align: center; background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-tertiary) 100%);">
+        
+        <!-- Up-to-date Icon (Green) -->
+        <div id="updateIconUpToDate" class="dialog-icon-circle green">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+
+        <!-- Update Available Icon (Blue) -->
+        <div id="updateIconAvailable" class="dialog-icon-circle blue" style="display: none;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </div>
+
+        <!-- Error Icon (Red) -->
+        <div id="updateIconError" class="dialog-icon-circle red" style="display: none;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+
+        <h3 id="updateModalTitle" style="margin: 0 0 8px; font-size: 19px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px;">
+          You are using the latest version.
+        </h3>
+        
+        <p id="updateModalMessage" style="margin: 0; font-size: 13.5px; color: var(--text-muted); line-height: 1.5;">
+          Leaf Ledger Pro v1.0.1 is currently up to date.
+        </p>
+
+        <!-- Changelog box if update is available -->
+        <div id="updateModalChangelogContainer" style="display: none; margin-top: 14px; text-align: left; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px 14px; max-height: 130px; overflow-y: auto;">
+          <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 5px; letter-spacing: 0.5px;">What's New in this update</div>
+          <div id="updateModalChangelogText" style="font-size: 12.5px; color: var(--text-muted); line-height: 1.45; white-space: pre-line;"></div>
+        </div>
+
+      </div>
+
+      <!-- Action Footer -->
+      <div id="updateModalFooter" style="display: flex; gap: 12px; padding: 16px 24px 22px; background: var(--bg-tertiary); border-top: 1px solid var(--border-subtle); justify-content: center; align-items: center;">
+        <button type="button" id="updateModalCancelBtn" class="btn btn-secondary" style="display: none; flex: 1; padding: 12px 18px; font-weight: 600; font-size: 14px; border-radius: 10px; justify-content: center; align-items: center; text-align: center;" onclick="app.closeModal('modalUpdateStatus')">
+          Later
+        </button>
+        <button type="button" id="updateModalPrimaryBtn" class="btn btn-primary" style="flex: 1; padding: 12px 18px; font-weight: 700; font-size: 14px; border-radius: 10px; display: inline-flex; justify-content: center; align-items: center; text-align: center; cursor: pointer;" onclick="app.handleUpdatePrimaryAction()">
+          OK
+        </button>
+      </div>
+
     </div>
   </div>
 

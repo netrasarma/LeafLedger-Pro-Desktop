@@ -910,6 +910,8 @@ body {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 8px;
   padding: 8px 16px;
   font-size: 13px;
@@ -2098,6 +2100,20 @@ body.auth-mode .win-btn:hover {
   display: none !important;
 }
 
+.auth-grid-2col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-grid-2col > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .auth-input-wrapper {
   display: flex;
   align-items: center;
@@ -2106,11 +2122,22 @@ body.auth-mode .win-btn:hover {
   border-radius: 12px;
   height: 50px;
   padding: 0 14px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   transition: all 0.2s ease;
 }
 
 .auth-input-wrapper.compact {
   height: 44px;
+  padding: 0 10px;
+}
+
+.auth-input-wrapper.compact .auth-input-prefix {
+  padding-right: 8px;
+  margin-right: 8px;
+  font-size: 13px;
 }
 
 .auth-input-wrapper:focus-within {
@@ -2130,10 +2157,14 @@ body.auth-mode .win-btn:hover {
   border-right: 1px solid #e2e8f0 !important;
   margin-right: 12px;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .auth-input-elem {
   flex: 1;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   background: transparent;
   border: none;
   outline: none;
@@ -3008,5 +3039,86 @@ body.auth-mode .win-btn:hover {
   color: #10b981;
   border-color: rgba(16, 185, 129, 0.28);
 }
+
+/* Dialog Icon Badges with full Light/Dark Theme Adaptation */
+.dialog-icon-circle {
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  transition: all 0.2s ease;
+}
+
+.dialog-icon-circle.green {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.28);
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.2);
+}
+.dialog-icon-circle.green svg { stroke: #22c55e; }
+
+.dialog-icon-circle.amber {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.28);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+}
+.dialog-icon-circle.amber svg { stroke: #f59e0b; }
+
+.dialog-icon-circle.red {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.28);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2);
+}
+.dialog-icon-circle.red svg { stroke: #ef4444; }
+
+.dialog-icon-circle.blue {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.28);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+}
+.dialog-icon-circle.blue svg { stroke: #3b82f6; }
+
+[data-theme="light"] .dialog-icon-circle.green {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.15);
+}
+[data-theme="light"] .dialog-icon-circle.green svg { stroke: #16a34a; }
+
+[data-theme="light"] .dialog-icon-circle.amber {
+  background: #fffbeb;
+  border-color: #fde68a;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.15);
+}
+[data-theme="light"] .dialog-icon-circle.amber svg { stroke: #d97706; }
+
+[data-theme="light"] .dialog-icon-circle.red {
+  background: #fef2f2;
+  border-color: #fecaca;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.15);
+}
+[data-theme="light"] .dialog-icon-circle.red svg { stroke: #dc2626; }
+
+[data-theme="light"] .dialog-icon-circle.blue {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15);
+}
+[data-theme="light"] .dialog-icon-circle.blue svg { stroke: #2563eb; }
+
+/* Modal Action Buttons: Guarantee perfect text centering & sizing */
+#updateModalPrimaryBtn,
+#updateModalCancelBtn,
+#confirmExitAppBtn,
+#confirmSignOutAppBtn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
 
 

@@ -399,17 +399,26 @@ const ownersModule = {
       if (advHistoryEl) {
         const rows = advHistRes?.data || [];
         if (rows.length === 0) {
-          advHistoryEl.innerHTML = '<div style="font-size: 11px; color: var(--text-muted);">No advance history recorded.</div>';
+          advHistoryEl.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); padding: 6px 0;">No advance history recorded.</div>';
         } else {
-          advHistoryEl.innerHTML = rows.map(r => `
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--border-subtle);">
-              <div>
-                <span class="mono">${r.date}</span>
-                <span style="color: var(--text-muted); margin-left: 10px;">${r.payment_mode || 'Cash'} ${r.notes ? `• ${r.notes}` : ''}</span>
+          const advHeader = `
+            <div style="display: grid; grid-template-columns: 110px 1fr 120px; font-size: 10px; font-weight: 800; color: var(--text-muted); padding: 0 0 6px 0; border-bottom: 1px solid var(--border-subtle); letter-spacing: 0.5px; text-transform: uppercase;">
+              <div>Date</div>
+              <div>Mode / Notes</div>
+              <div style="text-align: right;">Amount</div>
+            </div>
+          `;
+          const advRows = rows.map(r => `
+            <div style="display: grid; grid-template-columns: 110px 1fr 120px; align-items: center; font-size: 12px; padding: 7px 0; border-bottom: 1px solid var(--border-subtle);">
+              <div class="mono" style="font-weight: 600; color: var(--text-primary);">${r.date}</div>
+              <div style="color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 12px;">
+                <span style="font-weight: 600; color: var(--text-primary);">${r.payment_mode || 'Cash'}</span>
+                ${r.notes ? `<span style="color: var(--text-muted); margin-left: 6px;">• ${r.notes}</span>` : ''}
               </div>
-              <div class="mono" style="font-weight: 700; color: #ef4444;">₹${Math.round(r.amount).toLocaleString('en-IN')}</div>
+              <div class="mono" style="text-align: right; font-weight: 700; color: #ef4444;">₹${Math.round(r.amount).toLocaleString('en-IN')}</div>
             </div>
           `).join('');
+          advHistoryEl.innerHTML = advHeader + advRows;
         }
       }
 
@@ -427,16 +436,25 @@ const ownersModule = {
       if (collHistoryEl) {
         const crows = collHistRes?.data || [];
         if (crows.length === 0) {
-          collHistoryEl.innerHTML = '<div style="font-size: 11px; color: var(--text-muted);">No collection history for this owner.</div>';
+          collHistoryEl.innerHTML = '<div style="font-size: 11px; color: var(--text-muted); padding: 6px 0;">No collection history for this owner.</div>';
         } else {
-          collHistoryEl.innerHTML = crows.map(c => `
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--border-subtle);">
-              <div style="font-weight: 700; color: var(--text-primary);">${c.period}</div>
-              <div class="mono" style="color: var(--text-secondary);">Gross: ${Math.round(c.gross)}kg</div>
-              <div class="mono" style="color: var(--accent-emerald);">Net: ${Math.round(c.net)}kg</div>
-              <div class="mono" style="font-weight: 700; color: var(--accent-amber);">₹${Math.round(c.amt).toLocaleString('en-IN')}</div>
+          const collHeader = `
+            <div style="display: grid; grid-template-columns: 100px 1fr 1fr 120px; font-size: 10px; font-weight: 800; color: var(--text-muted); padding: 0 0 6px 0; border-bottom: 1px solid var(--border-subtle); letter-spacing: 0.5px; text-transform: uppercase;">
+              <div>Period</div>
+              <div style="text-align: right;">Gross Weight</div>
+              <div style="text-align: right;">Net Weight</div>
+              <div style="text-align: right;">Total Amount</div>
+            </div>
+          `;
+          const collRows = crows.map(c => `
+            <div style="display: grid; grid-template-columns: 100px 1fr 1fr 120px; align-items: center; font-size: 12px; padding: 7px 0; border-bottom: 1px solid var(--border-subtle);">
+              <div class="mono" style="font-weight: 700; color: var(--text-primary);">${c.period}</div>
+              <div class="mono" style="text-align: right; color: var(--text-secondary);">${Math.round(c.gross).toLocaleString('en-IN')} kg</div>
+              <div class="mono" style="text-align: right; font-weight: 600; color: var(--accent-emerald);">${Math.round(c.net).toLocaleString('en-IN')} kg</div>
+              <div class="mono" style="text-align: right; font-weight: 700; color: var(--accent-amber);">₹${Math.round(c.amt).toLocaleString('en-IN')}</div>
             </div>
           `).join('');
+          collHistoryEl.innerHTML = collHeader + collRows;
         }
       }
 

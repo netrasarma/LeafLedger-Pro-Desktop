@@ -207,13 +207,24 @@
 
         <!-- Row 2: Advance History -->
         <div style="background: var(--bg-card); border-radius: 12px; padding: 16px; border: 1px solid var(--border-subtle); margin-bottom: 16px;">
-          <div style="font-size: 12px; font-weight: 700; color: var(--accent-emerald-light); margin-bottom: 10px;">💸 Advance History</div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--accent-emerald-light); margin-bottom: 12px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+            <span>Advance History</span>
+          </div>
           <div id="viewOwnerAdvanceHistory" style="max-height: 160px; overflow-y: auto;"></div>
         </div>
 
         <!-- Row 3: Monthly Collection History -->
         <div style="background: var(--bg-card); border-radius: 12px; padding: 16px; border: 1px solid var(--border-subtle);">
-          <div style="font-size: 12px; font-weight: 700; color: var(--accent-emerald-light); margin-bottom: 10px;">🍃 Collection History (Monthly)</div>
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--accent-emerald-light); margin-bottom: 12px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+            <span>Collection History (Monthly)</span>
+          </div>
           <div id="viewOwnerCollectionHistory" style="max-height: 180px; overflow-y: auto;"></div>
         </div>
 

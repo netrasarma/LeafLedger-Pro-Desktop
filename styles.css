@@ -418,6 +418,12 @@ kbd.shortcut-kbd {
   color: #ffffff;
 }
 
+[data-theme="light"] .settings-tab-btn.active .settings-tab-icon {
+  stroke: #ffffff;
+  color: #ffffff;
+  opacity: 1;
+}
+
 
 * {
   box-sizing: border-box;
@@ -2425,29 +2431,63 @@ body.auth-mode .win-btn:hover {
 .settings-tab-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
   height: 42px;
   padding: 0 14px;
   border-radius: 8px;
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--text-secondary);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.settings-tab-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  stroke-width: 2;
+  opacity: 0.72;
+  transition: opacity 0.18s ease, transform 0.18s ease, color 0.18s ease;
 }
 
 .settings-tab-btn:hover {
-  background: var(--bg-input);
+  background: var(--bg-card-hover, rgba(255, 255, 255, 0.05));
   color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.settings-tab-btn:hover .settings-tab-icon {
+  opacity: 1;
+  color: var(--text-primary);
+  transform: scale(1.08);
 }
 
 .settings-tab-btn.active {
-  background: var(--accent-green);
+  background: var(--brand-green, #16a34a);
   color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.28);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.settings-tab-btn.active .settings-tab-icon {
+  opacity: 1;
+  stroke: #ffffff;
+  color: #ffffff;
+  transform: none;
+}
+
+.settings-tab-btn span {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .settings-content-area {

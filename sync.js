@@ -631,6 +631,16 @@ class SyncEngine extends EventEmitter {
       if (translated.password && !translated.mpin_hash) {
         translated.mpin_hash = translated.password;
       }
+    if (tableName === 'daily_collections') {
+      if (translated.meta) {
+        try {
+          const m = typeof translated.meta === 'string' ? JSON.parse(translated.meta) : translated.meta;
+          if (m && typeof m === 'object') {
+            if (m.is_cash_paid !== undefined) translated.is_cash_paid = m.is_cash_paid ? 1 : 0;
+            if (m.rate_locked !== undefined) translated.rate_locked = m.rate_locked ? 1 : 0;
+          }
+        } catch (_) {}
+      }
     }
     if (tableName === 'factory_payments') {
       if (translated.amount === undefined && translated.amount_received !== undefined) {
@@ -783,13 +793,17 @@ class SyncEngine extends EventEmitter {
       }
     }
     if (tableName === 'daily_collections') {
-      if (clean.meta && typeof clean.meta === 'string') {
+      let metaObj = {};
+      if (clean.meta) {
         try {
-          clean.meta = JSON.parse(clean.meta);
+          metaObj = typeof clean.meta === 'string' ? JSON.parse(clean.meta) : { ...clean.meta };
         } catch (_) {
-          clean.meta = null;
+          metaObj = {};
         }
       }
+      if (rowData.is_cash_paid !== undefined) metaObj.is_cash_paid = rowData.is_cash_paid ? 1 : 0;
+      if (rowData.rate_locked !== undefined) metaObj.rate_locked = rowData.rate_locked ? 1 : 0;
+      clean.meta = Object.keys(metaObj).length > 0 ? metaObj : null;
     }
     if (tableName === 'factory_payments') {
       if (clean.amount_received === undefined && rowData.amount !== undefined) {

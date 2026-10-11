@@ -150,6 +150,8 @@ class LocalDatabase {
         net_weight_kg REAL NOT NULL,
         rate_per_kg REAL DEFAULT 0.0,
         amount REAL DEFAULT 0.0,
+        is_cash_paid INTEGER DEFAULT 0,
+        rate_locked INTEGER DEFAULT 0,
         collector_name TEXT,
         staff_id TEXT,
         notes TEXT,
@@ -347,6 +349,8 @@ class LocalDatabase {
     safeAddColumn('daily_collections', 'cloud_id', 'TEXT');
     safeAddColumn('daily_collections', 'sync_id', 'TEXT');
     safeAddColumn('daily_collections', 'meta', 'TEXT');
+    safeAddColumn('daily_collections', 'is_cash_paid', 'INTEGER DEFAULT 0');
+    safeAddColumn('daily_collections', 'rate_locked', 'INTEGER DEFAULT 0');
     safeAddColumn('daily_collections', 'sync_status', 'INTEGER DEFAULT 1');
     safeAddColumn('daily_collections', 'updated_at', 'TEXT DEFAULT CURRENT_TIMESTAMP');
 
@@ -732,47 +736,24 @@ class LocalDatabase {
 
   updateDailyBulk(dateStr, rate, waterPct) {
     const rows = this.query(
-      `SELECT id, gross_weight_kg, bag_weight_kg, rate_per_kg FROM daily_collections WHERE date = ?`,
+      `SELECT id, gross_weight_kg, bag_weight_kg, rate_per_kg, is_cash_paid, rate_locked, meta 
+       FROM daily_collections WHERE date = ?`,
       [dateStr]
     );
 
     let count = 0;
+    let skippedCash = 0;
     for (const r of rows) {
-      const nPct = waterPct !== null && waterPct !== undefined && waterPct !== '' ? Number(waterPct) : (r.bag_weight_kg || 0);
-      const nRate = rate !== null && rate !== undefined && rate !== '' ? Number(rate) : (r.rate_per_kg || 0);
-      const newNet = Math.round((r.gross_weight_kg || 0) * (1 - nPct / 100));
-      const newAmt = Math.round(newNet * nRate);
-
-      this.run(
-        `UPDATE daily_collections
-         SET bag_weight_kg = ?, net_weight_kg = ?, rate_per_kg = ?, amount = ?, sync_status = 0, updated_at = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [nPct, newNet, nRate, newAmt, r.id]
-      );
-      count++;
-    }
-    return { success: true, updatedCount: count };
-  }
-
-  updateRangeBulk(month, year, fromDay, toDay, rate, waterPct, excludeSundays) {
-    const mStr = String(month).padStart(2, '0');
-    const startDate = `${year}-${mStr}-${String(fromDay).padStart(2, '0')}`;
-    const endDate = `${year}-${mStr}-${String(toDay).padStart(2, '0')}`;
-
-    const rows = this.query(
-      `SELECT id, date, gross_weight_kg, bag_weight_kg, rate_per_kg
-       FROM daily_collections
-       WHERE date BETWEEN ? AND ?`,
-      [startDate, endDate]
-    );
-
-    let count = 0;
-    for (const r of rows) {
-      if (excludeSundays) {
-        // Exclude sundays (split date YYYY-MM-DD to avoid timezone shifts)
-        const [y, m, d] = r.date.split('-').map(Number);
-        const dayOfWeek = new Date(y, m - 1, d).getDay();
-        if (dayOfWeek === 0) continue; // Sunday
+      let isCash = Number(r.is_cash_paid) === 1 || Number(r.rate_locked) === 1;
+      if (!isCash && r.meta) {
+        try {
+          const m = typeof r.meta === 'string' ? JSON.parse(r.meta) : r.meta;
+          if (m?.is_cash_paid || m?.rate_locked || m?.payment_mode === 'cash') isCash = true;
+        } catch (_) {}
+      }
+      if (isCash) {
+        skippedCash++;
+        continue; // Protect cash collection from rate and deduction override!
       }
 
       const nPct = waterPct !== null && waterPct !== undefined && waterPct !== '' ? Number(waterPct) : (r.bag_weight_kg || 0);
@@ -788,7 +769,57 @@ class LocalDatabase {
       );
       count++;
     }
-    return { success: true, updatedCount: count };
+    return { success: true, updatedCount: count, skippedCashCount: skippedCash };
+  }
+
+  updateRangeBulk(month, year, fromDay, toDay, rate, waterPct, excludeSundays) {
+    const mStr = String(month).padStart(2, '0');
+    const startDate = `${year}-${mStr}-${String(fromDay).padStart(2, '0')}`;
+    const endDate = `${year}-${mStr}-${String(toDay).padStart(2, '0')}`;
+
+    const rows = this.query(
+      `SELECT id, date, gross_weight_kg, bag_weight_kg, rate_per_kg, is_cash_paid, rate_locked, meta
+       FROM daily_collections
+       WHERE date BETWEEN ? AND ?`,
+      [startDate, endDate]
+    );
+
+    let count = 0;
+    let skippedCash = 0;
+    for (const r of rows) {
+      if (excludeSundays) {
+        // Exclude sundays (split date YYYY-MM-DD to avoid timezone shifts)
+        const [y, m, d] = r.date.split('-').map(Number);
+        const dayOfWeek = new Date(y, m - 1, d).getDay();
+        if (dayOfWeek === 0) continue; // Sunday
+      }
+
+      let isCash = Number(r.is_cash_paid) === 1 || Number(r.rate_locked) === 1;
+      if (!isCash && r.meta) {
+        try {
+          const m = typeof r.meta === 'string' ? JSON.parse(r.meta) : r.meta;
+          if (m?.is_cash_paid || m?.rate_locked || m?.payment_mode === 'cash') isCash = true;
+        } catch (_) {}
+      }
+      if (isCash) {
+        skippedCash++;
+        continue; // Protect cash collection from rate and deduction override!
+      }
+
+      const nPct = waterPct !== null && waterPct !== undefined && waterPct !== '' ? Number(waterPct) : (r.bag_weight_kg || 0);
+      const nRate = rate !== null && rate !== undefined && rate !== '' ? Number(rate) : (r.rate_per_kg || 0);
+      const newNet = Math.round((r.gross_weight_kg || 0) * (1 - nPct / 100));
+      const newAmt = Math.round(newNet * nRate);
+
+      this.run(
+        `UPDATE daily_collections
+         SET bag_weight_kg = ?, net_weight_kg = ?, rate_per_kg = ?, amount = ?, sync_status = 0, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [nPct, newNet, nRate, newAmt, r.id]
+      );
+      count++;
+    }
+    return { success: true, updatedCount: count, skippedCashCount: skippedCash };
   }
 
   healForeignKeys() {

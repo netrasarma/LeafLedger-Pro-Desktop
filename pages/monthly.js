@@ -555,6 +555,9 @@ const monthlyModule = {
               `;
             }
 
+            const isCash = Number(r.is_cash_paid) === 1 || Number(r.rate_locked) === 1;
+            const cashBadge = isCash ? '<br><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 9px; padding: 1px 4px; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3);">💵 Spot Cash</span>' : '';
+
             return `
               <tr>
                 <td class="mono">${r.date}</td>
@@ -562,7 +565,7 @@ const monthlyModule = {
                 <td class="mono" style="color: var(--accent-amber);">${Math.round(r.bag_weight_kg || 0)}%</td>
                 <td class="mono" style="color: var(--accent-emerald-light); font-weight: 700;">${Math.round(r.net_weight_kg || 0)}</td>
                 <td class="mono">${rateStr}</td>
-                <td class="mono" style="font-weight: 700;">${amtStr}</td>
+                <td class="mono" style="font-weight: 700;">${amtStr}${cashBadge}</td>
                 <td>${noteContent}</td>
               </tr>
             `;

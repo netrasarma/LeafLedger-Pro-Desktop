@@ -195,9 +195,9 @@ const collectionsModule = {
 
     try {
       const collsRes = await window.electronAPI.db.query(`
-        SELECT dc.*, o.name as owner_name, o.phone as owner_phone
+        SELECT dc.*, COALESCE(o.name, 'Tea Grower') as owner_name, o.phone as owner_phone
         FROM daily_collections dc
-        JOIN owners o ON dc.owner_id = o.id
+        LEFT JOIN owners o ON dc.owner_id = o.id
         WHERE dc.date = ?
         ORDER BY dc.created_at DESC
       `, [this.currentDate]);
@@ -345,7 +345,10 @@ const collectionsModule = {
           <td class="mono" style="text-align: right; color: #ef4444;">${ded}%</td>
           <td class="mono font-bold" style="text-align: right; color: var(--accent-emerald-light); font-size: 14px;">${net} kg</td>
           <td class="mono" style="text-align: right; color: var(--accent-amber);">₹${rate}</td>
-          <td class="mono font-bold" style="text-align: right; color: #10b981; font-size: 14px;">₹${amount.toLocaleString('en-IN')}</td>
+          <td class="mono font-bold" style="text-align: right; color: #10b981; font-size: 14px;">
+            ₹${amount.toLocaleString('en-IN')}
+            ${(Number(row.is_cash_paid) === 1 || Number(row.rate_locked) === 1) ? `<br><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 9.5px; padding: 1px 5px; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3);">💵 Cash Paid</span>` : ''}
+          </td>
           <td>
             <span class="badge" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 11px; border-radius: 6px;">
               ${staff}
@@ -449,6 +452,10 @@ const collectionsModule = {
       finalNotes = `Deductions: [${activeChips.join(', ')}]${notes ? ' | ' + notes : ''}`;
     }
 
+    const paymentType = document.getElementById('collPaymentTypeInput')?.value || 'ledger';
+    const isCashPaid = paymentType === 'cash' ? 1 : 0;
+    const rateLocked = paymentType === 'cash' ? 1 : 0;
+
     const net = Math.max(0, Math.round(gross * (1 - ded / 100)));
     const amount = Math.round(net * rate);
 
@@ -459,9 +466,9 @@ const collectionsModule = {
       if (this.editingId) {
         await window.electronAPI.db.run(`
           UPDATE daily_collections 
-          SET owner_id = ?, date = ?, gross_weight_kg = ?, bag_weight_kg = ?, net_weight_kg = ?, rate_per_kg = ?, amount = ?, collector_name = ?, notes = ?, sync_status = 0, updated_at = CURRENT_TIMESTAMP
+          SET owner_id = ?, date = ?, gross_weight_kg = ?, bag_weight_kg = ?, net_weight_kg = ?, rate_per_kg = ?, amount = ?, collector_name = ?, notes = ?, is_cash_paid = ?, rate_locked = ?, sync_status = 0, updated_at = CURRENT_TIMESTAMP
           WHERE id = ?
-        `, [ownerId, entryDate, gross, ded, net, rate, amount, staff, finalNotes, this.editingId]);
+        `, [ownerId, entryDate, gross, ded, net, rate, amount, staff, finalNotes, isCashPaid, rateLocked, this.editingId]);
 
         app.showToast('Collection entry updated successfully!', 'success');
       } else {
@@ -470,9 +477,9 @@ const collectionsModule = {
         const currentUid = (await window.electronAPI.auth.getCurrentUser())?.id || '';
         const sid = app.getSessionIdForDate(entryDate);
         await window.electronAPI.db.run(`
-          INSERT INTO daily_collections (id, app_user_id, owner_id, session_id, date, gross_weight_kg, bag_weight_kg, net_weight_kg, rate_per_kg, amount, collector_name, notes, sync_id, sync_status, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
-        `, [id, currentUid, ownerId, sid, entryDate, gross, ded, net, rate, amount, staff, finalNotes, syncId]);
+          INSERT INTO daily_collections (id, app_user_id, owner_id, session_id, date, gross_weight_kg, bag_weight_kg, net_weight_kg, rate_per_kg, amount, collector_name, notes, is_cash_paid, rate_locked, sync_id, sync_status, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
+        `, [id, currentUid, ownerId, sid, entryDate, gross, ded, net, rate, amount, staff, finalNotes, isCashPaid, rateLocked, syncId]);
 
         app.showToast('Collection entry saved!', 'success');
       }
@@ -538,6 +545,15 @@ const collectionsModule = {
     if (notesInput) notesInput.value = cleanNotes.trim();
     if (staffSelect) staffSelect.value = entry.collector_name || 'Agent-Computer';
 
+    let isCash = Number(entry.is_cash_paid) === 1 || Number(entry.rate_locked) === 1;
+    if (!isCash && entry.meta) {
+      try {
+        const m = typeof entry.meta === 'string' ? JSON.parse(entry.meta) : entry.meta;
+        if (m?.is_cash_paid || m?.rate_locked || m?.payment_mode === 'cash') isCash = true;
+      } catch (_) {}
+    }
+    this.setPaymentType(isCash ? 'cash' : 'ledger');
+
     this.onOwnerChange();
     app.openModal('modalCollectionEntry');
 
@@ -570,6 +586,50 @@ const collectionsModule = {
     }
   },
 
+  setPaymentType(type) {
+    const hidden = document.getElementById('collPaymentTypeInput');
+    const ledgerBtn = document.getElementById('collPaymentLedgerBtn');
+    const cashBtn = document.getElementById('collPaymentCashBtn');
+    const badge = document.getElementById('collCashLockBadge');
+    const note = document.getElementById('collPaymentNote');
+
+    if (hidden) hidden.value = type;
+
+    if (type === 'cash') {
+      if (ledgerBtn) {
+        ledgerBtn.style.background = 'var(--bg-card)';
+        ledgerBtn.style.border = '1px solid var(--border-subtle)';
+        ledgerBtn.style.color = 'var(--text-secondary)';
+      }
+      if (cashBtn) {
+        cashBtn.style.background = 'rgba(16, 185, 129, 0.15)';
+        cashBtn.style.border = '1.5px solid var(--accent-emerald)';
+        cashBtn.style.color = 'var(--accent-emerald)';
+      }
+      if (badge) badge.style.display = 'inline-block';
+      if (note) {
+        note.innerHTML = '💵 <b>Spot Cash Paid:</b> Immediate payment. This rate and deduction percentage are locked and protected from bulk monthly rate changes.';
+        note.style.color = 'var(--accent-emerald)';
+      }
+    } else {
+      if (ledgerBtn) {
+        ledgerBtn.style.background = 'rgba(16, 185, 129, 0.12)';
+        ledgerBtn.style.border = '1.5px solid var(--accent-emerald)';
+        ledgerBtn.style.color = 'var(--accent-emerald)';
+      }
+      if (cashBtn) {
+        cashBtn.style.background = 'var(--bg-card)';
+        cashBtn.style.border = '1px solid var(--border-subtle)';
+        cashBtn.style.color = 'var(--text-secondary)';
+      }
+      if (badge) badge.style.display = 'none';
+      if (note) {
+        note.innerHTML = '📅 <b>Monthly Ledger:</b> Standard collection. Settled at month-end based on the monthly declared rate.';
+        note.style.color = 'var(--text-muted)';
+      }
+    }
+  },
+
   clearForm() {
     const grossInput = document.getElementById('collGrossInput');
     const dedInput = document.getElementById('collDeducInput');
@@ -582,6 +642,7 @@ const collectionsModule = {
     if (notesInput) notesInput.value = '';
     document.querySelectorAll('#collDeductionChips .leaf-chip').forEach(c => c.classList.remove('active'));
 
+    this.setPaymentType('ledger');
     this.updateCalc();
   },
 

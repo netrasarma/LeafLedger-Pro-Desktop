@@ -631,6 +631,7 @@ class SyncEngine extends EventEmitter {
       if (translated.password && !translated.mpin_hash) {
         translated.mpin_hash = translated.password;
       }
+    }
     if (tableName === 'daily_collections') {
       if (translated.meta) {
         try {

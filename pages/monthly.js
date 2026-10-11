@@ -30,11 +30,14 @@ const monthlyModule = {
       `);
       this.activeMonths = activeMonthsRes?.data || [];
 
-      // If current month has 0 collections, but an earlier month has collections, automatically select the latest month with collections!
-      const currentHasData = this.activeMonths.some(r => Number(r.m) === targetMonth && Number(r.y) === targetYear && Number(r.count) > 0);
-      if (!currentHasData && this.activeMonths.length > 0) {
-        targetMonth = Number(this.activeMonths[0].m);
-        targetYear = Number(this.activeMonths[0].y);
+      // Smart Auto-Selection: Prioritize the month that actually has pending collections to verify & pay
+      let bestMonth = this.activeMonths.find(r => Number(r.total_amount) > 0);
+      if (!bestMonth && this.activeMonths.length > 0) {
+        bestMonth = [...this.activeMonths].sort((a, b) => (b.count || 0) - (a.count || 0))[0];
+      }
+      if (bestMonth) {
+        targetMonth = Number(bestMonth.m);
+        targetYear = Number(bestMonth.y);
       }
 
       this.renderMonthPills(this.activeMonths, targetMonth, targetYear);
@@ -98,9 +101,9 @@ const monthlyModule = {
   selectMonthYear(m, y) {
     const monthSelect = document.getElementById('monthlyMonthSelect');
     const yearInput = document.getElementById('monthlyYearInput');
-    if (monthSelect) monthSelect.value = m;
-    if (yearInput) yearInput.value = y;
-    this.renderMonthPills(this.activeMonths, m, y);
+    if (monthSelect) monthSelect.value = String(m);
+    if (yearInput) yearInput.value = String(y);
+    this.renderMonthPills(this.activeMonths, Number(m), Number(y));
     this.loadMonthlyData();
   },
 
@@ -145,8 +148,8 @@ const monthlyModule = {
   },
 
   async loadMonthlyData() {
-    const m = parseInt(document.getElementById('monthlyMonthSelect')?.value || (new Date().getMonth() + 1));
-    const y = parseInt(document.getElementById('monthlyYearInput')?.value || new Date().getFullYear());
+    const m = parseInt(document.getElementById('monthlyMonthSelect')?.value, 10) || (new Date().getMonth() + 1);
+    const y = parseInt(document.getElementById('monthlyYearInput')?.value, 10) || new Date().getFullYear();
     const monthPrefix = `${y}-${String(m).padStart(2, '0')}`;
     const sid = this.activeSessionId;
 

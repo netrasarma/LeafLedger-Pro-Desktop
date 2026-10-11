@@ -678,7 +678,10 @@ class SyncEngine extends EventEmitter {
   async _syncTableDelta(tableName, appUserId, cache, force = false) {
     if (!this.client) return 0;
     try {
-      const lastSync = force
+      const localCountRes = this.localDb.getOne(`SELECT count(*) as c FROM ${tableName}`);
+      const isLocalEmpty = !localCountRes || Number(localCountRes.c) === 0;
+
+      const lastSync = (force || isLocalEmpty)
         ? '1970-01-01T00:00:00.000Z'
         : this.localDb.getSetting(`last_sync_${tableName}`, '1970-01-01T00:00:00.000Z');
 

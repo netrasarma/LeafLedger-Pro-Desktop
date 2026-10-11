@@ -457,6 +457,10 @@ class LocalDatabase {
         if (row && row.value !== undefined) return row.value;
       } catch (_) {}
     }
+    // Sync checkpoints are tenant-scoped and must never leak from globalDb to tenant DB
+    if (key.startsWith('last_sync_')) {
+      return defaultValue;
+    }
     try {
       const gRow = this.globalDb.prepare('SELECT value FROM settings WHERE key = ?').get(key);
       if (gRow && gRow.value !== undefined) return gRow.value;
@@ -466,7 +470,8 @@ class LocalDatabase {
 
   setSetting(key, value) {
     const valStr = value !== undefined && value !== null ? String(value) : '';
-    if (this.globalDb) {
+    // Do NOT pollute globalDb with tenant-specific sync checkpoints
+    if (this.globalDb && !key.startsWith('last_sync_')) {
       try {
         this.globalDb.prepare(
           'INSERT INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP'
@@ -952,16 +957,6 @@ class LocalDatabase {
         } catch (_) {}
       }
 
-      // Clean orphaned records with non-existent owner_ids
-      try {
-        this.db.exec(`DELETE FROM advances WHERE owner_id NOT IN (SELECT id FROM owners);`);
-      } catch (_) {}
-      try {
-        this.db.exec(`DELETE FROM daily_collections WHERE owner_id NOT IN (SELECT id FROM owners);`);
-      } catch (_) {}
-      try {
-        this.db.exec(`DELETE FROM monthly_payments WHERE owner_id NOT IN (SELECT id FROM owners);`);
-      } catch (_) {}
     } catch (e) {
       console.warn('[DB] purgeForeignTenantData notice:', e.message);
     }

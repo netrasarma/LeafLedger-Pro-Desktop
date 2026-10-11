@@ -74,10 +74,13 @@
       💰 Pricing & Rates Desk
     </button>
 
-    <button type="button" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 14px; font-weight: 700; color: var(--accent-emerald);" onclick="monthlyModule.loadMonthlyData()">
-      🔄 Refresh Statement
+    <button type="button" class="btn btn-secondary btn-sm" id="btnMonthlyRefresh" style="height: 36px; padding: 0 14px; font-weight: 700; color: var(--accent-emerald);" onclick="monthlyModule.syncAndReload()">
+      🔄 Refresh & Sync Data
     </button>
   </div>
+
+  <!-- Quick Month Selector Pills / Activity Bar -->
+  <div id="mMonthPillsContainer" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center;"></div>
 
   <!-- Two Tabs: Pending Payments & Completed Transactions -->
   <div style="display: flex; gap: 10px; margin-bottom: 12px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px;">

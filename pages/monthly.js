@@ -9,14 +9,43 @@ const monthlyModule = {
   completedPayments: [],
   activeAuditData: null,
   activeSessionId: null,
+  activeMonths: [],
 
   async init() {
     const curDate = new Date();
+    let targetMonth = curDate.getMonth() + 1;
+    let targetYear = curDate.getFullYear();
+
+    // Smart Month Auto-Detection: Find months with existing collections
+    try {
+      const activeMonthsRes = await window.electronAPI.db.query(`
+        SELECT strftime('%Y', date) as y, 
+               CAST(strftime('%m', date) AS INTEGER) as m, 
+               COUNT(id) as count,
+               SUM(net_weight_kg) as total_kg,
+               SUM(amount) as total_amount
+        FROM daily_collections
+        GROUP BY y, m
+        ORDER BY y DESC, m DESC
+      `);
+      this.activeMonths = activeMonthsRes?.data || [];
+
+      // If current month has 0 collections, but an earlier month has collections, automatically select the latest month with collections!
+      const currentHasData = this.activeMonths.some(r => Number(r.m) === targetMonth && Number(r.y) === targetYear && Number(r.count) > 0);
+      if (!currentHasData && this.activeMonths.length > 0) {
+        targetMonth = Number(this.activeMonths[0].m);
+        targetYear = Number(this.activeMonths[0].y);
+      }
+
+      this.renderMonthPills(this.activeMonths, targetMonth, targetYear);
+    } catch (err) {
+      console.warn('[MonthlyModule] Active months query warning:', err);
+    }
+
     const monthSelect = document.getElementById('monthlyMonthSelect');
     const yearInput = document.getElementById('monthlyYearInput');
-
-    if (monthSelect) monthSelect.value = curDate.getMonth() + 1;
-    if (yearInput) yearInput.value = curDate.getFullYear();
+    if (monthSelect) monthSelect.value = targetMonth;
+    if (yearInput) yearInput.value = targetYear;
 
     // Fetch active season session
     try {
@@ -27,6 +56,72 @@ const monthlyModule = {
     }
 
     await this.loadMonthlyData();
+  },
+
+  renderMonthPills(activeMonths, currentM, currentY) {
+    const container = document.getElementById('mMonthPillsContainer');
+    if (!container) return;
+
+    if (!activeMonths || activeMonths.length === 0) {
+      container.innerHTML = `
+        <div style="font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 8px; background: rgba(59, 130, 246, 0.08); padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.2);">
+          <span>ℹ️ No local collections detected yet. Click <b>Refresh & Sync Data</b> to pull records from cloud.</span>
+        </div>
+      `;
+      return;
+    }
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    container.innerHTML = `
+      <div style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-right: 4px;">📅 Active Periods:</div>
+      ${activeMonths.map(row => {
+        const m = Number(row.m);
+        const y = Number(row.y);
+        const isSelected = m === currentM && y === currentY;
+        const name = `${monthNames[m - 1]} ${y}`;
+        const count = row.count || 0;
+        const kg = Math.round(row.total_kg || 0).toLocaleString('en-IN');
+        return `
+          <button type="button" 
+                  class="btn btn-sm ${isSelected ? 'btn-primary' : 'btn-secondary'}" 
+                  style="font-size: 11.5px; padding: 4px 12px; border-radius: 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;"
+                  onclick="monthlyModule.selectMonthYear(${m}, ${y})">
+            <span>${name}</span>
+            <span style="opacity: 0.85; font-size: 10.5px; font-weight: 600;">(${count} entries • ${kg} kg)</span>
+            ${isSelected ? '✔' : ''}
+          </button>
+        `;
+      }).join('')}
+    `;
+  },
+
+  selectMonthYear(m, y) {
+    const monthSelect = document.getElementById('monthlyMonthSelect');
+    const yearInput = document.getElementById('monthlyYearInput');
+    if (monthSelect) monthSelect.value = m;
+    if (yearInput) yearInput.value = y;
+    this.renderMonthPills(this.activeMonths, m, y);
+    this.loadMonthlyData();
+  },
+
+  async syncAndReload() {
+    const btn = document.getElementById('btnMonthlyRefresh');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Syncing Cloud Data...';
+    }
+    try {
+      if (window.electronAPI?.sync?.triggerSync) {
+        await window.electronAPI.sync.triggerSync();
+      }
+    } catch (e) {
+      console.warn('[MonthlyModule] Sync error:', e);
+    }
+    await this.init();
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '🔄 Refresh & Sync Data';
+    }
   },
 
   switchTab(tab) {
@@ -55,6 +150,8 @@ const monthlyModule = {
     const monthPrefix = `${y}-${String(m).padStart(2, '0')}`;
     const sid = this.activeSessionId;
 
+    this.renderMonthPills(this.activeMonths, m, y);
+
     const pTbody = document.getElementById('mPendingTableBody');
     const cTbody = document.getElementById('mCompletedTableBody');
     if (pTbody) pTbody.innerHTML = app.getLoadingStateTableRow(8, 'Auditing monthly grower accounts...');
@@ -62,6 +159,7 @@ const monthlyModule = {
 
     try {
       // 1. Fetch collections for this month grouped by owner (with missing rate detection)
+      // Matches both padded '2026-09%' and unpadded '2026-9-%'
       const collQuery = `
         SELECT dc.owner_id, COALESCE(o.name, 'Tea Grower') as owner_name, o.phone, o.address, o.village,
                o.bank_name, o.bank_acc, o.bank_ifsc, o.account_holder_name, o.agreement_date,
@@ -72,10 +170,10 @@ const monthlyModule = {
                SUM(CASE WHEN dc.rate_per_kg IS NULL OR dc.rate_per_kg = 0 THEN 1 ELSE 0 END) as missing_rate_count
         FROM daily_collections dc
         LEFT JOIN owners o ON dc.owner_id = o.id
-        WHERE dc.date LIKE ?
+        WHERE (dc.date LIKE ? OR dc.date LIKE ?)
         GROUP BY dc.owner_id
       `;
-      const collParams = [`${monthPrefix}%`];
+      const collParams = [`${monthPrefix}%`, `${y}-${m}-%`];
 
       const collsRes = await window.electronAPI.db.query(collQuery, collParams);
       const monthlyRows = collsRes?.data || [];
@@ -178,9 +276,17 @@ const monthlyModule = {
       );
 
       if (filtered.length === 0) {
+        const selM = parseInt(document.getElementById('monthlyMonthSelect')?.value || '0');
+        const selY = parseInt(document.getElementById('monthlyYearInput')?.value || '0');
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        const periodName = `${monthNames[selM - 1] || ''} ${selY}`.trim();
+        const hasOtherMonths = this.activeMonths && this.activeMonths.length > 0;
+
         pTbody.innerHTML = app.getEmptyStateTableRow(8, {
-          title: 'All Accounts Reconciled',
-          message: 'No pending grower payments for this month. All verified!'
+          title: `No Pending Payments for ${periodName}`,
+          message: hasOtherMonths
+            ? `No unverified payments in ${periodName}. Click an active month pill above to switch months!`
+            : 'No grower records found. Click "Refresh & Sync Data" above to fetch from cloud.'
         });
       } else {
         pTbody.innerHTML = filtered.map(o => {
@@ -293,8 +399,8 @@ const monthlyModule = {
       }
 
       // 2. Fetch Collections for this owner in selected month
-      const logQuery = "SELECT * FROM daily_collections WHERE owner_id = ? AND date LIKE ? ORDER BY date ASC";
-      const logParams = [ownerId, `${monthPrefix}%`];
+      const logQuery = "SELECT * FROM daily_collections WHERE owner_id = ? AND (date LIKE ? OR date LIKE ?) ORDER BY date ASC";
+      const logParams = [ownerId, `${monthPrefix}%`, `${y}-${m}-%`];
 
       const logRes = await window.electronAPI.db.query(logQuery, logParams);
       const rows = logRes?.data || [];
@@ -729,8 +835,8 @@ const monthlyModule = {
       if (!owner) return;
 
       const collsRes = await window.electronAPI.db.query(
-        "SELECT * FROM daily_collections WHERE owner_id = ? AND date LIKE ? ORDER BY date ASC",
-        [ownerId, `${monthPrefix}%`]
+        "SELECT * FROM daily_collections WHERE owner_id = ? AND (date LIKE ? OR date LIKE ?) ORDER BY date ASC",
+        [ownerId, `${monthPrefix}%`, `${y}-${m}-%`]
       );
       const rows = collsRes?.data || [];
 

@@ -750,14 +750,17 @@ function startUpdateDownload(remoteVersion, downloadUrl) {
   if (!downloadUrl) return;
 
   const updateWindow = new BrowserWindow({
-    width: 480,
-    height: 190,
+    width: 540,
+    height: 250,
     parent: mainWindow,
     modal: true,
     frame: false,
     resizable: false,
     show: false,
-    backgroundColor: '#0a100d',
+    transparent: true,
+    backgroundColor: '#00000000',
+    hasShadow: true,
+    center: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

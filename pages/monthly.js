@@ -170,10 +170,14 @@ const monthlyModule = {
                SUM(CASE WHEN dc.rate_per_kg IS NULL OR dc.rate_per_kg = 0 THEN 1 ELSE 0 END) as missing_rate_count
         FROM daily_collections dc
         LEFT JOIN owners o ON dc.owner_id = o.id
-        WHERE (dc.date LIKE ? OR dc.date LIKE ?)
+        WHERE (
+          (strftime('%Y', dc.date) = ? AND CAST(strftime('%m', dc.date) AS INTEGER) = ?)
+          OR dc.date LIKE ?
+          OR dc.date LIKE ?
+        )
         GROUP BY dc.owner_id
       `;
-      const collParams = [`${monthPrefix}%`, `${y}-${m}-%`];
+      const collParams = [String(y), m, `${monthPrefix}%`, `${y}-${m}-%`];
 
       const collsRes = await window.electronAPI.db.query(collQuery, collParams);
       const monthlyRows = collsRes?.data || [];
@@ -399,8 +403,16 @@ const monthlyModule = {
       }
 
       // 2. Fetch Collections for this owner in selected month
-      const logQuery = "SELECT * FROM daily_collections WHERE owner_id = ? AND (date LIKE ? OR date LIKE ?) ORDER BY date ASC";
-      const logParams = [ownerId, `${monthPrefix}%`, `${y}-${m}-%`];
+      const logQuery = `
+        SELECT * FROM daily_collections 
+        WHERE owner_id = ? AND (
+          (strftime('%Y', date) = ? AND CAST(strftime('%m', date) AS INTEGER) = ?)
+          OR date LIKE ?
+          OR date LIKE ?
+        )
+        ORDER BY date ASC
+      `;
+      const logParams = [ownerId, String(y), m, `${monthPrefix}%`, `${y}-${m}-%`];
 
       const logRes = await window.electronAPI.db.query(logQuery, logParams);
       const rows = logRes?.data || [];

@@ -1,10 +1,10 @@
 {
-  "version": "1.0.4",
+  "version": "1.0.5",
   "mobile_version": "2.0.8",
   "name": "leaf-ledger-pro",
   "required": false,
   "release_date": "2026-10-11",
-  "changelog": "v1.0.4: Fix Monthly Ledger cross-platform transaction visibility on Windows, smart month auto-detection, and sync checkpoint isolation.",
+  "changelog": "v1.0.5: Redesigned updater progress UI with modern glassmorphism and enhanced date matching parity for monthly statements across platforms.",
   "download_urls": {
     "windows": "https://leafledger-update-gateway.officialnetrasarma.workers.dev/api/v1/desktop/download/latest",
     "android": "https://leafledger-update-gateway.officialnetrasarma.workers.dev/api/v1/mobile/download/latest.apk"

@@ -62,8 +62,8 @@ const monthlyModule = {
 
     try {
       // 1. Fetch collections for this month grouped by owner (with missing rate detection)
-      let collQuery = `
-        SELECT dc.owner_id, o.name as owner_name, o.phone, o.address, o.village,
+      const collQuery = `
+        SELECT dc.owner_id, COALESCE(o.name, 'Tea Grower') as owner_name, o.phone, o.address, o.village,
                o.bank_name, o.bank_acc, o.bank_ifsc, o.account_holder_name, o.agreement_date,
                SUM(dc.gross_weight_kg) as total_gross,
                SUM(dc.net_weight_kg) as total_net,
@@ -71,33 +71,25 @@ const monthlyModule = {
                COUNT(dc.id) as total_pickups,
                SUM(CASE WHEN dc.rate_per_kg IS NULL OR dc.rate_per_kg = 0 THEN 1 ELSE 0 END) as missing_rate_count
         FROM daily_collections dc
-        JOIN owners o ON dc.owner_id = o.id
+        LEFT JOIN owners o ON dc.owner_id = o.id
         WHERE dc.date LIKE ?
+        GROUP BY dc.owner_id
       `;
       const collParams = [`${monthPrefix}%`];
-      if (sid) {
-        collQuery += " AND (dc.session_id = ? OR dc.session_id IS NULL)";
-        collParams.push(sid);
-      }
-      collQuery += " GROUP BY dc.owner_id";
 
       const collsRes = await window.electronAPI.db.query(collQuery, collParams);
       const monthlyRows = collsRes?.data || [];
 
       // 2. Fetch completed settlements for this month & year
-      let payQuery = `
-        SELECT mp.*, o.name as owner_name, o.phone, o.address, o.village,
+      const payQuery = `
+        SELECT mp.*, COALESCE(o.name, 'Tea Grower') as owner_name, o.phone, o.address, o.village,
                o.bank_name, o.bank_acc, o.bank_ifsc, o.account_holder_name, o.agreement_date
         FROM monthly_payments mp
-        JOIN owners o ON mp.owner_id = o.id
+        LEFT JOIN owners o ON mp.owner_id = o.id
         WHERE mp.month = ? AND mp.year = ? AND (mp.is_paid = 1 OR mp.is_paid IS NULL)
+        ORDER BY mp.payment_date DESC, mp.created_at DESC
       `;
       const payParams = [m, y];
-      if (sid) {
-        payQuery += " AND (mp.session_id = ? OR mp.session_id IS NULL)";
-        payParams.push(sid);
-      }
-      payQuery += " ORDER BY mp.payment_date DESC, mp.created_at DESC";
 
       const payRes = await window.electronAPI.db.query(payQuery, payParams);
       this.completedPayments = payRes?.data || [];
@@ -301,13 +293,8 @@ const monthlyModule = {
       }
 
       // 2. Fetch Collections for this owner in selected month
-      let logQuery = "SELECT * FROM daily_collections WHERE owner_id = ? AND date LIKE ?";
+      const logQuery = "SELECT * FROM daily_collections WHERE owner_id = ? AND date LIKE ? ORDER BY date ASC";
       const logParams = [ownerId, `${monthPrefix}%`];
-      if (this.activeSessionId) {
-        logQuery += " AND (session_id = ? OR session_id IS NULL)";
-        logParams.push(this.activeSessionId);
-      }
-      logQuery += " ORDER BY date ASC";
 
       const logRes = await window.electronAPI.db.query(logQuery, logParams);
       const rows = logRes?.data || [];

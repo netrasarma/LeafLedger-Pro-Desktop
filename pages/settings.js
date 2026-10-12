@@ -522,7 +522,7 @@ class SettingsModule {
   // --- Tab 6: OTA Updates ---
   async loadSoftwareInfo() {
     try {
-      let ver = '1.0.8';
+      let ver = '1.0.9';
       if (window.electronAPI?.system?.getAppVersion) {
         ver = await window.electronAPI.system.getAppVersion();
       }

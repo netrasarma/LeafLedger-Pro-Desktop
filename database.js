@@ -263,10 +263,17 @@ class LocalDatabase {
         payment_date TEXT,
         total_gross_kg REAL DEFAULT 0.0,
         total_net_kg REAL DEFAULT 0.0,
+        gross_weight REAL DEFAULT 0.0,
+        net_weight REAL DEFAULT 0.0,
         rate_per_kg REAL DEFAULT 0.0,
         total_amount REAL DEFAULT 0.0,
+        gross_amount REAL DEFAULT 0.0,
         advance_deducted REAL DEFAULT 0.0,
+        total_advances REAL DEFAULT 0.0,
         final_paid_amount REAL DEFAULT 0.0,
+        net_paid REAL DEFAULT 0.0,
+        net_payable REAL DEFAULT 0.0,
+        total_deductions REAL DEFAULT 0.0,
         payment_mode TEXT DEFAULT 'Cash',
         is_paid INTEGER DEFAULT 0,
         notes TEXT,
@@ -460,11 +467,16 @@ class LocalDatabase {
     safeAddColumn('monthly_payments', 'updated_at', 'TEXT DEFAULT CURRENT_TIMESTAMP');
     safeAddColumn('monthly_payments', 'total_gross_kg', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'total_net_kg', 'REAL DEFAULT 0.0');
+    safeAddColumn('monthly_payments', 'gross_weight', 'REAL DEFAULT 0.0');
+    safeAddColumn('monthly_payments', 'net_weight', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'total_amount', 'REAL DEFAULT 0.0');
+    safeAddColumn('monthly_payments', 'gross_amount', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'advance_deducted', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'total_advances', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'final_paid_amount', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'net_paid', 'REAL DEFAULT 0.0');
+    safeAddColumn('monthly_payments', 'net_payable', 'REAL DEFAULT 0.0');
+    safeAddColumn('monthly_payments', 'total_deductions', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'payment_mode', "TEXT DEFAULT 'Cash'");
 
     safeAddColumn('staff_accounts', 'owner_id', 'TEXT');

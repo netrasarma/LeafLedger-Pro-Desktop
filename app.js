@@ -305,7 +305,7 @@ class AppRouter {
       if (iconAvailable) iconAvailable.style.display = 'flex';
 
       titleEl.innerText = `Update Available (v${info.remoteVersion || 'New'})`;
-      msgEl.innerText = `A new version of Leaf Ledger Pro is available. Current version is v${info.currentVersion || '1.0.8'}.`;
+      msgEl.innerText = `A new version of Leaf Ledger Pro is available. Current version is v${info.currentVersion || '1.0.9'}.`;
 
       if (info.changelog && changelogContainer && changelogText) {
         changelogText.innerText = info.changelog;
@@ -347,7 +347,7 @@ class AppRouter {
       if (iconUpToDate) iconUpToDate.style.display = 'flex';
 
       titleEl.innerText = 'You are using the latest version.';
-      msgEl.innerText = `Leaf Ledger Pro v${info.currentVersion || '1.0.8'} is currently up to date.`;
+      msgEl.innerText = `Leaf Ledger Pro v${info.currentVersion || '1.0.9'} is currently up to date.`;
       if (changelogContainer) changelogContainer.style.display = 'none';
       if (cancelBtn) cancelBtn.style.display = 'none';
       primaryBtn.innerText = 'OK';
@@ -690,6 +690,103 @@ class AppRouter {
   openModal(modalId) {
     const m = document.getElementById(modalId);
     if (m) m.classList.add('active');
+  }
+
+  confirmDialog({
+    title = 'Confirm Action',
+    message = 'Are you sure you want to proceed?',
+    details = '',
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+    type = 'primary'
+  } = {}) {
+    return new Promise((resolve) => {
+      const modal = document.getElementById('modalGenericConfirm');
+      if (!modal) {
+        resolve(window.confirm(`${title}\n\n${message}`));
+        return;
+      }
+
+      const titleEl = document.getElementById('genericConfirmTitle');
+      const msgEl = document.getElementById('genericConfirmMessage');
+      const detEl = document.getElementById('genericConfirmDetails');
+      const iconCircle = document.getElementById('genericConfirmIconCircle');
+      const okBtn = document.getElementById('genericConfirmOkBtn');
+      const cancelBtn = document.getElementById('genericConfirmCancelBtn');
+
+      if (titleEl) titleEl.textContent = title;
+      if (msgEl) msgEl.textContent = message;
+
+      if (detEl) {
+        if (details) {
+          detEl.innerHTML = details;
+          detEl.style.display = 'block';
+        } else {
+          detEl.style.display = 'none';
+        }
+      }
+
+      if (cancelBtn) cancelBtn.textContent = cancelText;
+      if (okBtn) {
+        okBtn.textContent = confirmText;
+        if (type === 'danger') {
+          okBtn.style.background = '#DC2626';
+          okBtn.style.color = '#FFFFFF';
+          okBtn.style.boxShadow = '0 2px 8px rgba(220, 38, 38, 0.25)';
+          if (iconCircle) {
+            iconCircle.className = 'dialog-icon-circle red';
+            iconCircle.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+          }
+        } else if (type === 'success') {
+          okBtn.style.background = '#10B981';
+          okBtn.style.color = '#FFFFFF';
+          okBtn.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.25)';
+          if (iconCircle) {
+            iconCircle.className = 'dialog-icon-circle green';
+            iconCircle.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+          }
+        } else if (type === 'warning') {
+          okBtn.style.background = '#D97706';
+          okBtn.style.color = '#FFFFFF';
+          okBtn.style.boxShadow = '0 2px 8px rgba(217, 119, 6, 0.25)';
+          if (iconCircle) {
+            iconCircle.className = 'dialog-icon-circle amber';
+            iconCircle.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+          }
+        } else {
+          okBtn.style.background = '#2563EB';
+          okBtn.style.color = '#FFFFFF';
+          okBtn.style.boxShadow = '0 2px 8px rgba(37, 99, 235, 0.25)';
+          if (iconCircle) {
+            iconCircle.className = 'dialog-icon-circle blue';
+            iconCircle.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+          }
+        }
+      }
+
+      // Clone buttons to strip old listeners
+      const newOkBtn = okBtn.cloneNode(true);
+      const newCancelBtn = cancelBtn.cloneNode(true);
+      okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+      cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
+      const cleanup = (val) => {
+        window.removeEventListener('keydown', onKey);
+        this.closeModal('modalGenericConfirm');
+        resolve(val);
+      };
+
+      const onKey = (e) => {
+        if (e.key === 'Escape') cleanup(false);
+        if (e.key === 'Enter') cleanup(true);
+      };
+
+      newOkBtn.addEventListener('click', () => cleanup(true));
+      newCancelBtn.addEventListener('click', () => cleanup(false));
+      window.addEventListener('keydown', onKey);
+
+      this.openModal('modalGenericConfirm');
+    });
   }
 
   // --------------------------------------------------------------------------
@@ -1119,7 +1216,7 @@ class AppRouter {
         this._appVersion = await window.electronAPI.system.getAppVersion();
       }
     } catch (_) {}
-    this._appVersion = this._appVersion || '1.0.8';
+    this._appVersion = this._appVersion || '1.0.9';
     return this._appVersion;
   }
 

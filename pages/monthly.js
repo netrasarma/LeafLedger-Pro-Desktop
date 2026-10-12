@@ -727,20 +727,36 @@ const monthlyModule = {
 
     // Validation 1: Missing Rates Check - STRICT BLOCK
     if (missingRateCount > 0) {
-      alert(
-        `🚫 SETTLEMENT BLOCKED:\n\n${missingRateCount} leaf pickup(s) do not have rates applied (Rs. 0.00/kg).\n\nYou cannot finalize this payout statement because rates are missing.\n\nPlease open the Rates Desk and enter rates for all leaf collections before settling.`
-      );
+      app.showToast(`Settlement blocked: ${missingRateCount} leaf pickup(s) do not have rates applied (Rs. 0.00/kg). Enter rates in Rates Desk first.`, 'error');
       return;
     }
 
     // Validation 2: Max Deduction Check
     if (deduc > availableAdv) {
-      alert(`Advance deduction (Rs. ${deduc}) cannot exceed available advance balance (Rs. ${availableAdv}).`);
+      app.showToast(`Advance deduction (Rs. ${deduc}) cannot exceed available advance balance (Rs. ${availableAdv}).`, 'error');
       return;
     }
 
-    // Confirmation
-    if (!confirm(`Confirm and finalize payment of Rs. ${Math.round(netPayable).toLocaleString('en-IN')} for ${owner.name} via ${mode}?`)) {
+    // Confirmation via in-app modern modal
+    const confirmed = await app.confirmDialog({
+      title: 'Confirm Monthly Payout',
+      message: `Finalize payout of Rs. ${Math.round(netPayable).toLocaleString('en-IN')} for ${owner.name}?`,
+      details: `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div><span style="color: var(--text-muted);">Grower:</span> <strong>${owner.name}</strong></div>
+          <div><span style="color: var(--text-muted);">Payment Mode:</span> <strong>${mode}</strong></div>
+          <div><span style="color: var(--text-muted);">Net Leaf:</span> <strong>${Math.round(totalNet).toLocaleString('en-IN')} kg</strong></div>
+          <div><span style="color: var(--text-muted);">Gross Amount:</span> <strong>Rs. ${Math.round(grossAmt).toLocaleString('en-IN')}</strong></div>
+          <div><span style="color: var(--text-muted);">Adv. Deducted:</span> <strong style="color: var(--accent-amber);">-Rs. ${Math.round(deduc).toLocaleString('en-IN')}</strong></div>
+          <div><span style="color: var(--text-muted);">Net Payable:</span> <strong style="color: #10b981;">Rs. ${Math.round(netPayable).toLocaleString('en-IN')}</strong></div>
+        </div>
+      `,
+      confirmText: 'Confirm & Finalize',
+      cancelText: 'Cancel',
+      type: 'success'
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -751,20 +767,20 @@ const monthlyModule = {
       const currentUid = (await window.electronAPI.auth.getCurrentUser())?.id || '';
 
       // Insert with all schema columns for complete compatibility
-      await window.electronAPI.db.run(`
+      let runRes = await window.electronAPI.db.run(`
         INSERT INTO monthly_payments (
           id, app_user_id, owner_id, month, year, payment_date, 
           total_gross_kg, total_net_kg, gross_weight, net_weight,
           rate_per_kg, total_amount, gross_amount, 
           advance_deducted, total_advances, 
-          final_paid_amount, net_paid, net_payable,
+          final_paid_amount, net_paid, net_payable, total_deductions,
           payment_mode, is_paid, notes, session_id, sync_id, sync_status
         ) VALUES (
           ?, ?, ?, ?, ?, ?, 
           ?, ?, ?, ?,
           ?, ?, ?, 
           ?, ?, 
-          ?, ?, ?,
+          ?, ?, ?, 0,
           ?, 1, ?, ?, ?, 0
         )
       `, [
@@ -775,6 +791,39 @@ const monthlyModule = {
         netPayable, netPayable, netPayable,
         mode, notes, sid, syncId
       ]);
+
+      // If full insert fails due to missing optional legacy columns on any platform, fallback to core schema columns
+      if (runRes && runRes.success === false) {
+        console.warn('[MonthlyModule] Full schema insert failed, falling back to core columns:', runRes.error);
+        runRes = await window.electronAPI.db.run(`
+          INSERT INTO monthly_payments (
+            id, app_user_id, owner_id, month, year, payment_date, 
+            total_gross_kg, total_net_kg,
+            rate_per_kg, total_amount,
+            advance_deducted,
+            final_paid_amount,
+            payment_mode, is_paid, notes, session_id, sync_id, sync_status
+          ) VALUES (
+            ?, ?, ?, ?, ?, ?, 
+            ?, ?, 
+            0, ?, 
+            ?, 
+            ?, 
+            ?, 1, ?, ?, ?, 0
+          )
+        `, [
+          id, currentUid, owner.id, month, year, todayStr,
+          totalGross, totalNet,
+          grossAmt,
+          deduc,
+          netPayable,
+          mode, notes, sid, syncId
+        ]);
+      }
+
+      if (runRes && runRes.success === false) {
+        throw new Error(runRes.error || 'Failed to save monthly payment record.');
+      }
 
       app.closeModal('modalAuditStatement');
       app.showToast(`Payment of Rs. ${Math.round(netPayable).toLocaleString('en-IN')} committed for ${owner.name}!`, 'success');
@@ -792,7 +841,7 @@ const monthlyModule = {
   },
 
   /**
-   * Re-Open statement within the 7-day grace period
+   * Re-Open statement within the grace period
    */
   async reopenStatement(paymentId, ownerName) {
     let name = ownerName;
@@ -813,7 +862,22 @@ const monthlyModule = {
 
     name = name || 'this grower';
 
-    if (!confirm(`Are you sure you want to re-open the statement for ${name}?\n\nThis payment will be cancelled and returned to Pending Payments.`)) {
+    const confirmed = await app.confirmDialog({
+      title: 'Re-Open Monthly Statement',
+      message: `Re-open statement and cancel finalized payout for ${name}?`,
+      details: `
+        <div>
+          This payment will be removed from <strong>Completed Transactions</strong> and returned to <strong>Pending Payments</strong>.
+          <br><br>
+          Any advance deduction applied in this settlement will be <strong>refunded back</strong> to ${name}'s available advance balance.
+        </div>
+      `,
+      confirmText: 'Re-Open Statement',
+      cancelText: 'Keep Completed',
+      type: 'warning'
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -829,7 +893,11 @@ const monthlyModule = {
         );
       }
 
-      await window.electronAPI.db.run("DELETE FROM monthly_payments WHERE id = ?", [paymentId]);
+      const delRes = await window.electronAPI.db.run("DELETE FROM monthly_payments WHERE id = ?", [paymentId]);
+      if (delRes && delRes.success === false) {
+        throw new Error(delRes.error || 'Failed to remove payment record');
+      }
+
       app.showToast(`Statement for ${name} re-opened and returned to Pending.`, 'info');
       await this.loadMonthlyData();
       this.switchTab('pending');

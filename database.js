@@ -120,8 +120,10 @@ class LocalDatabase {
         id TEXT PRIMARY KEY,
         app_user_id TEXT,
         name TEXT NOT NULL,
+        code TEXT,
         phone TEXT,
         address TEXT,
+        village TEXT,
         agreement_date TEXT,
         bank_name TEXT,
         bank_acc TEXT,
@@ -394,7 +396,9 @@ class LocalDatabase {
     } catch (_) {}
 
     safeAddColumn('owners', 'app_user_id', 'TEXT');
+    safeAddColumn('owners', 'code', 'TEXT');
     safeAddColumn('owners', 'address', 'TEXT');
+    safeAddColumn('owners', 'village', 'TEXT');
     safeAddColumn('owners', 'agreement_date', 'TEXT');
     safeAddColumn('owners', 'bank_name', 'TEXT');
     safeAddColumn('owners', 'bank_acc', 'TEXT');
@@ -458,6 +462,7 @@ class LocalDatabase {
     safeAddColumn('monthly_payments', 'total_net_kg', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'total_amount', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'advance_deducted', 'REAL DEFAULT 0.0');
+    safeAddColumn('monthly_payments', 'total_advances', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'final_paid_amount', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'net_paid', 'REAL DEFAULT 0.0');
     safeAddColumn('monthly_payments', 'payment_mode', "TEXT DEFAULT 'Cash'");

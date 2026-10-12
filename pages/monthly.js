@@ -164,7 +164,7 @@ const monthlyModule = {
       // 1. Fetch collections for this month grouped by owner (with missing rate detection)
       // Matches both padded '2026-09%' and unpadded '2026-9-%'
       const collQuery = `
-        SELECT dc.owner_id, COALESCE(o.name, 'Tea Grower') as owner_name, o.phone, o.address, o.village,
+        SELECT dc.owner_id, COALESCE(o.name, 'Tea Grower') as owner_name, o.phone, o.address,
                o.bank_name, o.bank_acc, o.bank_ifsc, o.account_holder_name, o.agreement_date,
                SUM(dc.gross_weight_kg) as total_gross,
                SUM(dc.net_weight_kg) as total_net,
@@ -187,7 +187,7 @@ const monthlyModule = {
 
       // 2. Fetch completed settlements for this month & year
       const payQuery = `
-        SELECT mp.*, COALESCE(o.name, 'Tea Grower') as owner_name, o.phone, o.address, o.village,
+        SELECT mp.*, COALESCE(o.name, 'Tea Grower') as owner_name, o.phone, o.address,
                o.bank_name, o.bank_acc, o.bank_ifsc, o.account_holder_name, o.agreement_date
         FROM monthly_payments mp
         LEFT JOIN owners o ON mp.owner_id = o.id
@@ -205,7 +205,7 @@ const monthlyModule = {
         "SELECT owner_id, COALESCE(SUM(amount), 0) as total_adv FROM advances GROUP BY owner_id"
       );
       const advRecRes = await window.electronAPI.db.query(
-        "SELECT owner_id, COALESCE(SUM(COALESCE(advance_deducted, total_advances, 0)), 0) as total_rec FROM monthly_payments WHERE is_paid = 1 GROUP BY owner_id"
+        "SELECT owner_id, COALESCE(SUM(COALESCE(advance_deducted, 0)), 0) as total_rec FROM monthly_payments WHERE is_paid = 1 GROUP BY owner_id"
       );
 
       const advTotalMap = new Map((advTotalRes?.data || []).map(r => [r.owner_id, Number(r.total_adv)]));
@@ -436,7 +436,7 @@ const monthlyModule = {
         [ownerId]
       );
       const advDeducRes = await window.electronAPI.db.getOne(
-        "SELECT COALESCE(SUM(COALESCE(advance_deducted, total_advances, 0)), 0) as deducted FROM monthly_payments WHERE owner_id = ? AND is_paid = 1",
+        "SELECT COALESCE(SUM(COALESCE(advance_deducted, 0)), 0) as deducted FROM monthly_payments WHERE owner_id = ? AND is_paid = 1",
         [ownerId]
       );
 
@@ -870,7 +870,7 @@ const monthlyModule = {
         [ownerId]
       );
       const advDeducRes = await window.electronAPI.db.getOne(
-        "SELECT COALESCE(SUM(COALESCE(advance_deducted, total_advances, 0)), 0) as deducted FROM monthly_payments WHERE owner_id = ? AND is_paid = 1" + (pay.id ? " AND id != ?" : ""),
+        "SELECT COALESCE(SUM(COALESCE(advance_deducted, 0)), 0) as deducted FROM monthly_payments WHERE owner_id = ? AND is_paid = 1" + (pay.id ? " AND id != ?" : ""),
         pay.id ? [ownerId, pay.id] : [ownerId]
       );
 

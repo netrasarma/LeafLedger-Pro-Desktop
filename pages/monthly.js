@@ -371,13 +371,11 @@ const monthlyModule = {
                     Audit
                   </button>
                   <button type="button" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 4px 8px;" onclick="monthlyModule.printStatement('${p.owner_id}')">
-                    📄 Print
+                    Print
                   </button>
-                  ${canReopen ? `
-                    <button type="button" class="btn btn-danger btn-sm" style="font-size: 10.5px; padding: 4px 8px; font-weight: 700;" onclick="monthlyModule.reopenStatement('${p.id}', '${p.owner_name}')" title="Re-Open statement and revert to pending (Within 7-day grace period)">
-                      🔓 Re-Open
-                    </button>
-                  ` : ''}
+                  <button type="button" class="btn btn-danger btn-sm" style="font-size: 10.5px; padding: 4px 8px; font-weight: 700;" onclick="monthlyModule.reopenStatement('${p.id}')" title="Re-Open statement and revert to pending">
+                    Re-Open
+                  </button>
                 </div>
               </td>
             </tr>
@@ -612,7 +610,7 @@ const monthlyModule = {
             settleBtn.classList.add('btn-secondary');
             settleBtn.style.opacity = '0.6';
             settleBtn.style.cursor = 'not-allowed';
-            settleBtn.innerHTML = `🚫 &nbsp;Rate Missing (${missingRateCount})`;
+            settleBtn.innerHTML = `Rate Missing (${missingRateCount})`;
           } else {
             settleBtn.disabled = false;
             settleBtn.title = 'Confirm and finalize payment';
@@ -620,7 +618,7 @@ const monthlyModule = {
             settleBtn.classList.remove('btn-secondary');
             settleBtn.style.opacity = '1';
             settleBtn.style.cursor = 'pointer';
-            settleBtn.innerHTML = `✅ &nbsp;Confirm Payment`;
+            settleBtn.innerHTML = `Confirm Payment`;
           }
         }
         if (reopenBtn) reopenBtn.style.display = 'none';
@@ -797,19 +795,42 @@ const monthlyModule = {
    * Re-Open statement within the 7-day grace period
    */
   async reopenStatement(paymentId, ownerName) {
-    if (!confirm(`Are you sure you want to re-open the statement for ${ownerName}?\n\nThis payment will be cancelled and returned to Pending Payments.`)) {
+    let name = ownerName;
+    let syncId = paymentId;
+    let cloudId = null;
+
+    try {
+      const row = await window.electronAPI.db.getOne(
+        "SELECT mp.sync_id, mp.cloud_id, o.name as owner_name FROM monthly_payments mp LEFT JOIN owners o ON mp.owner_id = o.id WHERE mp.id = ?",
+        [paymentId]
+      );
+      if (row?.data) {
+        if (!name && row.data.owner_name) name = row.data.owner_name;
+        if (row.data.sync_id) syncId = row.data.sync_id;
+        if (row.data.cloud_id) cloudId = row.data.cloud_id;
+      }
+    } catch (_) {}
+
+    name = name || 'this grower';
+
+    if (!confirm(`Are you sure you want to re-open the statement for ${name}?\n\nThis payment will be cancelled and returned to Pending Payments.`)) {
       return;
     }
 
     try {
-      const row = await window.electronAPI.db.getOne("SELECT sync_id, cloud_id FROM monthly_payments WHERE id = ?", [paymentId]);
-      const syncId = row?.data?.sync_id || row?.data?.cloud_id || paymentId;
-      await window.electronAPI.db.run(
-        "INSERT OR REPLACE INTO deleted_tombstones (sync_id, table_name, deleted_at) VALUES (?, 'monthly_payments', CURRENT_TIMESTAMP)",
-        [syncId]
-      );
+      // Tombstone all identifiers to prevent cloud ghost resurrection
+      const tombstonesToInsert = new Set([syncId, paymentId]);
+      if (cloudId) tombstonesToInsert.add(cloudId);
+
+      for (const tId of tombstonesToInsert) {
+        await window.electronAPI.db.run(
+          "INSERT OR REPLACE INTO deleted_tombstones (sync_id, table_name, deleted_at) VALUES (?, 'monthly_payments', CURRENT_TIMESTAMP)",
+          [tId]
+        );
+      }
+
       await window.electronAPI.db.run("DELETE FROM monthly_payments WHERE id = ?", [paymentId]);
-      app.showToast(`Statement for ${ownerName} re-opened and returned to Pending.`, 'info');
+      app.showToast(`Statement for ${name} re-opened and returned to Pending.`, 'info');
       await this.loadMonthlyData();
       this.switchTab('pending');
       if (window.electronAPI?.sync?.smartSync) {

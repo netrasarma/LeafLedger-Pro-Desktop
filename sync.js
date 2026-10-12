@@ -14,7 +14,7 @@ const { EventEmitter } = require('node:events');
 const crypto = require('node:crypto');
 const { createClient } = require('@supabase/supabase-js');
 
-const PARENT_TABLES = ['sessions', 'factories', 'owners', 'staff_accounts'];
+const PARENT_TABLES = ['sessions', 'factories', 'owners', 'staff_accounts', 'workers'];
 const CHILD_TABLES = [
   'daily_collections',
   'advances',
@@ -22,6 +22,8 @@ const CHILD_TABLES = [
   'factory_collections',
   'factory_payments',
   'monthly_payments',
+  'worker_attendance',
+  'worker_payouts',
 ];
 
 const FK_MAP = {
@@ -29,6 +31,7 @@ const FK_MAP = {
   session_id: 'sessions',
   staff_id: 'staff_accounts',
   factory_id: 'factories',
+  worker_id: 'workers',
 };
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -36,7 +39,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-
 const TABLE_SCHEMAS = {
   factories: ['id', 'app_user_id', 'name', 'address', 'phone', 'is_active', 'sync_id', 'created_at', 'updated_at'],
   owners: ['id', 'app_user_id', 'name', 'phone', 'address', 'bank_name', 'account_holder_name', 'bank_acc', 'bank_ifsc', 'notes', 'agreement_date', 'portal_pin', 'is_active', 'sync_id', 'created_at', 'updated_at'],
-  daily_collections: ['id', 'app_user_id', 'owner_id', 'session_id', 'date', 'gross_weight_kg', 'bag_weight_kg', 'net_weight_kg', 'rate_per_kg', 'amount', 'notes', 'meta', 'collector_name', 'staff_id', 'sync_id', 'created_at', 'updated_at'],
+  daily_collections: ['id', 'app_user_id', 'owner_id', 'session_id', 'date', 'gross_weight_kg', 'bag_weight_kg', 'net_weight_kg', 'rate_per_kg', 'amount', 'notes', 'meta', 'collector_name', 'staff_id', 'is_cash_paid', 'rate_locked', 'sync_id', 'created_at', 'updated_at'],
   factory_collections: ['id', 'app_user_id', 'session_id', 'factory_name', 'factory_id', 'date', 'gross_weight_kg', 'bag_weight_kg', 'net_weight_kg', 'rate_per_kg', 'amount', 'notes', 'sync_id', 'created_at', 'updated_at'],
   expenses: ['id', 'app_user_id', 'session_id', 'date', 'category', 'amount', 'notes', 'sync_id', 'created_at', 'updated_at'],
   advances: ['id', 'app_user_id', 'owner_id', 'session_id', 'date', 'amount', 'payment_mode', 'notes', 'sync_id', 'created_at', 'updated_at'],
@@ -44,6 +47,9 @@ const TABLE_SCHEMAS = {
   factory_payments: ['id', 'app_user_id', 'session_id', 'factory_name', 'factory_id', 'month', 'year', 'total_weight_kg', 'total_amount', 'amount_received', 'payment_mode', 'payment_date', 'reference_no', 'notes', 'sync_id', 'created_at', 'updated_at'],
   staff_accounts: ['id', 'owner_id', 'username', 'full_name', 'mobile_number', 'is_active', 'allow_collector', 'password', 'display_mpin', 'sync_id', 'created_at', 'updated_at'],
   sessions: ['id', 'app_user_id', 'name', 'is_active', 'start_date', 'sync_id', 'created_at'],
+  workers: ['id', 'app_user_id', 'name', 'phone', 'emergency_phone', 'worker_type', 'rate', 'designation', 'status', 'joined_date', 'address', 'id_proof_number', 'bank_name', 'bank_acc', 'bank_ifsc', 'upi_id', 'notes', 'sync_id', 'created_at', 'updated_at'],
+  worker_attendance: ['id', 'app_user_id', 'worker_id', 'date', 'status', 'wage_earned', 'overtime_hours', 'is_paid', 'notes', 'sync_id', 'created_at', 'updated_at'],
+  worker_payouts: ['id', 'app_user_id', 'worker_id', 'payout_type', 'amount', 'period_start', 'period_end', 'payment_date', 'payment_mode', 'notes', 'sync_id', 'created_at', 'updated_at'],
 };
 
 class SyncEngine extends EventEmitter {
@@ -633,12 +639,14 @@ class SyncEngine extends EventEmitter {
       }
     }
     if (tableName === 'daily_collections') {
+      if (translated.is_cash_paid !== undefined) translated.is_cash_paid = Number(translated.is_cash_paid) ? 1 : 0;
+      if (translated.rate_locked !== undefined) translated.rate_locked = Number(translated.rate_locked) ? 1 : 0;
       if (translated.meta) {
         try {
           const m = typeof translated.meta === 'string' ? JSON.parse(translated.meta) : translated.meta;
           if (m && typeof m === 'object') {
-            if (m.is_cash_paid !== undefined) translated.is_cash_paid = m.is_cash_paid ? 1 : 0;
-            if (m.rate_locked !== undefined) translated.rate_locked = m.rate_locked ? 1 : 0;
+            if (m.is_cash_paid !== undefined && !translated.is_cash_paid) translated.is_cash_paid = m.is_cash_paid ? 1 : 0;
+            if (m.rate_locked !== undefined && !translated.rate_locked) translated.rate_locked = m.rate_locked ? 1 : 0;
           }
         } catch (_) {}
       }
@@ -802,8 +810,16 @@ class SyncEngine extends EventEmitter {
           metaObj = {};
         }
       }
-      if (rowData.is_cash_paid !== undefined) metaObj.is_cash_paid = rowData.is_cash_paid ? 1 : 0;
-      if (rowData.rate_locked !== undefined) metaObj.rate_locked = rowData.rate_locked ? 1 : 0;
+      if (rowData.is_cash_paid !== undefined) {
+        const val = rowData.is_cash_paid ? 1 : 0;
+        metaObj.is_cash_paid = val;
+        clean.is_cash_paid = val;
+      }
+      if (rowData.rate_locked !== undefined) {
+        const val = rowData.rate_locked ? 1 : 0;
+        metaObj.rate_locked = val;
+        clean.rate_locked = val;
+      }
       clean.meta = Object.keys(metaObj).length > 0 ? metaObj : null;
     }
     if (tableName === 'factory_payments') {

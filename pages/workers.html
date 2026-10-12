@@ -1,0 +1,919 @@
+<section id="view-workers" class="view-page active" style="padding: 20px 28px; display: flex; flex-direction: column; height: calc(100vh - var(--titlebar-height)); box-sizing: border-box; overflow: hidden; position: relative;">
+  
+  <!-- Header Row -->
+  <header style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-shrink: 0; flex-wrap: wrap; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(245, 158, 11, 0.15)); border: 1px solid var(--border-medium); display: flex; align-items: center; justify-content: center;">
+        <img src="assets/sidebar/workers.png" style="width: 24px; height: 24px; object-fit: contain;" alt="Workers">
+      </div>
+      <div>
+        <h1 style="font-size: 22px; font-weight: 800; color: var(--text-primary); margin: 0; letter-spacing: -0.3px;">
+          Workers & Labor Desk
+        </h1>
+        <p style="font-size: 12px; color: var(--text-secondary); margin: 2px 0 0 0;">
+          Daily wage laborers, monthly staff & live attendance register
+        </p>
+      </div>
+    </div>
+
+    <!-- Top Action Buttons -->
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button type="button" class="btn btn-secondary btn-sm" style="height: 36px; border-radius: 8px; font-weight: 700; font-size: 12px;" onclick="workersModule.loadAllData()">
+        Refresh
+      </button>
+
+      <button type="button" class="btn btn-secondary btn-sm" style="height: 36px; border-radius: 8px; font-weight: 700; font-size: 12px;" onclick="workersModule.openPayoutModal()">
+        Disburse Wages
+      </button>
+
+      <button type="button" class="btn btn-primary btn-sm" style="height: 36px; border-radius: 8px; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;" onclick="workersModule.openAddWorkerModal()">
+        <span>＋</span>
+        <span>Add Worker</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Top 4 KPI Metrics Row -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; flex-shrink: 0;">
+    
+    <!-- 1. Total Workers -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-sm);">
+      <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="fa-solid fa-users" style="color: var(--accent-blue); font-size: 16px;"></i>
+      </div>
+      <div style="min-width: 0; flex: 1;">
+        <div style="font-size: 10px; font-weight: 800; color: var(--text-secondary); letter-spacing: 0.5px; text-transform: uppercase;">WORKFORCE FLEET</div>
+        <div id="wrkKpiTotal" style="font-size: 19px; font-weight: 800; color: var(--accent-blue); line-height: 1.2; margin-top: 1px; font-family: var(--font-mono);">0 Active</div>
+        <div id="wrkKpiTypes" style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">0 Daily • 0 Monthly</div>
+      </div>
+    </div>
+
+    <!-- 2. Today's Present Attendance -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-sm);">
+      <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="fa-solid fa-clipboard-check" style="color: var(--accent-emerald-light); font-size: 16px;"></i>
+      </div>
+      <div style="min-width: 0; flex: 1;">
+        <div style="font-size: 10px; font-weight: 800; color: var(--text-secondary); letter-spacing: 0.5px; text-transform: uppercase;">TODAY'S ATTENDANCE</div>
+        <div id="wrkKpiPresent" style="font-size: 19px; font-weight: 800; color: var(--accent-emerald-light); line-height: 1.2; margin-top: 1px; font-family: var(--font-mono);">0 Present</div>
+        <div id="wrkKpiAbsenceSub" style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">0 Half Day • 0 Absent</div>
+      </div>
+    </div>
+
+    <!-- 3. Today's Daily Wage Accrual -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-sm);">
+      <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="fa-solid fa-coins" style="color: var(--accent-amber); font-size: 16px;"></i>
+      </div>
+      <div style="min-width: 0; flex: 1;">
+        <div style="font-size: 10px; font-weight: 800; color: var(--text-secondary); letter-spacing: 0.5px; text-transform: uppercase;">TODAY'S DAILY WAGE</div>
+        <div id="wrkKpiTodayWage" style="font-size: 19px; font-weight: 800; color: var(--accent-amber); line-height: 1.2; margin-top: 1px; font-family: var(--font-mono);">₹ 0</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">Earned by temporary labor</div>
+      </div>
+    </div>
+
+    <!-- 4. Monthly Wage / Salary Liability -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-sm);">
+      <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(99, 102, 241, 0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <i class="fa-solid fa-receipt" style="color: #818cf8; font-size: 16px;"></i>
+      </div>
+      <div style="min-width: 0; flex: 1;">
+        <div style="font-size: 10px; font-weight: 800; color: var(--text-secondary); letter-spacing: 0.5px; text-transform: uppercase;">THIS MONTH PAYOUTS</div>
+        <div id="wrkKpiMonthPayout" style="font-size: 19px; font-weight: 800; color: #818cf8; line-height: 1.2; margin-top: 1px; font-family: var(--font-mono);">₹ 0</div>
+        <div id="wrkKpiMonthDisbursedCount" style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">0 wage disbursements</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Primary Workspace Tabs Navigation Bar -->
+  <div style="display: flex; align-items: center; border-bottom: 1px solid var(--border-subtle); margin-bottom: 12px; flex-shrink: 0; gap: 8px;">
+    <button type="button" id="wrkTabBtn_attendance" class="btn btn-secondary btn-sm" style="border: none; border-radius: 8px 8px 0 0; font-weight: 800; font-size: 12.5px; padding: 8px 18px; background: var(--bg-card); border-bottom: 2px solid var(--accent-emerald); color: var(--accent-emerald);" onclick="workersModule.switchTab('attendance')">
+      Daily Attendance
+    </button>
+    <button type="button" id="wrkTabBtn_directory" class="btn btn-secondary btn-sm" style="border: none; border-radius: 8px 8px 0 0; font-weight: 700; font-size: 12.5px; padding: 8px 18px; background: transparent; color: var(--text-secondary);" onclick="workersModule.switchTab('directory')">
+      Worker Directory
+    </button>
+    <button type="button" id="wrkTabBtn_payroll" class="btn btn-secondary btn-sm" style="border: none; border-radius: 8px 8px 0 0; font-weight: 700; font-size: 12.5px; padding: 8px 18px; background: transparent; color: var(--text-secondary);" onclick="workersModule.switchTab('payroll')">
+      Wage Settlements
+    </button>
+    <button type="button" id="wrkTabBtn_staff" class="btn btn-secondary btn-sm" style="border: none; border-radius: 8px 8px 0 0; font-weight: 700; font-size: 12.5px; padding: 8px 18px; background: transparent; color: var(--text-secondary);" onclick="workersModule.switchTab('staff')">
+      Staff App Access
+    </button>
+  </div>
+
+  <!-- =========================================================================
+       TAB 1: Daily Attendance Register
+       ========================================================================= -->
+  <div id="wrkTabPane_attendance" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
+    
+    <!-- Unified Single Attendance Toolbar (Date Picker on Left + Search & Actions on Right) -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 8px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; flex-wrap: wrap; gap: 10px;">
+      
+      <!-- Date Selector Group (Left) -->
+      <div id="wrkDateSelectorGroup" style="display: flex; align-items: center; gap: 6px;">
+        <button type="button" class="btn btn-secondary btn-sm" style="height: 32px; width: 32px; padding: 0; font-size: 12px; display: flex; align-items: center; justify-content: center;" title="Previous Day" onclick="workersModule.changeAttendanceDate(-1)">
+          ◀
+        </button>
+        <input type="date" id="wrkAttendanceDate" class="form-input mono" style="height: 32px; font-size: 12.5px; font-weight: 700; padding: 0 10px; border-radius: 6px; width: 145px;" onchange="workersModule.loadAttendanceForDate()">
+        <button type="button" class="btn btn-secondary btn-sm" style="height: 32px; width: 32px; padding: 0; font-size: 12px; display: flex; align-items: center; justify-content: center;" title="Next Day" onclick="workersModule.changeAttendanceDate(1)">
+          ▶
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 12px; font-size: 12px; font-weight: 700;" onclick="workersModule.jumpAttendanceToday()">
+          Today
+        </button>
+      </div>
+
+      <!-- Search, Type Filter & Batch Actions (Right) -->
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <input type="text" id="wrkAttSearch" class="form-input" placeholder="Search worker..." style="height: 32px; font-size: 12px; width: 170px; padding: 0 10px;" oninput="workersModule.renderAttendanceTable()">
+        
+        <select id="wrkAttFilterType" class="form-select" style="height: 32px; font-size: 12px; width: 135px;" onchange="workersModule.renderAttendanceTable()">
+          <option value="ALL">All Types</option>
+          <option value="temporary">Daily Wage</option>
+          <option value="permanent">Monthly Staff</option>
+        </select>
+
+        <button type="button" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 12px; font-size: 11.5px; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981;" onclick="workersModule.markAllPresent()">
+          Mark All Present
+        </button>
+
+        <button type="button" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 12px; font-size: 11.5px; font-weight: 700; border: 1px solid rgba(59, 130, 246, 0.4); color: #3b82f6;" onclick="workersModule.markAllPaid()">
+          Mark All Paid
+        </button>
+      </div>
+    </div>
+
+    <!-- Attendance Table Container -->
+    <div style="flex: 1; min-height: 0; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+      
+      <!-- Table Header -->
+      <div style="display: grid; grid-template-columns: 2fr 115px 105px 230px 105px 90px 1.4fr; gap: 8px; padding: 10px 14px; background: var(--bg-input); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; align-items: center;">
+        <div>Worker / Laborer</div>
+        <div>Worker Type</div>
+        <div style="text-align: right;">Standard Rate</div>
+        <div style="text-align: center;">Daily Status</div>
+        <div style="text-align: right;">Wage Earned</div>
+        <div style="text-align: center;">Payout Status</div>
+        <div>Work Notes / Duty</div>
+      </div>
+
+      <!-- Scrollable List of Worker Attendance Rows -->
+      <div id="wrkAttendanceListContainer" style="flex: 1; overflow-y: auto; padding: 6px 8px;">
+        <!-- Dynamically rendered -->
+      </div>
+
+      <!-- Sticky Attendance Footer Bar -->
+      <div id="wrkAttendanceFooter" style="padding: 10px 16px; background: var(--bg-tertiary); border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; font-size: 12px; font-weight: 700;">
+        <div id="wrkAttFooterStats" style="color: var(--text-secondary);">
+          Showing 0 workers
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <span>Daily Wage Liability: <strong id="wrkAttFooterWage" style="color: var(--accent-amber); font-family: var(--font-mono); font-size: 14px;">₹ 0</strong></span>
+          <button type="button" class="btn btn-primary btn-sm" style="height: 32px; font-size: 11.5px; font-weight: 700; padding: 0 16px;" onclick="workersModule.saveAttendanceBatch()">
+            Save All Changes
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =========================================================================
+       TAB 2: Worker Directory
+       ========================================================================= -->
+  <div id="wrkTabPane_directory" style="display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
+    
+    <!-- Directory Controls Bar -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 8px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; flex-wrap: wrap; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="text" id="wrkDirSearch" class="form-input" placeholder="Search name, phone, role..." style="height: 32px; font-size: 12px; width: 220px; padding: 0 10px;" oninput="workersModule.renderDirectoryTable()">
+        
+        <select id="wrkDirFilterType" class="form-select" style="height: 32px; font-size: 12px; width: 150px;" onchange="workersModule.renderDirectoryTable()">
+          <option value="ALL">All Categories</option>
+          <option value="temporary">Daily Wage</option>
+          <option value="permanent">Monthly Salary</option>
+        </select>
+
+        <select id="wrkDirFilterStatus" class="form-select" style="height: 32px; font-size: 12px; width: 120px;" onchange="workersModule.renderDirectoryTable()">
+          <option value="active">Active Only</option>
+          <option value="inactive">Inactive Only</option>
+          <option value="ALL">All Status</option>
+        </select>
+      </div>
+
+      <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;" id="wrkDirCountLabel">
+        0 workers listed
+      </div>
+    </div>
+
+    <!-- Directory Table Container -->
+    <div style="flex: 1; min-height: 0; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+      
+      <!-- Table Header -->
+      <div style="display: grid; grid-template-columns: 2fr 130px 130px 120px 120px 90px 180px; gap: 8px; padding: 10px 14px; background: var(--bg-input); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; align-items: center;">
+        <div>Worker Full Name</div>
+        <div>Role / Duty</div>
+        <div>Worker Type</div>
+        <div style="text-align: right;">Pay Rate</div>
+        <div>Mobile Contact</div>
+        <div style="text-align: center;">Status</div>
+        <div style="text-align: right;">Actions</div>
+      </div>
+
+      <!-- Scrollable List of Workers -->
+      <div id="wrkDirectoryListContainer" style="flex: 1; overflow-y: auto; padding: 6px 8px;">
+        <!-- Dynamically rendered -->
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =========================================================================
+       TAB 3: Wage & Salary Settlements Desk
+       ========================================================================= -->
+  <div id="wrkTabPane_payroll" style="display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
+    
+    <!-- Settlements Control Header -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 8px 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; flex-wrap: wrap; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Period:</span>
+        <input type="date" id="wrkPayFromDate" class="form-input mono" style="height: 32px; font-size: 12px; width: 140px;">
+        <span style="font-size: 12px; color: var(--text-muted);">to</span>
+        <input type="date" id="wrkPayToDate" class="form-input mono" style="height: 32px; font-size: 12px; width: 140px;">
+        <button type="button" class="btn btn-secondary btn-sm" style="height: 32px; font-size: 12px; font-weight: 700; padding: 0 12px;" onclick="workersModule.calculatePayroll()">
+          Calculate Sheet
+        </button>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" class="btn btn-secondary btn-sm" style="height: 32px; font-size: 12px; font-weight: 700; padding: 0 12px;" onclick="workersModule.exportPayrollPDF()">
+          Export Statement
+        </button>
+      </div>
+    </div>
+
+    <!-- Settlement Workspace Table -->
+    <div style="flex: 1; min-height: 0; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+      
+      <!-- Table Header -->
+      <div style="display: grid; grid-template-columns: 2fr 130px 100px 110px 110px 120px 140px; gap: 8px; padding: 10px 14px; background: var(--bg-input); font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; align-items: center;">
+        <div>Worker</div>
+        <div>Type / Base Rate</div>
+        <div style="text-align: center;">Days Worked</div>
+        <div style="text-align: right;">Gross Wage</div>
+        <div style="text-align: right;">Deductions</div>
+        <div style="text-align: right;">Net Payable</div>
+        <div style="text-align: right;">Settlement Action</div>
+      </div>
+
+      <!-- Scrollable List of Payroll Rows -->
+      <div id="wrkPayrollListContainer" style="flex: 1; overflow-y: auto; padding: 6px 8px;">
+        <!-- Dynamically rendered -->
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =========================================================================
+       TAB 4: Staff & Field App Access
+       ========================================================================= -->
+  <div id="wrkTabPane_staff" style="display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; gap: 10px;">
+    
+    <!-- Section 1: Provision New Field Collector Form Box -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 18px; flex-shrink: 0;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+        <div>
+          <div style="font-size: 12px; font-weight: 800; color: var(--accent-emerald); text-transform: uppercase; letter-spacing: 0.5px;">
+            Provision New Field Collector
+          </div>
+          <div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 1px;">
+            Assign 10-digit mobile login and secure 6-digit MPIN for field leaf collection app.
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 12px; align-items: flex-end;">
+        <div>
+          <label class="form-label" style="font-size: 11px; font-weight: 700; margin-bottom: 4px;">Full Name <span class="req">*</span></label>
+          <input type="text" id="setStaffName" class="form-input" placeholder="e.g. Ajay Sharma" style="height: 36px; font-size: 12px;">
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 11px; font-weight: 700; margin-bottom: 4px;">Mobile Number <span class="req">*</span></label>
+          <input type="tel" id="setStaffMobile" class="form-input mono" placeholder="10-digit mobile" maxlength="10" style="height: 36px; font-size: 12px;" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
+        </div>
+        <div>
+          <label class="form-label" style="font-size: 11px; font-weight: 700; margin-bottom: 4px;">6-Digit MPIN <span class="req">*</span></label>
+          <input type="password" id="setStaffMpin" class="form-input mono" placeholder="6-digit PIN" maxlength="6" style="height: 36px; font-size: 12px;" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)">
+        </div>
+        <div>
+          <button type="button" class="btn btn-primary" style="height: 36px; font-weight: 700; font-size: 12px; padding: 0 18px; white-space: nowrap;" onclick="workersModule.addStaffMember()">
+            Authorize Collector
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Field Fleet & Access Directory -->
+    <div style="flex: 1; min-height: 0; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+      
+      <!-- Controls & Summary Bar -->
+      <div style="padding: 10px 14px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+            Field Collectors & Access
+          </div>
+          <div style="display: flex; gap: 6px; align-items: center;">
+            <span id="statStaffTotal" style="font-size: 11px; font-weight: 700; background: var(--bg-input); border: 1px solid var(--border-subtle); color: var(--text-primary); padding: 2px 8px; border-radius: 6px;">Total: 0</span>
+            <span id="statStaffActive" style="font-size: 11px; font-weight: 700; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--accent-emerald); padding: 2px 8px; border-radius: 6px;">Active: 0</span>
+            <span id="statStaffRevoked" style="font-size: 11px; font-weight: 700; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--accent-red); padding: 2px 8px; border-radius: 6px;">Revoked: 0</span>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <input type="text" id="setStaffSearchInput" class="form-input" placeholder="Search name or mobile..." style="height: 32px; width: 200px; font-size: 11.5px; padding: 0 10px;" oninput="workersModule.filterStaffTable()">
+          <select id="setStaffFilterStatus" class="form-select" style="height: 32px; font-size: 11.5px; width: 125px;" onchange="workersModule.filterStaffTable()">
+            <option value="all">All Status</option>
+            <option value="active">Active Only</option>
+            <option value="revoked">Revoked Only</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div style="flex: 1; overflow-y: auto;">
+        <table class="data-table" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="width: 35%; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">STAFF COLLECTOR & LOGIN</th>
+              <th style="width: 25%; padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">COLLECTION PERMISSION</th>
+              <th style="width: 15%; padding: 10px 14px; text-align: center; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">LOGIN STATUS</th>
+              <th style="width: 25%; padding: 10px 14px; text-align: right; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="setStaffTableBody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =========================================================================
+       MODAL: Add / Edit Worker Profile
+       ========================================================================= -->
+  <div id="modalAddWorker" class="modal-overlay">
+    <div class="modal-box" style="width: 520px; max-width: 95vw; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; padding: 0;">
+      
+      <div style="padding: 16px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 id="modalWorkerTitle" style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin: 0;">
+            Add New Worker / Laborer
+          </h3>
+          <p style="font-size: 12px; color: var(--text-secondary); margin: 2px 0 0 0;">
+            Configure worker compensation type & job profile
+          </p>
+        </div>
+        <button class="modal-close-btn" onclick="app.closeModal('modalAddWorker')">✕</button>
+      </div>
+
+      <form id="formAddWorker" onsubmit="event.preventDefault(); workersModule.saveWorkerProfile();" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+        <input type="hidden" id="wrkEditId">
+
+        <!-- Worker Full Name -->
+        <div>
+          <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Worker Full Name <span style="color: #ef4444;">*</span></label>
+          <input type="text" id="wrkInputName" class="form-input" placeholder="e.g. Ramu Karmakar" required style="width: 100%; height: 38px; font-size: 13px;">
+        </div>
+
+        <!-- Worker Type Toggle (Temporary Daily vs Permanent Monthly) -->
+        <div>
+          <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 6px; display: block;">Employment & Wage Model <span style="color: #ef4444;">*</span></label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <label style="border: 1px solid var(--border-subtle); border-radius: 10px; padding: 10px 12px; display: flex; align-items: flex-start; gap: 8px; cursor: pointer; background: var(--bg-input);">
+              <input type="radio" name="wrkRadioType" value="temporary" checked style="accent-color: var(--accent-emerald); margin-top: 2px;" onchange="workersModule.onWorkerTypeChange()">
+              <div>
+                <div style="font-weight: 700; font-size: 12.5px; color: var(--text-primary);">Temporary (Daily Wage)</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">Paid per day of attendance (Hazira/Thika)</div>
+              </div>
+            </label>
+
+            <label style="border: 1px solid var(--border-subtle); border-radius: 10px; padding: 10px 12px; display: flex; align-items: flex-start; gap: 8px; cursor: pointer; background: var(--bg-input);">
+              <input type="radio" name="wrkRadioType" value="permanent" style="accent-color: var(--accent-emerald); margin-top: 2px;" onchange="workersModule.onWorkerTypeChange()">
+              <div>
+                <div style="font-weight: 700; font-size: 12.5px; color: var(--text-primary);">Permanent (Monthly Salary)</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 1px;">Fixed monthly payroll with attendance tuning</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Rate Input (Dynamically adjusts label) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label id="wrkRateLabel" class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">
+              Daily Wage Rate (₹ / Day) <span style="color: #ef4444;">*</span>
+            </label>
+            <div style="position: relative;">
+              <span style="position: absolute; left: 10px; top: 9px; font-weight: 700; color: var(--text-muted); font-size: 13px;">₹</span>
+              <input type="number" step="1" id="wrkInputRate" class="form-input mono" placeholder="350" required style="width: 100%; height: 38px; padding-left: 24px; font-size: 13px; font-weight: 700;">
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Role / Designation</label>
+            <input type="text" id="wrkInputRole" class="form-input" placeholder="e.g. Weighing Helper / Loader" style="width: 100%; height: 38px; font-size: 13px;">
+          </div>
+        </div>
+
+        <!-- Phone, Emergency Phone & Joining Date -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Primary Phone</label>
+            <input type="tel" id="wrkInputPhone" class="form-input mono" placeholder="10-digit number" maxlength="10" style="width: 100%; height: 38px; font-size: 13px;">
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Emergency Contact / Alt</label>
+            <input type="tel" id="wrkInputEmergencyPhone" class="form-input mono" placeholder="Kin / family contact" maxlength="10" style="width: 100%; height: 38px; font-size: 13px;">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Date of Joining</label>
+            <input type="date" id="wrkInputJoinDate" class="form-input mono" style="width: 100%; height: 38px; font-size: 12px;">
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Aadhaar / ID Proof No.</label>
+            <input type="text" id="wrkInputIdProof" class="form-input mono" placeholder="e.g. 1234 5678 9012" style="width: 100%; height: 38px; font-size: 12.5px;">
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div>
+          <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Address / Village / Line Quarters</label>
+          <input type="text" id="wrkInputAddress" class="form-input" placeholder="e.g. Line No 4, Borbam Division..." style="width: 100%; height: 36px; font-size: 12px;">
+        </div>
+
+        <!-- Bank & Digital Payment Details Section -->
+        <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="font-size: 11px; font-weight: 800; color: var(--accent-emerald-light); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-building-columns"></i>
+            <span>Banking & UPI Payout Credentials (Optional)</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label class="form-label" style="font-size: 11px; font-weight: 700; margin-bottom: 3px; display: block;">Bank Name</label>
+              <input type="text" id="wrkInputBankName" class="form-input" placeholder="e.g. SBI / AGVB" style="width: 100%; height: 34px; font-size: 12px;">
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 11px; font-weight: 700; margin-bottom: 3px; display: block;">Bank Account Number</label>
+              <input type="text" id="wrkInputBankAcc" class="form-input mono" placeholder="Account Number" style="width: 100%; height: 34px; font-size: 12px;">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label class="form-label" style="font-size: 11px; font-weight: 700; margin-bottom: 3px; display: block;">IFSC Code</label>
+              <input type="text" id="wrkInputBankIfsc" class="form-input mono" placeholder="e.g. SBIN0001234" style="width: 100%; height: 34px; font-size: 12px; text-transform: uppercase;">
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 11px; font-weight: 700; margin-bottom: 3px; display: block;">UPI ID / GPay Phone</label>
+              <input type="text" id="wrkInputUpiId" class="form-input mono" placeholder="e.g. mobile@upi" style="width: 100%; height: 34px; font-size: 12px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Notes / Remarks</label>
+          <input type="text" id="wrkInputNotes" class="form-input" placeholder="Assignment details or personal notes..." style="width: 100%; height: 36px; font-size: 12px;">
+        </div>
+
+        <!-- Form Actions -->
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+          <button type="button" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 14px;" onclick="app.closeModal('modalAddWorker')">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" style="height: 36px; padding: 0 18px; font-weight: 700;">Save Worker</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: Record Wage / Salary Payout
+       ========================================================================= -->
+  <div id="modalWorkerPayout" class="modal-overlay">
+    <div class="modal-box" style="width: 480px; max-width: 95vw; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; padding: 0;">
+      
+      <div style="padding: 16px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin: 0;">
+            Disburse Worker Wages / Salary
+          </h3>
+          <p style="font-size: 12px; color: var(--text-secondary); margin: 2px 0 0 0;">
+            Record cash settlement & link directly to operational expenses
+          </p>
+        </div>
+        <button class="modal-close-btn" onclick="app.closeModal('modalWorkerPayout')">✕</button>
+      </div>
+
+      <form id="formWorkerPayout" onsubmit="event.preventDefault(); workersModule.submitPayout();" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+        <input type="hidden" id="payoutWorkerId">
+
+        <div>
+          <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Select Worker <span style="color: #ef4444;">*</span></label>
+          <select id="payoutSelectWorker" class="form-select" required style="width: 100%; height: 38px; font-size: 13px;" onchange="workersModule.onPayoutWorkerSelect()">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Payout Amount (₹) <span style="color: #ef4444;">*</span></label>
+            <input type="number" step="1" id="payoutInputAmount" class="form-input mono" placeholder="0" required style="width: 100%; height: 38px; font-size: 14px; font-weight: 800; color: #10b981;">
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Payment Mode</label>
+            <select id="payoutSelectMode" class="form-select" style="width: 100%; height: 38px; font-size: 13px;">
+              <option value="Cash">Cash Handover</option>
+              <option value="UPI">UPI / GPay</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Payment Date</label>
+            <input type="date" id="payoutInputDate" class="form-input mono" required style="width: 100%; height: 38px; font-size: 12px;">
+          </div>
+
+          <div>
+            <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Payout Category</label>
+            <select id="payoutSelectType" class="form-select" style="width: 100%; height: 38px; font-size: 13px;">
+              <option value="daily_wage">Daily Wage (Hazira)</option>
+              <option value="monthly_salary">Monthly Salary</option>
+              <option value="advance">Worker Advance</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Auto link to expenses checkbox -->
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-primary); cursor: pointer; background: var(--bg-input); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+          <input type="checkbox" id="payoutCheckExpense" checked style="accent-color: var(--accent-emerald); width: 16px; height: 16px;">
+          <span>Automatically record in <strong>Operational Expenses</strong></span>
+        </label>
+
+        <div>
+          <label class="form-label" style="font-size: 12px; font-weight: 700; margin-bottom: 4px; display: block;">Payment Remarks</label>
+          <input type="text" id="payoutInputNotes" class="form-input" placeholder="e.g. Paid for Week 1 loading duty..." style="width: 100%; height: 36px; font-size: 12px;">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+          <button type="button" class="btn btn-secondary btn-sm" style="height: 36px; padding: 0 14px;" onclick="app.closeModal('modalWorkerPayout')">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm" style="height: 36px; padding: 0 18px; font-weight: 700;">Record Disbursed Cash</button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL: Worker 360° Comprehensive Profile with Monthly Attendance Calendar
+       ========================================================================= -->
+  <div id="modalWorkerProfile" class="modal-overlay">
+    <div class="modal-box" style="width: 860px; max-width: 96vw; max-height: 92vh; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; padding: 0; display: flex; flex-direction: column;">
+      
+      <!-- Profile Header Banner with Integrated Lifetime Summary Metrics -->
+      <div style="padding: 16px 22px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; flex-wrap: wrap; gap: 14px;">
+        
+        <!-- Left: Worker Details -->
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div id="profAvatar" style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--accent-emerald), #059669); color: #fff; font-size: 19px; font-weight: 800; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm); flex-shrink: 0;">
+            W
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <h3 id="profName" style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin: 0;">
+                Worker Name
+              </h3>
+              <span id="profStatusBadge" style="font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: rgba(16, 185, 129, 0.14); color: #10b981;">Active</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 3px; font-size: 12px; color: var(--text-secondary);">
+              <span id="profRole">Role</span>
+              <span>•</span>
+              <span id="profTypePill" style="font-weight: 700;">Daily Wage</span>
+              <span>•</span>
+              <span id="profRate" style="font-family: var(--font-mono); font-weight: 700; color: var(--text-primary);">₹0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Lifetime Totals Capsule & Close -->
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <div style="display: flex; align-items: center; gap: 14px; background: var(--bg-card); padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+            <div style="text-align: right;">
+              <div style="font-size: 9.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Days Worked</div>
+              <div id="profStatDays" style="font-size: 13.5px; font-weight: 800; color: var(--accent-blue); font-family: var(--font-mono); margin-top: 1px;">0 d</div>
+            </div>
+            <div style="width: 1px; height: 22px; background: var(--border-subtle);"></div>
+            <div style="text-align: right;">
+              <div style="font-size: 9.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Gross</div>
+              <div id="profStatGross" style="font-size: 13.5px; font-weight: 800; color: var(--accent-amber); font-family: var(--font-mono); margin-top: 1px;">₹ 0</div>
+            </div>
+            <div style="width: 1px; height: 22px; background: var(--border-subtle);"></div>
+            <div style="text-align: right;">
+              <div style="font-size: 9.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Total Paid</div>
+              <div id="profStatPaid" style="font-size: 13.5px; font-weight: 800; color: var(--accent-emerald-light); font-family: var(--font-mono); margin-top: 1px;">₹ 0</div>
+            </div>
+            <div style="width: 1px; height: 22px; background: var(--border-subtle);"></div>
+            <div style="text-align: right;">
+              <div style="font-size: 9.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Net Due</div>
+              <div id="profStatDue" style="font-size: 13.5px; font-weight: 800; color: #ef4444; font-family: var(--font-mono); margin-top: 1px;">₹ 0</div>
+            </div>
+          </div>
+
+          <button class="modal-close-btn" onclick="app.closeModal('modalWorkerProfile')">✕</button>
+        </div>
+
+      </div>
+
+      <!-- Profile Clean Sub-Tabs Row (Uncluttered, No Icons, Generous Space) -->
+      <div style="display: flex; align-items: center; padding: 0 20px; background: var(--bg-card); border-bottom: 1px solid var(--border-subtle); flex-shrink: 0; gap: 4px;">
+        <button type="button" id="profSubTabBtn_calendar" class="btn btn-sm" style="border: none; border-radius: 0; padding: 11px 18px; font-size: 12.5px; font-weight: 800; color: var(--accent-emerald); border-bottom: 2px solid var(--accent-emerald); background: transparent;" onclick="workersModule.switchProfileSubTab('calendar')">
+          Monthly Attendance Calendar
+        </button>
+        <button type="button" id="profSubTabBtn_personal" class="btn btn-sm" style="border: none; border-radius: 0; padding: 11px 18px; font-size: 12.5px; font-weight: 700; color: var(--text-secondary); border-bottom: 2px solid transparent; background: transparent;" onclick="workersModule.switchProfileSubTab('personal')">
+          Personal & Bank Profile
+        </button>
+        <button type="button" id="profSubTabBtn_payouts" class="btn btn-sm" style="border: none; border-radius: 0; padding: 11px 18px; font-size: 12.5px; font-weight: 700; color: var(--text-secondary); border-bottom: 2px solid transparent; background: transparent;" onclick="workersModule.switchProfileSubTab('payouts')">
+          Disbursement History
+        </button>
+      </div>
+
+      <!-- Scrollable Profile Content Body -->
+      <div style="flex: 1; overflow-y: auto; padding: 16px 22px; display: flex; flex-direction: column; gap: 14px;">
+        
+        <!-- ===================================================================
+             SUB-TAB 1: Monthly Attendance Calendar
+             =================================================================== -->
+        <div id="profSubTabPane_calendar" style="display: flex; flex-direction: column; gap: 12px;">
+          
+          <!-- Month Control Header & Counters (Single Symmetrical Row) -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" class="btn btn-secondary btn-sm" style="height: 30px; width: 30px; padding: 0; font-size: 11px; display: flex; align-items: center; justify-content: center;" title="Previous Month" onclick="workersModule.changeProfileCalendarMonth(-1)">
+                ◀
+              </button>
+              <span id="profCalMonthLabel" style="font-size: 14px; font-weight: 800; color: var(--text-primary); min-width: 130px; text-align: center; font-family: var(--font-mono);">
+                October 2026
+              </span>
+              <button type="button" class="btn btn-secondary btn-sm" style="height: 30px; width: 30px; padding: 0; font-size: 11px; display: flex; align-items: center; justify-content: center;" title="Next Month" onclick="workersModule.changeProfileCalendarMonth(1)">
+                ▶
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" style="height: 30px; font-size: 11.5px; font-weight: 700; padding: 0 10px;" onclick="workersModule.jumpProfileCalendarCurrent()">
+                This Month
+              </button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; flex-wrap: wrap;">
+              <span style="padding: 3px 8px; border-radius: 5px; background: rgba(16, 185, 129, 0.14); color: #10b981; font-weight: 700;">
+                <strong id="profCalPresCount">0</strong> Present
+              </span>
+              <span style="padding: 3px 8px; border-radius: 5px; background: rgba(245, 158, 11, 0.14); color: #f59e0b; font-weight: 700;">
+                <strong id="profCalHalfCount">0</strong> Half
+              </span>
+              <span style="padding: 3px 8px; border-radius: 5px; background: rgba(239, 68, 68, 0.14); color: #ef4444; font-weight: 700;">
+                <strong id="profCalAbsCount">0</strong> Absent
+              </span>
+              <span style="padding: 3px 8px; border-radius: 5px; background: var(--bg-input); border: 1px solid var(--border-subtle); color: var(--text-primary); font-family: var(--font-mono); font-weight: 800;">
+                Earned: <span id="profCalMonthWage" style="color: var(--accent-amber);">₹ 0</span>
+              </span>
+              <span style="padding: 3px 8px; border-radius: 5px; background: var(--bg-input); border: 1px solid var(--border-subtle); color: var(--text-primary); font-family: var(--font-mono); font-weight: 800;">
+                Settled: <span id="profCalMonthPaid" style="color: #10b981;">₹ 0</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Calendar Board -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 12px; display: flex; flex-direction: column;">
+            <!-- Day of Week Header Grid -->
+            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; margin-bottom: 8px;">
+              <div style="font-size: 11px; font-weight: 800; color: #ef4444; padding: 3px 0;">SUN</div>
+              <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); padding: 3px 0;">MON</div>
+              <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); padding: 3px 0;">TUE</div>
+              <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); padding: 3px 0;">WED</div>
+              <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); padding: 3px 0;">THU</div>
+              <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); padding: 3px 0;">FRI</div>
+              <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); padding: 3px 0;">SAT</div>
+            </div>
+
+            <!-- Dynamic 7-Column Days Grid -->
+            <div id="profCalGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Calendar Color Legend (Clean Dots, No Emojis) -->
+          <div style="display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 11px; color: var(--text-muted); padding: 4px 8px; flex-wrap: wrap;">
+            <span style="display: inline-flex; align-items: center; gap: 5px;">
+              <span style="width: 8px; height: 8px; border-radius: 2px; background: #10b981;"></span> Present
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 5px;">
+              <span style="width: 8px; height: 8px; border-radius: 2px; background: #f59e0b;"></span> Half Day
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 5px;">
+              <span style="width: 8px; height: 8px; border-radius: 2px; background: #ef4444;"></span> Absent
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 5px;">
+              <span style="width: 8px; height: 8px; border-radius: 2px; background: #3b82f6;"></span> Leave
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 5px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span> Paid
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 5px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444;"></span> Unpaid
+            </span>
+          </div>
+
+        </div>
+
+        <!-- ===================================================================
+             SUB-TAB 2: Personal, Address & Banking Credentials
+             =================================================================== -->
+        <div id="profSubTabPane_personal" style="display: none; flex-direction: column; gap: 14px;">
+          
+          <!-- Personal Card -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 16px;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--accent-emerald-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+              Personal & Contact Credentials
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12.5px;">
+              <div>
+                <div style="color: var(--text-muted); font-size: 11px;">Primary Phone</div>
+                <div id="profFieldPhone" style="font-weight: 700; color: var(--text-primary); font-family: var(--font-mono); margin-top: 2px;">—</div>
+              </div>
+
+              <div>
+                <div style="color: var(--text-muted); font-size: 11px;">Emergency / Kin Phone</div>
+                <div id="profFieldEmergency" style="font-weight: 700; color: var(--text-primary); font-family: var(--font-mono); margin-top: 2px;">—</div>
+              </div>
+
+              <div>
+                <div style="color: var(--text-muted); font-size: 11px;">Joining Date</div>
+                <div id="profFieldJoined" style="font-weight: 700; color: var(--text-primary); font-family: var(--font-mono); margin-top: 2px;">—</div>
+              </div>
+
+              <div>
+                <div style="color: var(--text-muted); font-size: 11px;">Aadhaar / ID Proof</div>
+                <div id="profFieldIdProof" style="font-weight: 700; color: var(--text-primary); font-family: var(--font-mono); margin-top: 2px;">—</div>
+              </div>
+
+              <div style="grid-column: span 2;">
+                <div style="color: var(--text-muted); font-size: 11px;">Residential Address</div>
+                <div id="profFieldAddress" style="font-weight: 600; color: var(--text-secondary); margin-top: 2px;">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Banking Card -->
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 16px;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--accent-emerald-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">
+              Bank Account & Digital Payment
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12.5px;">
+              <div>
+                <div style="color: var(--text-muted); font-size: 11px;">Bank Name</div>
+                <div id="profFieldBank" style="font-weight: 700; color: var(--text-primary); margin-top: 2px;">—</div>
+              </div>
+
+              <div>
+                <div style="color: var(--text-muted); font-size: 11px;">Account Number</div>
+                <div id="profFieldAcc" style="font-weight: 700; color: var(--text-primary); font-family: var(--font-mono); margin-top: 2px;">—</div>
+              </div>
+
+              <div>
+                <div style="color: var(--text-muted); font-size: 11px;">IFSC Code</div>
+                <div id="profFieldIfsc" style="font-weight: 700; color: var(--text-primary); font-family: var(--font-mono); margin-top: 2px;">—</div>
+              </div>
+
+              <div>
+                <div style="color: var(--text-muted); font-size: 11px;">UPI ID / GPay Number</div>
+                <div id="profFieldUpi" style="font-weight: 700; color: var(--text-primary); font-family: var(--font-mono); margin-top: 2px;">—</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ===================================================================
+             SUB-TAB 3: Historical Payouts Ledger
+             =================================================================== -->
+        <div id="profSubTabPane_payouts" style="display: none; flex-direction: column; gap: 10px;">
+          <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 14px 16px;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--accent-emerald-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+              <span>Wage & Advance Disbursements Ledger</span>
+              <span id="profPayoutCount" style="font-size: 11px; color: var(--text-muted);">0 records</span>
+            </div>
+
+            <div id="profPayoutList" style="max-height: 280px; overflow-y: auto; font-size: 12px;">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Profile Modal Bottom Actions -->
+      <div style="padding: 12px 20px; background: var(--bg-secondary); border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-secondary btn-sm" id="profBtnEdit" style="height: 34px; font-weight: 700; font-size: 12px; padding: 0 14px;">
+            Edit Profile
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" id="profBtnDisburse" style="height: 34px; font-weight: 700; font-size: 12px; padding: 0 16px;">
+            Disburse Payout
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-secondary btn-sm" style="height: 34px; padding: 0 18px;" onclick="app.closeModal('modalWorkerProfile')">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Edit Staff Member & Permissions -->
+  <div id="modalEditStaff" class="modal-overlay">
+    <div class="modal-box" style="width: 520px; max-width: 95vw; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; overflow: hidden; padding: 0;">
+      <div style="padding: 16px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin: 0;">
+            Edit Staff Member & Permissions
+          </h3>
+          <p style="font-size: 12px; color: var(--text-secondary); margin: 2px 0 0 0;">
+            Manage field login authorization and leaf intake access
+          </p>
+        </div>
+        <button class="modal-close-btn" onclick="app.closeModal('modalEditStaff')">✕</button>
+      </div>
+      <div class="modal-body" style="padding: 20px 24px;">
+        <form id="editStaffForm" onsubmit="event.preventDefault(); workersModule.saveStaffEdit();">
+          <input type="hidden" id="editStaffId">
+          
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700;">Full Name <span class="req">*</span></label>
+            <input type="text" id="editStaffName" class="form-input" placeholder="e.g. Ajay Sharma" required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+            <div class="form-group">
+              <label class="form-label" style="font-size: 11px; font-weight: 700;">Mobile Number (10 digits) <span class="req">*</span></label>
+              <input type="tel" id="editStaffMobile" class="form-input mono" placeholder="10-digit mobile" maxlength="10" required oninput="this.value = this.value.replace(/\D/g, '').slice(0, 10)">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size: 11px; font-weight: 700;">Reset 6-Digit MPIN</label>
+              <input type="password" id="editStaffMpin" class="form-input mono" placeholder="Leave blank to keep" maxlength="6" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 6)">
+            </div>
+          </div>
+
+          <!-- Specific Permissions Box -->
+          <div style="background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--accent-emerald); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">
+              Collector App Permissions
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12.5px; color: var(--text-primary);">
+                <input type="checkbox" id="editStaffActive" style="accent-color: var(--accent-emerald); width: 16px; height: 16px;">
+                <span><b>Allow Mobile App Login</b> <span style="font-size: 11px; color: var(--text-muted);">(Active Account)</span></span>
+              </label>
+
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12.5px; color: var(--text-primary);">
+                <input type="checkbox" id="editStaffAllowCollector" style="accent-color: var(--accent-emerald); width: 16px; height: 16px;">
+                <span><b>Collection Permission</b> <span style="font-size: 11px; color: var(--text-muted);">(Green Leaf Intake & Weighment access)</span></span>
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div style="padding: 14px 24px; background: var(--bg-secondary); border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" class="btn btn-secondary btn-sm" style="height: 34px; padding: 0 16px;" onclick="app.closeModal('modalEditStaff')">Cancel</button>
+        <button type="button" class="btn btn-primary btn-sm" style="height: 34px; padding: 0 18px; font-weight: 700;" onclick="workersModule.saveStaffEdit()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+</section>

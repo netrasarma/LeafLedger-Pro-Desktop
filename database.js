@@ -305,6 +305,68 @@ class LocalDatabase {
         table_name TEXT NOT NULL,
         deleted_at TEXT DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS workers (
+        id TEXT PRIMARY KEY,
+        app_user_id TEXT,
+        name TEXT NOT NULL,
+        phone TEXT,
+        emergency_phone TEXT,
+        worker_type TEXT NOT NULL DEFAULT 'temporary',
+        rate REAL NOT NULL DEFAULT 0.0,
+        designation TEXT,
+        status TEXT DEFAULT 'active',
+        joined_date TEXT,
+        address TEXT,
+        id_proof_number TEXT,
+        bank_name TEXT,
+        bank_acc TEXT,
+        bank_ifsc TEXT,
+        upi_id TEXT,
+        notes TEXT,
+        sync_id TEXT UNIQUE,
+        cloud_id TEXT,
+        sync_status INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS worker_attendance (
+        id TEXT PRIMARY KEY,
+        app_user_id TEXT,
+        worker_id TEXT NOT NULL,
+        date TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'present',
+        wage_earned REAL DEFAULT 0.0,
+        overtime_hours REAL DEFAULT 0.0,
+        is_paid INTEGER DEFAULT 0,
+        notes TEXT,
+        sync_id TEXT UNIQUE,
+        cloud_id TEXT,
+        sync_status INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (worker_id) REFERENCES workers(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS worker_payouts (
+        id TEXT PRIMARY KEY,
+        app_user_id TEXT,
+        worker_id TEXT NOT NULL,
+        payout_type TEXT NOT NULL,
+        amount REAL NOT NULL DEFAULT 0.0,
+        period_start TEXT,
+        period_end TEXT,
+        payment_date TEXT NOT NULL,
+        payment_mode TEXT DEFAULT 'Cash',
+        notes TEXT,
+        sync_id TEXT UNIQUE,
+        cloud_id TEXT,
+        sync_status INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (worker_id) REFERENCES workers(id) ON DELETE CASCADE
+      );
     `);
 
     // Safe column migrations for pre-existing sqlite files
@@ -411,6 +473,15 @@ class LocalDatabase {
       this.db.exec("UPDATE staff_accounts SET password = COALESCE(password, mpin_hash, '123456') WHERE password IS NULL OR password = '';");
     } catch (_) {}
 
+    safeAddColumn('workers', 'emergency_phone', 'TEXT');
+    safeAddColumn('workers', 'address', 'TEXT');
+    safeAddColumn('workers', 'id_proof_number', 'TEXT');
+    safeAddColumn('workers', 'bank_name', 'TEXT');
+    safeAddColumn('workers', 'bank_acc', 'TEXT');
+    safeAddColumn('workers', 'bank_ifsc', 'TEXT');
+    safeAddColumn('workers', 'upi_id', 'TEXT');
+    safeAddColumn('worker_attendance', 'is_paid', 'INTEGER DEFAULT 0');
+
     // Safe index creation after all columns are guaranteed to exist
     const safeCreateIndex = (sql) => {
       try {
@@ -434,6 +505,13 @@ class LocalDatabase {
     safeCreateIndex('CREATE INDEX IF NOT EXISTS idx_exp_sync ON expenses(sync_status);');
     safeCreateIndex('CREATE INDEX IF NOT EXISTS idx_fact_sync ON factory_collections(sync_status);');
     safeCreateIndex('CREATE INDEX IF NOT EXISTS idx_tomb_table ON deleted_tombstones(table_name);');
+    safeCreateIndex('CREATE INDEX IF NOT EXISTS idx_workers_sync ON workers(sync_status);');
+    safeCreateIndex('CREATE INDEX IF NOT EXISTS idx_workers_status ON workers(status);');
+    safeCreateIndex('CREATE UNIQUE INDEX IF NOT EXISTS idx_worker_att_worker_date ON worker_attendance(worker_id, date);');
+    safeCreateIndex('CREATE INDEX IF NOT EXISTS idx_worker_att_date ON worker_attendance(date);');
+    safeCreateIndex('CREATE INDEX IF NOT EXISTS idx_worker_att_sync ON worker_attendance(sync_status);');
+    safeCreateIndex('CREATE INDEX IF NOT EXISTS idx_worker_payouts_sync ON worker_payouts(sync_status);');
+    safeCreateIndex('CREATE INDEX IF NOT EXISTS idx_worker_payouts_worker ON worker_payouts(worker_id);');
   }
 
   query(sql, params = []) {
@@ -662,7 +740,7 @@ class LocalDatabase {
     const endDate = `${year}-${mStr}-${String(lastDay).padStart(2, '0')}`;
 
     const collections = this.query(
-      `SELECT date, gross_weight_kg, bag_weight_kg, net_weight_kg, rate_per_kg, amount
+      `SELECT date, gross_weight_kg, bag_weight_kg, net_weight_kg, rate_per_kg, amount, is_cash_paid, rate_locked, meta
        FROM daily_collections
        WHERE date BETWEEN ? AND ?
        ORDER BY date ASC`,
@@ -672,12 +750,27 @@ class LocalDatabase {
     let totalGross = 0;
     let totalNet = 0;
     let totalAmt = 0;
+    let totalCashAmt = 0;
+    let totalCashEntries = 0;
     const dayMap = {};
 
     for (const r of collections) {
       totalGross += r.gross_weight_kg || 0;
       totalNet += r.net_weight_kg || 0;
       totalAmt += r.amount || 0;
+
+      let isCash = Number(r.is_cash_paid) === 1 || Number(r.rate_locked) === 1;
+      if (!isCash && r.meta) {
+        try {
+          const m = typeof r.meta === 'string' ? JSON.parse(r.meta) : r.meta;
+          if (m?.is_cash_paid || m?.rate_locked || m?.payment_mode === 'cash') isCash = true;
+        } catch (_) {}
+      }
+
+      if (isCash) {
+        totalCashAmt += r.amount || 0;
+        totalCashEntries += 1;
+      }
 
       const d = r.date;
       if (!dayMap[d]) {
@@ -688,6 +781,8 @@ class LocalDatabase {
           net: 0,
           amount: 0,
           entries: 0,
+          cash_entries: 0,
+          cash_amount: 0,
           standard_deduction_pct: r.bag_weight_kg || 0,
           rate: r.rate_per_kg || 0,
         };
@@ -698,6 +793,10 @@ class LocalDatabase {
       dayMap[d].net += r.net_weight_kg || 0;
       dayMap[d].amount += r.amount || 0;
       dayMap[d].entries += 1;
+      if (isCash) {
+        dayMap[d].cash_entries += 1;
+        dayMap[d].cash_amount += r.amount || 0;
+      }
     }
 
     for (const d of Object.keys(dayMap)) {
@@ -729,6 +828,8 @@ class LocalDatabase {
       gross: totalGross,
       net: totalNet,
       amount: totalAmt,
+      cash_amount: totalCashAmt,
+      cash_entries: totalCashEntries,
       days: daysList,
       factoryMap,
     };

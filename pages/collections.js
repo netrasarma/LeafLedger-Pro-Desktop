@@ -345,9 +345,17 @@ const collectionsModule = {
           <td class="mono" style="text-align: right; color: #ef4444;">${ded}%</td>
           <td class="mono font-bold" style="text-align: right; color: var(--accent-emerald-light); font-size: 14px;">${net} kg</td>
           <td class="mono" style="text-align: right; color: var(--accent-amber);">₹${rate}</td>
-          <td class="mono font-bold" style="text-align: right; color: #10b981; font-size: 14px;">
-            ₹${amount.toLocaleString('en-IN')}
-            ${(Number(row.is_cash_paid) === 1 || Number(row.rate_locked) === 1) ? `<br><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 9.5px; padding: 1px 5px; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3);">💵 Cash Paid</span>` : ''}
+          <td style="text-align: right; vertical-align: middle;">
+            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 2px;">
+              <span class="mono font-bold" style="color: #10b981; font-size: 14px; letter-spacing: -0.2px;">
+                ₹${amount.toLocaleString('en-IN')}
+              </span>
+              ${(Number(row.is_cash_paid) === 1 || Number(row.rate_locked) === 1 || (row.meta && (typeof row.meta === 'string' ? row.meta.includes('"is_cash_paid":1') : row.meta.is_cash_paid))) ? `
+                <span class="badge badge-emerald" style="display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; font-size: 10px; font-weight: 700; padding: 1.5px 7px; border-radius: 4px; line-height: 1.2; font-family: var(--font-sans, -apple-system, sans-serif); letter-spacing: 0.2px;">
+                  <span>💵</span><span>Spot Cash</span>
+                </span>
+              ` : ''}
+            </div>
           </td>
           <td>
             <span class="badge" style="background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 11px; border-radius: 6px;">

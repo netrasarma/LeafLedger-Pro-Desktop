@@ -209,6 +209,7 @@ class AppRouter {
         monthly: window.monthlyModule,
         factory: window.factoryModule,
         expenses: window.expensesModule,
+        workers: window.workersModule,
         reports: window.reportsModule,
         settings: window.settingsModule,
       };
@@ -304,7 +305,7 @@ class AppRouter {
       if (iconAvailable) iconAvailable.style.display = 'flex';
 
       titleEl.innerText = `Update Available (v${info.remoteVersion || 'New'})`;
-      msgEl.innerText = `A new version of Leaf Ledger Pro is available. Current version is v${info.currentVersion || '1.0.6'}.`;
+      msgEl.innerText = `A new version of Leaf Ledger Pro is available. Current version is v${info.currentVersion || '1.0.7'}.`;
 
       if (info.changelog && changelogContainer && changelogText) {
         changelogText.innerText = info.changelog;
@@ -346,7 +347,7 @@ class AppRouter {
       if (iconUpToDate) iconUpToDate.style.display = 'flex';
 
       titleEl.innerText = 'You are using the latest version.';
-      msgEl.innerText = `Leaf Ledger Pro v${info.currentVersion || '1.0.6'} is currently up to date.`;
+      msgEl.innerText = `Leaf Ledger Pro v${info.currentVersion || '1.0.7'} is currently up to date.`;
       if (changelogContainer) changelogContainer.style.display = 'none';
       if (cancelBtn) cancelBtn.style.display = 'none';
       primaryBtn.innerText = 'OK';
@@ -1118,7 +1119,7 @@ class AppRouter {
         this._appVersion = await window.electronAPI.system.getAppVersion();
       }
     } catch (_) {}
-    this._appVersion = this._appVersion || '1.0.6';
+    this._appVersion = this._appVersion || '1.0.7';
     return this._appVersion;
   }
 

@@ -148,6 +148,7 @@ const ratesModule = {
       const statNet = document.getElementById('ratesStatNet');
       const statAvgRate = document.getElementById('ratesStatAvgRate');
       const statPayable = document.getElementById('ratesStatPayable');
+      const statPayableSub = document.getElementById('ratesStatPayableSub');
       const statSlips = document.getElementById('ratesStatSlipsCount');
       const statDedPct = document.getElementById('ratesStatDedPct');
 
@@ -159,6 +160,13 @@ const ratesModule = {
 
       if (statAvgRate) statAvgRate.innerText = `₹ ${weightedAvgRate.toFixed(2)}`;
       if (statPayable) statPayable.innerText = `Rs. ${Math.round(totalAmt).toLocaleString('en-IN')}`;
+      if (statPayableSub) {
+        if (summary.cash_entries > 0) {
+          statPayableSub.innerHTML = `Net payout • <span style="color: #10b981; font-weight: 700; white-space: nowrap;">💵 ₹${Math.round(summary.cash_amount).toLocaleString('en-IN')} Spot Cash</span>`;
+        } else {
+          statPayableSub.innerText = 'Net monthly payout';
+        }
+      }
 
       // Left Column: Render Days (1 to last day of month)
       const numDays = new Date(year, month, 0).getDate();
@@ -187,29 +195,45 @@ const ratesModule = {
         const dayColor = isSunday ? 'var(--accent-red)' : 'var(--text-primary)';
         const dayBorder = dInfo.entries > 0 ? 'border-left: 3px solid var(--accent-emerald);' : '';
 
-        const activityPill = dInfo.entries > 0
-          ? `<span style="font-size: 11px; font-weight: 700; color: var(--accent-emerald-light); font-family: var(--font-mono); white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
-               <span style="color: var(--accent-emerald); font-size: 8px;">●</span> ${Math.round(dInfo.gross).toLocaleString('en-IN')} kg
-             </span>`
-          : `<span style="font-size: 11px; color: var(--text-muted); white-space: nowrap;">—</span>`;
+        const hasCash = (dInfo.cash_entries || 0) > 0;
+        const isAllCash = dInfo.entries > 0 && dInfo.cash_entries === dInfo.entries;
+
+        let activityPill = `<span style="font-size: 11px; color: var(--text-muted); white-space: nowrap;">—</span>`;
+        if (dInfo.entries > 0) {
+          activityPill = `
+            <div style="display: flex; flex-direction: column; justify-content: center; gap: 1px;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--accent-emerald-light); font-family: var(--font-mono); white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
+                <span style="color: var(--accent-emerald); font-size: 8px;">●</span> ${Math.round(dInfo.gross).toLocaleString('en-IN')} kg
+              </span>
+              ${hasCash ? `
+                <span title="${dInfo.cash_entries} of ${dInfo.entries} slips Spot Cash Paid (Rate Locked)" style="display: inline-flex; align-items: center; gap: 2px; font-size: 8.5px; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 3px; padding: 0 4px; white-space: nowrap; line-height: 1.2;">
+                  💵 ${dInfo.cash_entries} Cash
+                </span>
+              ` : ''}
+            </div>
+          `;
+        }
 
         daysHtml += `
           <div style="display: grid; grid-template-columns: 58px 78px 1fr 1fr 38px 65px 65px; gap: 6px; align-items: center; padding: 5px 8px; margin-bottom: 3px; border-radius: 8px; background: ${rowBg}; ${dayBorder} transition: background 0.15s ease;">
             <div style="display: flex; align-items: center; gap: 4px; white-space: nowrap;">
               <span style="font-size: 12px; font-weight: 800; color: ${dayColor}; font-family: var(--font-mono);">${String(day).padStart(2, '0')}</span>
               <span style="font-size: 11px; font-weight: 600; color: ${isSunday ? 'var(--accent-red)' : 'var(--text-secondary)'};">${dayName}</span>
+              ${isAllCash ? '<span title="All slips are locked Spot Cash Paid" style="font-size: 9px; color: #10b981;">🔒</span>' : ''}
             </div>
 
             <div style="min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${activityPill}</div>
 
             <div>
               <input type="number" step="0.05" id="rateRow_rate_${dStr}" class="form-input mono" value="${curRate}" placeholder="₹" 
+                     ${isAllCash ? 'title="Rate locked: All entries are spot cash paid"' : ''}
                      style="height: 28px; width: 100%; font-size: 12px; padding: 2px 6px; text-align: center; border-radius: 6px;" 
                      onkeydown="ratesModule.handleRowKeyDown(event, '${dStr}', ${day}, ${numDays})">
             </div>
 
             <div>
               <input type="number" step="0.1" id="rateRow_ded_${dStr}" class="form-input mono" value="${curDed}" placeholder="%" 
+                     ${isAllCash ? 'title="Deduction locked: All entries are spot cash paid"' : ''}
                      style="height: 28px; width: 100%; font-size: 12px; padding: 2px 6px; text-align: center; border-radius: 6px;" 
                      onkeydown="ratesModule.handleRowKeyDown(event, '${dStr}', ${day}, ${numDays})">
             </div>
@@ -258,17 +282,36 @@ const ratesModule = {
             : (i % 2 === 0 ? 'var(--bg-input)' : 'transparent');
           const dayColor = isSunday ? 'var(--accent-red)' : 'var(--text-primary)';
 
+          const slipsCell = (r.cash_entries || 0) > 0
+            ? `<div style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;">
+                 <span style="color: var(--text-muted); font-weight: 600; font-family: var(--font-mono);">${r.entries}</span>
+                 <span title="${r.cash_entries} of ${r.entries} slips Cash Paid (Locked)" style="display: inline-flex; align-items: center; gap: 2px; font-size: 8.5px; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.16); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 3px; padding: 0 3px; white-space: nowrap;">
+                   💵 ${r.cash_entries === r.entries ? 'Cash' : `${r.cash_entries}C`}
+                 </span>
+               </div>`
+            : `<div style="color: var(--text-muted); text-align: center; font-weight: 600;">${r.entries}</div>`;
+
+          const payableCell = (r.cash_entries || 0) > 0
+            ? `<div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 1px;">
+                 <span style="font-weight: 800; color: var(--text-primary); font-family: var(--font-mono);">₹${Math.round(r.amount).toLocaleString('en-IN')}</span>
+                 ${r.cash_entries === r.entries 
+                   ? `<span style="font-size: 8.5px; font-weight: 700; color: #10b981; white-space: nowrap;">🔒 Cash Settled</span>`
+                   : `<span style="font-size: 8.5px; font-weight: 600; color: #10b981; white-space: nowrap;">(₹${Math.round(r.cash_amount).toLocaleString('en-IN')} Cash)</span>`
+                 }
+               </div>`
+            : `<div style="font-weight: 800; color: var(--text-primary); text-align: right; font-family: var(--font-mono);">₹${Math.round(r.amount).toLocaleString('en-IN')}</div>`;
+
           ledgerHtml += `
             <div style="display: grid; grid-template-columns: 55px 50px 1fr 65px 1fr 75px 1.2fr 34px; gap: 4px; align-items: center; padding: 7px 10px; margin-bottom: 2px; border-radius: 6px; background: ${rowBg}; font-size: 12px; cursor: pointer; transition: background 0.15s ease;"
                  onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='${rowBg}'"
                  onclick="ratesModule.inspectDay('${r.date}', ${r.entries})">
               <div style="font-weight: 800; color: ${dayColor}; font-family: var(--font-mono);">${dayNum} <span style="font-size: 10px; font-weight: 600; color: var(--text-muted);">${dayName}</span></div>
-              <div style="color: var(--text-muted); text-align: center; font-weight: 600;">${r.entries}</div>
+              ${slipsCell}
               <div style="color: var(--accent-blue); text-align: right; font-family: var(--font-mono);">${Math.round(r.gross).toLocaleString('en-IN')}</div>
               <div style="color: var(--accent-amber); font-weight: 700; text-align: center;">${Number(r.standard_deduction_pct || 0).toFixed(1)}%</div>
               <div style="color: var(--accent-emerald-light); font-weight: 700; text-align: right; font-family: var(--font-mono);">${Math.round(r.net).toLocaleString('en-IN')}</div>
               <div style="color: var(--text-secondary); text-align: right; font-family: var(--font-mono);">₹${Number(r.rate || 0).toFixed(2)}</div>
-              <div style="font-weight: 800; color: var(--text-primary); text-align: right; font-family: var(--font-mono);">₹${Math.round(r.amount).toLocaleString('en-IN')}</div>
+              ${payableCell}
               <div style="text-align: center; color: var(--text-muted); font-size: 11px;" title="Inspect day details">🔍</div>
             </div>
           `;
@@ -289,7 +332,18 @@ const ratesModule = {
       if (footDed) footDed.innerText = `${effectiveDedPct.toFixed(1)}%`;
       if (footNet) footNet.innerText = Math.round(totalNet).toLocaleString('en-IN');
       if (footRate) footRate.innerText = `₹${weightedAvgRate.toFixed(2)}`;
-      if (footAmt) footAmt.innerText = `₹${Math.round(totalAmt).toLocaleString('en-IN')}`;
+      if (footAmt) {
+        if ((summary.cash_amount || 0) > 0) {
+          footAmt.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 1px;">
+              <span>₹${Math.round(totalAmt).toLocaleString('en-IN')}</span>
+              <span style="font-size: 8.5px; font-weight: 700; color: #10b981; white-space: nowrap;">(₹${Math.round(summary.cash_amount).toLocaleString('en-IN')} Cash)</span>
+            </div>
+          `;
+        } else {
+          footAmt.innerText = `₹${Math.round(totalAmt).toLocaleString('en-IN')}`;
+        }
+      }
 
     } catch (e) {
       console.error('[RatesModule] loadData error:', e);
@@ -331,7 +385,15 @@ const ratesModule = {
       this.hideProcessing();
 
       if (res?.success) {
-        app.showToast(`Rates for ${dateStr} updated successfully.`, 'success');
+        const skipped = res.data?.skippedCashCount || 0;
+        const updated = res.data?.updatedCount || 0;
+        if (skipped > 0 && updated === 0) {
+          app.showToast(`All ${skipped} slip(s) for ${dateStr} are Spot Cash Paid (Rate Locked). Rates protected.`, 'info');
+        } else if (skipped > 0) {
+          app.showToast(`Updated ${updated} slip(s) for ${dateStr} (${skipped} Spot Cash slip(s) protected).`, 'success');
+        } else {
+          app.showToast(`Rates for ${dateStr} updated successfully.`, 'success');
+        }
         await this.loadData();
         window.electronAPI.sync.smartSync('daily_collections');
       } else {
@@ -380,7 +442,13 @@ const ratesModule = {
       this.hideProcessing();
 
       if (res?.success) {
-        app.showToast('Bulk update applied successfully across date range.', 'success');
+        const skipped = res.data?.skippedCashCount || 0;
+        const updated = res.data?.updatedCount || 0;
+        if (skipped > 0) {
+          app.showToast(`Bulk updated ${updated} slips (${skipped} Spot Cash slips protected).`, 'success');
+        } else {
+          app.showToast('Bulk update applied successfully across date range.', 'success');
+        }
         await this.loadData();
         window.electronAPI.sync.smartSync('daily_collections');
       } else {
@@ -407,14 +475,15 @@ const ratesModule = {
 
     if (title) title.innerText = `Collections Breakdown — ${dateStr}`;
     if (sub) sub.innerText = `${slipCount} garden owner collection receipt${slipCount === 1 ? '' : 's'} recorded`;
-    if (tbody) tbody.innerHTML = app.getLoadingStateTableRow(7, 'Loading farmer slips...');
+    if (tbody) tbody.innerHTML = app.getLoadingStateTableRow(8, 'Loading farmer slips...');
 
     app.openModal('ratesDayInspectorModal');
 
     try {
       const res = await window.electronAPI.db.query(
         `SELECT dc.id, dc.created_at, COALESCE(o.name, 'Unknown Grower') as owner_name,
-                dc.gross_weight_kg, dc.bag_weight_kg, dc.net_weight_kg, dc.rate_per_kg, dc.amount, dc.notes
+                dc.gross_weight_kg, dc.bag_weight_kg, dc.net_weight_kg, dc.rate_per_kg, dc.amount, dc.notes,
+                dc.is_cash_paid, dc.rate_locked, dc.meta
          FROM daily_collections dc
          LEFT JOIN owners o ON dc.owner_id = o.id
          WHERE dc.date = ?
@@ -429,11 +498,30 @@ const ratesModule = {
       const rows = Array.isArray(res) ? res : (res?.data || []);
 
       if (!rows || rows.length === 0) {
-        if (tbody) tbody.innerHTML = app.getEmptyStateTableRow(7, {
+        if (tbody) tbody.innerHTML = app.getEmptyStateTableRow(8, {
           title: 'No Collection Slips',
           message: 'No individual grower slips recorded for this date.'
         });
         return;
+      }
+
+      const cashCount = rows.filter(r => {
+        let ic = Number(r.is_cash_paid) === 1 || Number(r.rate_locked) === 1;
+        if (!ic && r.meta) {
+          try {
+            const m = typeof r.meta === 'string' ? JSON.parse(r.meta) : r.meta;
+            if (m?.is_cash_paid || m?.rate_locked || m?.payment_mode === 'cash') ic = true;
+          } catch (_) {}
+        }
+        return ic;
+      }).length;
+
+      if (sub) {
+        if (cashCount > 0) {
+          sub.innerHTML = `${rows.length} garden owner collection receipt${rows.length === 1 ? '' : 's'} recorded • <span style="display: inline-flex; align-items: center; gap: 3px; font-weight: 700; color: #10b981;"><span>💵</span> ${cashCount} Spot Cash (Rate Locked)</span>`;
+        } else {
+          sub.innerText = `${rows.length} garden owner collection receipt${rows.length === 1 ? '' : 's'} recorded`;
+        }
       }
 
       let html = '';
@@ -454,25 +542,48 @@ const ratesModule = {
           }).join(' ');
         }
 
+        let isCash = Number(r.is_cash_paid) === 1 || Number(r.rate_locked) === 1;
+        if (!isCash && r.meta) {
+          try {
+            const m = typeof r.meta === 'string' ? JSON.parse(r.meta) : r.meta;
+            if (m?.is_cash_paid || m?.rate_locked || m?.payment_mode === 'cash') isCash = true;
+          } catch (_) {}
+        }
+
         html += `
-          <tr style="border-bottom: 1px solid var(--border-subtle); font-size: 12px;">
+          <tr style="border-bottom: 1px solid var(--border-subtle); font-size: 12px; ${isCash ? 'background: rgba(16, 185, 129, 0.05);' : ''}">
             <td style="padding: 8px; font-family: var(--font-mono); color: var(--text-muted);">${time}</td>
             <td style="padding: 8px;">
-              <div style="font-weight: 700; color: var(--text-primary);">${r.owner_name}</div>
-              ${dedBadges ? `<div style="margin-top: 2px; display: flex; gap: 4px; flex-wrap: wrap;">${dedBadges}</div>` : ''}
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">${r.owner_name}</div>
+              ${dedBadges ? `<div style="margin-top: 3px; display: flex; gap: 4px; flex-wrap: wrap;">${dedBadges}</div>` : ''}
             </td>
             <td style="padding: 8px; text-align: right; font-family: var(--font-mono); color: var(--accent-blue);">${Math.round(r.gross_weight_kg)} kg</td>
             <td style="padding: 8px; text-align: center; font-family: var(--font-mono); color: var(--accent-amber);">${Number(r.bag_weight_kg).toFixed(1)}%</td>
             <td style="padding: 8px; text-align: right; font-family: var(--font-mono); color: var(--accent-emerald-light); font-weight: 700;">${Math.round(r.net_weight_kg)} kg</td>
-            <td style="padding: 8px; text-align: right; font-family: var(--font-mono); color: var(--text-secondary);">₹${Number(r.rate_per_kg).toFixed(2)}</td>
-            <td style="padding: 8px; text-align: right; font-family: var(--font-mono); color: var(--text-primary); font-weight: 800;">₹${Math.round(r.amount).toLocaleString('en-IN')}</td>
+            <td style="padding: 8px; text-align: right; font-family: var(--font-mono); color: var(--text-secondary);">
+              <div>₹${Number(r.rate_per_kg).toFixed(2)}</div>
+              ${isCash ? '<div style="font-size: 9px; color: #10b981; font-weight: 700;">🔒 Rate Locked</div>' : ''}
+            </td>
+            <td style="padding: 8px; text-align: right; font-family: var(--font-mono); color: var(--text-primary); font-weight: 800;">
+              <div>₹${Math.round(r.amount).toLocaleString('en-IN')}</div>
+            </td>
+            <td style="padding: 8px; text-align: center;">
+              ${isCash 
+                ? `<span class="badge badge-emerald" style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 10.5px; font-weight: 700; padding: 2.5px 8px; border-radius: 5px; line-height: 1.2;">
+                     <span>💵</span><span>Spot Cash</span>
+                   </span>`
+                : `<span class="badge" style="display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 10.5px; font-weight: 600; padding: 2.5px 8px; border-radius: 5px; line-height: 1.2; background: rgba(255, 255, 255, 0.06); color: var(--text-muted); border: 1px solid var(--border-subtle);">
+                     <span>📅</span><span>Monthly Ledger</span>
+                   </span>`
+              }
+            </td>
           </tr>
         `;
       });
       if (tbody) tbody.innerHTML = html;
     } catch (err) {
       console.error('[RatesModule] inspectDay error:', err);
-      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--accent-red);">Error loading receipts: ${err.message}</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--accent-red);">Error loading receipts: ${err.message}</td></tr>`;
     }
   },
 
